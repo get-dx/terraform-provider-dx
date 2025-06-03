@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"terraform-provider-scorecard/internal/provider/dxapi"
+	"terraform-provider-dx/internal/provider/dxapi"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"

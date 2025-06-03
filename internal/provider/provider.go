@@ -6,7 +6,7 @@ package provider
 import (
 	"context"
 
-	"terraform-provider-scorecard/internal/provider/dxapi"
+	"terraform-provider-dx/internal/provider/dxapi"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -15,23 +15,23 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// Ensure scorecardProvider satisfies various provider interfaces.
+// Ensure dxProvider satisfies various provider interfaces.
 var (
-	_ provider.Provider = &scorecardProvider{}
-	// _ provider.ProviderWithFunctions = &scorecardProvider{}
-	// _ provider.ProviderWithEphemeralResources = &scorecardProvider{}
+	_ provider.Provider = &dxProvider{}
+	// _ provider.ProviderWithFunctions = &dxProvider{}
+	// _ provider.ProviderWithEphemeralResources = &dxProvider{}
 )
 
 func New(version string) func() provider.Provider {
 	return func() provider.Provider {
-		return &scorecardProvider{
+		return &dxProvider{
 			version: version,
 		}
 	}
 }
 
-// scorecardProvider defines the provider implementation.
-type scorecardProvider struct {
+// dxProvider defines the provider implementation.
+type dxProvider struct {
 	// version is set to the provider version on release, "dev" when the
 	// provider is built and ran locally, and "test" when running acceptance
 	// testing.
@@ -40,17 +40,17 @@ type scorecardProvider struct {
 	version string
 }
 
-// scorecardProviderModel describes the provider data model.
-type scorecardProviderModel struct {
+// dxProviderModel describes the provider data model.
+type dxProviderModel struct {
 	ApiToken types.String `tfsdk:"api_token"`
 }
 
-func (p *scorecardProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
-	resp.TypeName = "scorecard"
+func (p *dxProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
+	resp.TypeName = "dx"
 	resp.Version = p.version
 }
 
-func (p *scorecardProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
+func (p *dxProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"api_token": schema.StringAttribute{
@@ -62,8 +62,8 @@ func (p *scorecardProvider) Schema(_ context.Context, _ provider.SchemaRequest, 
 	}
 }
 
-func (p *scorecardProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
-	var config scorecardProviderModel
+func (p *dxProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
+	var config dxProviderModel
 
 	// Load provider config
 	diags := req.Config.Get(ctx, &config)
@@ -92,12 +92,12 @@ func (p *scorecardProvider) Configure(ctx context.Context, req provider.Configur
 	// resp.DataSourceData = client
 }
 
-func (p *scorecardProvider) Resources(ctx context.Context) []func() resource.Resource {
+func (p *dxProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewScorecardResource,
 	}
 }
 
-func (p *scorecardProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
+func (p *dxProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return nil
 }

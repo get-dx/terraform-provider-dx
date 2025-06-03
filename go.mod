@@ -1,4 +1,4 @@
-module terraform-provider-scorecard
+module terraform-provider-dx
 
 go 1.23.7
 

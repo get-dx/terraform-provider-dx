@@ -1,17 +1,17 @@
 terraform {
   required_providers {
-    scorecard = {
-      source  = "registry.terraform.io/local/scorecard"
+    dx = {
+      source  = "registry.terraform.io/local/dx"
       version = "0.1.0"
     }
   }
 }
 
-provider "scorecard" {
+provider "dx" {
   api_token = "v1U37UDXfAHtABr7UJXaFdm5HDVqQPYFQ6Bo"
 }
 
-resource "scorecard_scorecard" "example" {
+resource "dx_scorecard" "example" {
   name                           = "Terraform Provider Scorecard"
   description                    = "This is a test scorecard"
   type                           = "LEVEL"
