@@ -5,6 +5,7 @@ package provider
 
 import (
 	"context"
+	"os"
 
 	"terraform-provider-dx/internal/provider/dxapi"
 
@@ -83,7 +84,10 @@ func (p *dxProvider) Configure(ctx context.Context, req provider.ConfigureReques
 	}
 
 	// Initialize HTTP client
-	baseURL := "https://api.getdx.com"
+	baseURL := os.Getenv("DX_WEB_API_URL")
+	if baseURL == "" {
+		baseURL = "https://api.getdx.com"
+	}
 	client := dxapi.NewClient(baseURL, token)
 	// p.client = client
 
