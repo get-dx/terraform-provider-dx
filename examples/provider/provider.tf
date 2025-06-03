@@ -1,3 +1,3 @@
-provider "scaffolding" {
+provider "dx" {
   # example configuration here
 }
