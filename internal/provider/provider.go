@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 // Ensure dxProvider satisfies various provider interfaces.
@@ -64,6 +65,8 @@ func (p *dxProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *p
 }
 
 func (p *dxProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
+	tflog.Debug(ctx, "Configuring DX provider")
+
 	var config dxProviderModel
 
 	// Load provider config

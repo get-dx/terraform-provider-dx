@@ -9,8 +9,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
+
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 // API model structs for unmarshalling API responses
@@ -118,9 +119,13 @@ func (c *Client) CreateScorecard(ctx context.Context, payload map[string]interfa
 
 	// Log the API response for debugging
 	if respJson, err := json.MarshalIndent(apiResp, "", "  "); err == nil {
-		log.Printf("[DEBUG] API Response from CreateScorecard:\n%s\n", string(respJson))
+		tflog.Debug(ctx, "API Response from CreateScorecard", map[string]interface{}{
+			"response": string(respJson),
+		})
 	} else {
-		log.Printf("[DEBUG] Could not marshal API response: %v", err)
+		tflog.Debug(ctx, "Could not marshal API response", map[string]interface{}{
+			"error": err,
+		})
 	}
 
 	// Return the APIResponse object
@@ -155,9 +160,13 @@ func (c *Client) GetScorecard(ctx context.Context, id string) (*APIResponse, err
 
 	// Log the API response for debugging
 	if respJson, err := json.MarshalIndent(apiResp, "", "  "); err == nil {
-		log.Printf("[DEBUG] API Response from CreateScorecard:\n%s\n", string(respJson))
+		tflog.Debug(ctx, "API Response from CreateScorecard", map[string]interface{}{
+			"response": string(respJson),
+		})
 	} else {
-		log.Printf("[DEBUG] Could not marshal API response: %v", err)
+		tflog.Debug(ctx, "Could not marshal API response", map[string]interface{}{
+			"error": err,
+		})
 	}
 
 	return &apiResp, nil
