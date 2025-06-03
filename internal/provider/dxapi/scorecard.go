@@ -14,26 +14,26 @@ import (
 
 type APIScorecard struct {
 	// Required fields
-	Id           string         `json:"id"`
-	Name         string         `json:"name"`
-	Type         string         `json:"type"`
-	EntityFilterType string     `json:"entity_filter_type"`
-	EvaluationFrequency int     `json:"evaluation_frequency_hours"`
-	
+	Id                  string `json:"id"`
+	Name                string `json:"name"`
+	Type                string `json:"type"`
+	EntityFilterType    string `json:"entity_filter_type"`
+	EvaluationFrequency int    `json:"evaluation_frequency_hours"`
+
 	// Conditionally required fields for levels based scorecards
-	EmptyLevelLabel *string      `json:"empty_level_label"`
-	EmptyLevelColor *string      `json:"empty_level_color"`
-	Levels       []*APILevel     `json:"levels"`
-	
+	EmptyLevelLabel *string     `json:"empty_level_label"`
+	EmptyLevelColor *string     `json:"empty_level_color"`
+	Levels          []*APILevel `json:"levels"`
+
 	// Conditionally required fields for points based scorecards
-	CheckGroups  []*APICheckGroup `json:"check_groups"`
-	
+	CheckGroups []*APICheckGroup `json:"check_groups"`
+
 	// Optional fields
-	Description  *string         `json:"description"`
-	Published    bool           `json:"published"`
-	EntityFilterTypeIdentifiers []*string `json:"entity_filter_type_identifiers"`
-	EntityFilterSql *string      `json:"entity_filter_sql"`
-	Checks       []*APICheck     `json:"checks"`
+	Description                 *string     `json:"description"`
+	Published                   bool        `json:"published"`
+	EntityFilterTypeIdentifiers []*string   `json:"entity_filter_type_identifiers"`
+	EntityFilterSql             *string     `json:"entity_filter_sql"`
+	Checks                      []*APICheck `json:"checks"`
 }
 
 type APILevel struct {
@@ -52,25 +52,25 @@ type APICheckGroup struct {
 }
 
 type APICheck struct {
-	Id          *string `json:"id"`
-	Name        *string `json:"name"`
-	Description *string `json:"description"`
-	Ordering    *int    `json:"ordering"`
-	Sql         *string `json:"sql"`
-	FilterSql   *string `json:"filter_sql"`
-	FilterMessage *string `json:"filter_message"`
-	OutputEnabled bool  `json:"output_enabled"`
-	OutputType   *string `json:"output_type"`
-	OutputAggregation *string `json:"output_aggregation"`
-	OutputCustomOptions *string `json:"output_custom_options"`
-	EstimatedDevDays *int `json:"estimated_dev_days"`
-	ExternalUrl *string `json:"external_url"`
-	Published   bool   `json:"published"`
-	ScorecardLevelKey *string `json:"scorecard_level_key"`
-	Level       *APILevel `json:"level"`
-	ScorecardCheckGroupKey *string `json:"scorecard_check_group_key"`
-	CheckGroup  *APICheckGroup `json:"check_group"`
-	Points      *int    `json:"points"`
+	Id                     *string        `json:"id"`
+	Name                   *string        `json:"name"`
+	Description            *string        `json:"description"`
+	Ordering               *int           `json:"ordering"`
+	Sql                    *string        `json:"sql"`
+	FilterSql              *string        `json:"filter_sql"`
+	FilterMessage          *string        `json:"filter_message"`
+	OutputEnabled          bool           `json:"output_enabled"`
+	OutputType             *string        `json:"output_type"`
+	OutputAggregation      *string        `json:"output_aggregation"`
+	OutputCustomOptions    *string        `json:"output_custom_options"`
+	EstimatedDevDays       *int           `json:"estimated_dev_days"`
+	ExternalUrl            *string        `json:"external_url"`
+	Published              bool           `json:"published"`
+	ScorecardLevelKey      *string        `json:"scorecard_level_key"`
+	Level                  *APILevel      `json:"level"`
+	ScorecardCheckGroupKey *string        `json:"scorecard_check_group_key"`
+	CheckGroup             *APICheckGroup `json:"check_group"`
+	Points                 *int           `json:"points"`
 }
 
 // APIResponse is the top-level response from the DX API for scorecard endpoints
@@ -202,7 +202,7 @@ func (c *Client) UpdateScorecard(ctx context.Context, payload map[string]interfa
 }
 
 func (c *Client) DeleteScorecard(ctx context.Context, id string) (bool, error) {
-	payload := map[string]interface{}{ "id": id }
+	payload := map[string]interface{}{"id": id}
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return false, fmt.Errorf("marshaling payload: %w", err)

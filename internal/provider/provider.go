@@ -16,11 +16,11 @@ import (
 )
 
 // Ensure scorecardProvider satisfies various provider interfaces.
-var(
+var (
 	_ provider.Provider = &scorecardProvider{}
 	// _ provider.ProviderWithFunctions = &scorecardProvider{}
 	// _ provider.ProviderWithEphemeralResources = &scorecardProvider{}
-) 
+)
 
 func New(version string) func() provider.Provider {
 	return func() provider.Provider {
@@ -35,8 +35,8 @@ type scorecardProvider struct {
 	// version is set to the provider version on release, "dev" when the
 	// provider is built and ran locally, and "test" when running acceptance
 	// testing.
-	client *dxapi.Client
-	token string
+	client  *dxapi.Client
+	token   string
 	version string
 }
 
@@ -51,41 +51,41 @@ func (p *scorecardProvider) Metadata(ctx context.Context, req provider.MetadataR
 }
 
 func (p *scorecardProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
-    resp.Schema = schema.Schema{
-        Attributes: map[string]schema.Attribute{
-            "api_token": schema.StringAttribute{
-                Description: "DX Web API token for authentication.",
-                Required:    true,
-                Sensitive:   true,
-            },
-        },
-    }
+	resp.Schema = schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"api_token": schema.StringAttribute{
+				Description: "DX Web API token for authentication.",
+				Required:    true,
+				Sensitive:   true,
+			},
+		},
+	}
 }
 
 func (p *scorecardProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
-    var config scorecardProviderModel
+	var config scorecardProviderModel
 
-    // Load provider config
-    diags := req.Config.Get(ctx, &config)
-    resp.Diagnostics.Append(diags...)
-    if resp.Diagnostics.HasError() {
-        return
-    }
+	// Load provider config
+	diags := req.Config.Get(ctx, &config)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-    token := config.ApiToken.ValueString()
+	token := config.ApiToken.ValueString()
 
-    if token == "" {
-        resp.Diagnostics.AddError(
-            "Missing API Token",
-            "The provider could not retrieve an API token. This is required to authenticate with the DX API.",
-        )
-        return
-    }
+	if token == "" {
+		resp.Diagnostics.AddError(
+			"Missing API Token",
+			"The provider could not retrieve an API token. This is required to authenticate with the DX API.",
+		)
+		return
+	}
 
-    // Initialize HTTP client
+	// Initialize HTTP client
 	baseURL := "https://api.getdx.com"
-    client := dxapi.NewClient(baseURL, token)
-    // p.client = client
+	client := dxapi.NewClient(baseURL, token)
+	// p.client = client
 
 	resp.ResourceData = client
 	// Set if we create a data source
