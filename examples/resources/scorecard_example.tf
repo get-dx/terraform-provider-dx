@@ -8,7 +8,7 @@ terraform {
 }
 
 provider "dx" {
-  api_token = "v1U37UDXfAHtABr7UJXaFdm5HDVqQPYFQ6Bo"
+  api_token = "<your api token>"
 }
 
 resource "dx_scorecard" "example" {
