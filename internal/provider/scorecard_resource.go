@@ -191,8 +191,12 @@ func (r *scorecardResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 				Description: "The levels that can be achieved in this scorecard (levels scorecards only).",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"key":   schema.StringAttribute{Required: true},
-						"id":    schema.StringAttribute{Computed: true},
+						"key": schema.StringAttribute{Required: true},
+						"id": schema.StringAttribute{
+							Computed: true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							}},
 						"name":  schema.StringAttribute{Required: true},
 						"color": schema.StringAttribute{Required: true},
 						"rank":  schema.Int32Attribute{Required: true},
@@ -206,8 +210,12 @@ func (r *scorecardResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 				Description: "Groups of checks, to help organize the scorecard for entity owners (points scorecards only).",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"key":      schema.StringAttribute{Required: true},
-						"id":       schema.StringAttribute{Computed: true},
+						"key": schema.StringAttribute{Required: true},
+						"id": schema.StringAttribute{
+							Computed: true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							}},
 						"name":     schema.StringAttribute{Required: true},
 						"ordering": schema.NumberAttribute{Required: true},
 					},
@@ -239,7 +247,12 @@ func (r *scorecardResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 				Description: "List of checks that are applied to entities in the scorecard.",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"id":                 schema.StringAttribute{Computed: true},
+						"id": schema.StringAttribute{
+							Computed: true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
+						},
 						"name":               schema.StringAttribute{Required: true},
 						"description":        schema.StringAttribute{Required: true},
 						"ordering":           schema.Int32Attribute{Required: true},
@@ -332,7 +345,7 @@ func (r *scorecardResource) Create(ctx context.Context, req resource.CreateReque
 		return
 	}
 
-	payload, err := modelToRequestBody(ctx, plan)
+	payload, err := modelToRequestBody(ctx, plan, false)
 	if err != nil {
 		resp.Diagnostics.AddError("Error converting plan to request body", err.Error())
 		return
@@ -407,89 +420,11 @@ func (r *scorecardResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 
-	// Build the payload, similar to Create, but include the id
-	payload := map[string]interface{}{
-		"id":                         plan.Id.ValueString(),
-		"name":                       plan.Name.ValueString(),
-		"type":                       plan.Type.ValueString(),
-		"entity_filter_type":         plan.EntityFilterType.ValueString(),
-		"evaluation_frequency_hours": plan.EvaluationFrequency.ValueInt32(),
+	payload, err := modelToRequestBody(ctx, plan, true)
+	if err != nil {
+		resp.Diagnostics.AddError("Error converting plan to request body", err.Error())
+		return
 	}
-
-	scorecardType := plan.Type.ValueString()
-	if scorecardType == "LEVEL" {
-		payload["empty_level_label"] = plan.EmptyLevelLabel.ValueString()
-		payload["empty_level_color"] = plan.EmptyLevelColor.ValueString()
-		levels := []map[string]interface{}{}
-		for _, level := range plan.Levels {
-			levels = append(levels, map[string]interface{}{
-				"key":   level.Key.ValueString(),
-				"id":    level.Id.ValueString(),
-				"name":  level.Name.ValueString(),
-				"color": level.Color.ValueString(),
-				"rank":  level.Rank.ValueInt32(),
-			})
-		}
-		payload["levels"] = levels
-	}
-	if scorecardType == "POINTS" {
-		checkGroups := []map[string]interface{}{}
-		for _, group := range plan.CheckGroups {
-			checkGroups = append(checkGroups, map[string]interface{}{
-				"key":      group.Key.ValueString(),
-				"id":       group.Id.ValueString(),
-				"name":     group.Name.ValueString(),
-				"ordering": group.Ordering.ValueInt32(),
-			})
-		}
-		payload["check_groups"] = checkGroups
-	}
-	if !plan.Description.IsNull() && !plan.Description.IsUnknown() {
-		payload["description"] = plan.Description.ValueString()
-	}
-	if !plan.Published.IsNull() && !plan.Published.IsUnknown() {
-		payload["published"] = plan.Published.ValueBool()
-	}
-	if len(plan.EntityFilterTypeIdentifiers) > 0 {
-		identifiers := make([]string, 0, len(plan.EntityFilterTypeIdentifiers))
-		for _, id := range plan.EntityFilterTypeIdentifiers {
-			if !id.IsNull() && !id.IsUnknown() {
-				identifiers = append(identifiers, id.ValueString())
-			}
-		}
-		payload["entity_filter_type_identifiers"] = identifiers
-	}
-	if !plan.EntityFilterSql.IsNull() && !plan.EntityFilterSql.IsUnknown() {
-		payload["entity_filter_sql"] = plan.EntityFilterSql.ValueString()
-	}
-	checks := []map[string]interface{}{}
-	for _, check := range plan.Checks {
-		checkPayload := map[string]interface{}{
-			"id":                    check.Id.ValueString(),
-			"name":                  check.Name.ValueString(),
-			"description":           check.Description.ValueString(),
-			"ordering":              check.Ordering,
-			"sql":                   check.Sql.ValueString(),
-			"filter_sql":            check.FilterSql.ValueString(),
-			"filter_message":        check.FilterMessage.ValueString(),
-			"output_enabled":        check.OutputEnabled.ValueBool(),
-			"output_type":           check.OutputType.ValueString(),
-			"output_aggregation":    check.OutputAggregation.ValueString(),
-			"output_custom_options": nil,
-			"estimated_dev_days":    check.EstimatedDevDays,
-			"external_url":          check.ExternalUrl.ValueString(),
-			"published":             check.Published.ValueBool(),
-		}
-		if scorecardType == "LEVEL" {
-			checkPayload["scorecard_level_key"] = check.ScorecardLevelKey.ValueString()
-		}
-		if scorecardType == "POINTS" {
-			checkPayload["scorecard_check_group_key"] = check.ScorecardCheckGroupKey.ValueString()
-			checkPayload["points"] = check.Points
-		}
-		checks = append(checks, checkPayload)
-	}
-	payload["checks"] = checks
 
 	apiResp, err := r.client.UpdateScorecard(ctx, payload)
 	if err != nil {
@@ -534,7 +469,7 @@ func (r *scorecardResource) ImportState(ctx context.Context, req resource.Import
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-func modelToRequestBody(ctx context.Context, plan scorecardModel) (map[string]interface{}, error) {
+func modelToRequestBody(ctx context.Context, plan scorecardModel, setIds bool) (map[string]interface{}, error) {
 	tflog.Debug(ctx, "Converting plan to request body")
 
 	scorecardType := plan.Type.ValueString()
@@ -547,6 +482,9 @@ func modelToRequestBody(ctx context.Context, plan scorecardModel) (map[string]in
 		"entity_filter_type":         plan.EntityFilterType.ValueString(),
 		"evaluation_frequency_hours": plan.EvaluationFrequency.ValueInt32(),
 	}
+	if setIds {
+		payload["id"] = plan.Id.ValueString()
+	}
 
 	// Add LEVEL-specific required fields
 	if scorecardType == "LEVEL" {
@@ -554,13 +492,17 @@ func modelToRequestBody(ctx context.Context, plan scorecardModel) (map[string]in
 		payload["empty_level_color"] = plan.EmptyLevelColor.ValueString()
 
 		levels := []map[string]interface{}{}
-		for _, level := range plan.Levels {
-			levels = append(levels, map[string]interface{}{
-				"key":   level.Key.ValueString(),
-				"name":  level.Name.ValueString(),
-				"color": level.Color.ValueString(),
-				"rank":  level.Rank.ValueInt32(),
-			})
+		for _, planLevel := range plan.Levels {
+			level := map[string]interface{}{
+				"key":   planLevel.Key.ValueString(),
+				"name":  planLevel.Name.ValueString(),
+				"color": planLevel.Color.ValueString(),
+				"rank":  planLevel.Rank.ValueInt32(),
+			}
+			if setIds {
+				level["id"] = planLevel.Id.ValueString()
+			}
+			levels = append(levels, level)
 		}
 		payload["levels"] = levels
 	}
@@ -568,12 +510,16 @@ func modelToRequestBody(ctx context.Context, plan scorecardModel) (map[string]in
 	// Add POINTS-specific required fields
 	if scorecardType == "POINTS" {
 		checkGroups := []map[string]interface{}{}
-		for _, group := range plan.CheckGroups {
-			checkGroups = append(checkGroups, map[string]interface{}{
-				"key":      group.Key.ValueString(),
-				"name":     group.Name.ValueString(),
-				"ordering": group.Ordering,
-			})
+		for _, planCheckGroup := range plan.CheckGroups {
+			checkGroup := map[string]interface{}{
+				"key":      planCheckGroup.Key.ValueString(),
+				"name":     planCheckGroup.Name.ValueString(),
+				"ordering": planCheckGroup.Ordering.ValueInt32(),
+			}
+			if setIds {
+				checkGroup["id"] = planCheckGroup.Id.ValueString()
+			}
+			checkGroups = append(checkGroups, checkGroup)
 		}
 		payload["check_groups"] = checkGroups
 	}
@@ -622,6 +568,10 @@ func modelToRequestBody(ctx context.Context, plan scorecardModel) (map[string]in
 			"estimated_dev_days":    estimatedDevDaysValue,
 			"external_url":          check.ExternalUrl.ValueString(),
 			"published":             check.Published.ValueBool(),
+		}
+
+		if setIds {
+			checkPayload["id"] = check.Id.ValueString()
 		}
 
 		// Add LEVEL-specific check fields
