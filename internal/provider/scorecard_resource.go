@@ -89,16 +89,16 @@ type checkModel struct {
 	OutputAggregation   types.String `tfsdk:"output_aggregation"`
 	OutputCustomOptions types.Object `tfsdk:"output_custom_options"` //TODO figure out how to model this
 
-	EstimatedDevDays types.Number `tfsdk:"estimated_dev_days"`
-	ExternalUrl      types.String `tfsdk:"external_url"`
-	Published        types.Bool   `tfsdk:"published"`
+	EstimatedDevDays types.Float32 `tfsdk:"estimated_dev_days"`
+	ExternalUrl      types.String  `tfsdk:"external_url"`
+	Published        types.Bool    `tfsdk:"published"`
 
 	// Additional fields for level based scorecards
 	ScorecardLevelKey types.String `tfsdk:"scorecard_level_key"`
 
 	// Additional fields for points based scorecards
 	ScorecardCheckGroupKey types.String `tfsdk:"scorecard_check_group_key"`
-	Points                 types.Number `tfsdk:"points"`
+	Points                 types.Int32  `tfsdk:"points"`
 }
 
 func (r *scorecardResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -257,7 +257,7 @@ func (r *scorecardResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 								"decimals": schema.NumberAttribute{Required: true, Description: "The number of decimals to display, or `auto` for default behavior."},
 							},
 						},
-						"estimated_dev_days": schema.NumberAttribute{Required: true},
+						"estimated_dev_days": schema.Float32Attribute{Optional: true},
 						"external_url":       schema.StringAttribute{Required: true},
 						"published":          schema.BoolAttribute{Required: true},
 
@@ -266,7 +266,7 @@ func (r *scorecardResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 
 						// Fields for points-based scorecards
 						"scorecard_check_group_key": schema.StringAttribute{Optional: true},
-						"points":                    schema.NumberAttribute{Optional: true},
+						"points":                    schema.Int32Attribute{Optional: true},
 					},
 				},
 			},
@@ -395,6 +395,13 @@ func (r *scorecardResource) Create(ctx context.Context, req resource.CreateReque
 	// Add checks
 	checks := []map[string]interface{}{}
 	for _, check := range plan.Checks {
+		var estimatedDevDaysValue interface{}
+		if check.EstimatedDevDays.IsNull() || check.EstimatedDevDays.IsUnknown() {
+			estimatedDevDaysValue = nil
+		} else {
+			estimatedDevDaysValue = check.EstimatedDevDays.ValueFloat32()
+		}
+
 		checkPayload := map[string]interface{}{
 			"name":                  check.Name.ValueString(),
 			"description":           check.Description.ValueString(),
@@ -406,7 +413,7 @@ func (r *scorecardResource) Create(ctx context.Context, req resource.CreateReque
 			"output_type":           check.OutputType.ValueString(),
 			"output_aggregation":    check.OutputAggregation.ValueString(),
 			"output_custom_options": nil,
-			"estimated_dev_days":    check.EstimatedDevDays,
+			"estimated_dev_days":    estimatedDevDaysValue,
 			"external_url":          check.ExternalUrl.ValueString(),
 			"published":             check.Published.ValueBool(),
 		}
@@ -468,6 +475,20 @@ func mapApiResponseToTerraformModel(ctx context.Context, apiResp *dxapi.APIRespo
 			return types.NumberValue(big.NewFloat(float64(*n)))
 		}
 		return types.NumberNull()
+	}
+
+	float32OrNull := func(f *float32) types.Float32 {
+		if f != nil {
+			return types.Float32Value(*f)
+		}
+		return types.Float32Null()
+	}
+
+	int32OrNull := func(i *int32) types.Int32 {
+		if i != nil {
+			return types.Int32Value(*i)
+		}
+		return types.Int32Null()
 	}
 
 	// ************** Required fields **************
@@ -565,14 +586,14 @@ func mapApiResponseToTerraformModel(ctx context.Context, apiResp *dxapi.APIRespo
 					"unit":     types.StringType,
 					"decimals": types.NumberType,
 				}),
-				EstimatedDevDays: numberOrNull(chk.EstimatedDevDays),
+				EstimatedDevDays: float32OrNull(chk.EstimatedDevDays),
 				ExternalUrl:      stringOrNull(chk.ExternalUrl),
 				Published:        boolApiToTF(chk.Published, plan.Checks[i].Published),
 				// Key not returned by API. Leave same as plan.
 				ScorecardLevelKey: prevCheck.ScorecardLevelKey,
 				// Key not returned by API. Leave same as plan.
 				ScorecardCheckGroupKey: prevCheck.ScorecardCheckGroupKey,
-				Points:                 numberOrNull(chk.Points),
+				Points:                 int32OrNull(chk.Points),
 			}
 		}
 	} else {

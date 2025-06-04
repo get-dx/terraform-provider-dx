@@ -67,14 +67,14 @@ type APICheck struct {
 	OutputType             *string        `json:"output_type"`
 	OutputAggregation      *string        `json:"output_aggregation"`
 	OutputCustomOptions    *string        `json:"output_custom_options"`
-	EstimatedDevDays       *int           `json:"estimated_dev_days"`
+	EstimatedDevDays       *float32       `json:"estimated_dev_days"`
 	ExternalUrl            *string        `json:"external_url"`
 	Published              bool           `json:"published"`
 	ScorecardLevelKey      *string        `json:"scorecard_level_key"`
 	Level                  *APILevel      `json:"level"`
 	ScorecardCheckGroupKey *string        `json:"scorecard_check_group_key"`
 	CheckGroup             *APICheckGroup `json:"check_group"`
-	Points                 *int           `json:"points"`
+	Points                 *int32         `json:"points"`
 }
 
 // APIResponse is the top-level response from the DX API for scorecard endpoints
@@ -121,9 +121,7 @@ func (c *Client) CreateScorecard(ctx context.Context, payload map[string]interfa
 
 	// Log the API response for debugging
 	if respJson, err := json.MarshalIndent(apiResp, "", "  "); err == nil {
-		tflog.Debug(ctx, "API Response from CreateScorecard", map[string]interface{}{
-			"response": string(respJson),
-		})
+		tflog.Debug(ctx, fmt.Sprintf("API Response from CreateScorecard:\n%s", string(respJson)))
 	} else {
 		tflog.Debug(ctx, "Could not marshal API response", map[string]interface{}{
 			"error": err,
