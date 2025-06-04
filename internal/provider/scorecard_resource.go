@@ -332,6 +332,213 @@ func (r *scorecardResource) Create(ctx context.Context, req resource.CreateReque
 		return
 	}
 
+	payload, err := modelToRequestBody(ctx, plan)
+	if err != nil {
+		resp.Diagnostics.AddError("Error converting plan to request body", err.Error())
+		return
+	}
+
+	// Create Scorecard (apiResp is a struct of type APIResponse)
+	apiResp, err := r.client.CreateScorecard(ctx, payload)
+	if err != nil {
+		resp.Diagnostics.AddError("Error creating scorecard", err.Error())
+		return
+	}
+
+	// Shallow copy of plan to preserve values
+	oldPlan := plan
+	responseBodyToModel(ctx, apiResp, &plan, &oldPlan)
+
+	diags = resp.State.Set(ctx, plan)
+	resp.Diagnostics.Append(diags...)
+}
+
+func (r *scorecardResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var state scorecardModel
+
+	// Load existing state
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Extract ID
+	id := state.Id.ValueString()
+	if id == "" {
+		resp.Diagnostics.AddError("Missing ID", "The resource ID is missing from the state")
+		return
+	}
+
+	// Call the API to get the latest scorecard data
+	apiResp, err := r.client.GetScorecard(ctx, id)
+	if err != nil {
+		// TODO - implement resource not found error handling
+		// 	// Resource no longer exists remotely — remove from state
+		// 	resp.State.RemoveResource(ctx)
+		// 	return
+		// }
+		resp.Diagnostics.AddError(
+			"Error reading scorecard",
+			fmt.Sprintf("Could not read scorecard ID %s: %s", id, err.Error()),
+		)
+		return
+	}
+
+	// Map API response to Terraform state model
+	// Shallow copy of plan to preserve values
+	oldState := state
+	responseBodyToModel(ctx, apiResp, &state, &oldState)
+	// state.Id = types.StringValue(apiResp.Scorecard.Id)
+	// state.Name = types.StringValue(apiResp.Scorecard.Name)
+	// // state.Description = types.StringValue(apiResp.Scorecard.Description)
+	// state.Type = types.StringValue(apiResp.Scorecard.Type)
+	// Map other fields as needed
+	// ...
+
+	diags = resp.State.Set(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+}
+
+func (r *scorecardResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan scorecardModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...) // Get the desired state
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Build the payload, similar to Create, but include the id
+	payload := map[string]interface{}{
+		"id":                         plan.Id.ValueString(),
+		"name":                       plan.Name.ValueString(),
+		"type":                       plan.Type.ValueString(),
+		"entity_filter_type":         plan.EntityFilterType.ValueString(),
+		"evaluation_frequency_hours": plan.EvaluationFrequency.ValueInt32(),
+	}
+
+	scorecardType := plan.Type.ValueString()
+	if scorecardType == "LEVEL" {
+		payload["empty_level_label"] = plan.EmptyLevelLabel.ValueString()
+		payload["empty_level_color"] = plan.EmptyLevelColor.ValueString()
+		levels := []map[string]interface{}{}
+		for _, level := range plan.Levels {
+			levels = append(levels, map[string]interface{}{
+				"key":   level.Key.ValueString(),
+				"id":    level.Id.ValueString(),
+				"name":  level.Name.ValueString(),
+				"color": level.Color.ValueString(),
+				"rank":  level.Rank.ValueInt32(),
+			})
+		}
+		payload["levels"] = levels
+	}
+	if scorecardType == "POINTS" {
+		checkGroups := []map[string]interface{}{}
+		for _, group := range plan.CheckGroups {
+			checkGroups = append(checkGroups, map[string]interface{}{
+				"key":      group.Key.ValueString(),
+				"id":       group.Id.ValueString(),
+				"name":     group.Name.ValueString(),
+				"ordering": group.Ordering.ValueInt32(),
+			})
+		}
+		payload["check_groups"] = checkGroups
+	}
+	if !plan.Description.IsNull() && !plan.Description.IsUnknown() {
+		payload["description"] = plan.Description.ValueString()
+	}
+	if !plan.Published.IsNull() && !plan.Published.IsUnknown() {
+		payload["published"] = plan.Published.ValueBool()
+	}
+	if len(plan.EntityFilterTypeIdentifiers) > 0 {
+		identifiers := make([]string, 0, len(plan.EntityFilterTypeIdentifiers))
+		for _, id := range plan.EntityFilterTypeIdentifiers {
+			if !id.IsNull() && !id.IsUnknown() {
+				identifiers = append(identifiers, id.ValueString())
+			}
+		}
+		payload["entity_filter_type_identifiers"] = identifiers
+	}
+	if !plan.EntityFilterSql.IsNull() && !plan.EntityFilterSql.IsUnknown() {
+		payload["entity_filter_sql"] = plan.EntityFilterSql.ValueString()
+	}
+	checks := []map[string]interface{}{}
+	for _, check := range plan.Checks {
+		checkPayload := map[string]interface{}{
+			"id":                    check.Id.ValueString(),
+			"name":                  check.Name.ValueString(),
+			"description":           check.Description.ValueString(),
+			"ordering":              check.Ordering,
+			"sql":                   check.Sql.ValueString(),
+			"filter_sql":            check.FilterSql.ValueString(),
+			"filter_message":        check.FilterMessage.ValueString(),
+			"output_enabled":        check.OutputEnabled.ValueBool(),
+			"output_type":           check.OutputType.ValueString(),
+			"output_aggregation":    check.OutputAggregation.ValueString(),
+			"output_custom_options": nil,
+			"estimated_dev_days":    check.EstimatedDevDays,
+			"external_url":          check.ExternalUrl.ValueString(),
+			"published":             check.Published.ValueBool(),
+		}
+		if scorecardType == "LEVEL" {
+			checkPayload["scorecard_level_key"] = check.ScorecardLevelKey.ValueString()
+		}
+		if scorecardType == "POINTS" {
+			checkPayload["scorecard_check_group_key"] = check.ScorecardCheckGroupKey.ValueString()
+			checkPayload["points"] = check.Points
+		}
+		checks = append(checks, checkPayload)
+	}
+	payload["checks"] = checks
+
+	apiResp, err := r.client.UpdateScorecard(ctx, payload)
+	if err != nil {
+		resp.Diagnostics.AddError("Error updating scorecard", err.Error())
+		return
+	}
+
+	// Map API response to Terraform state model
+	oldPlan := plan
+	responseBodyToModel(ctx, apiResp, &plan, &oldPlan)
+
+	diags := resp.State.Set(ctx, plan)
+	resp.Diagnostics.Append(diags...)
+}
+
+func (r *scorecardResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var state scorecardModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...) // Get the current state
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	id := state.Id.ValueString()
+	if id == "" {
+		resp.Diagnostics.AddError("Missing ID", "The resource ID is missing from the state")
+		return
+	}
+
+	success, err := r.client.DeleteScorecard(ctx, id)
+	if err != nil {
+		resp.Diagnostics.AddError("Error deleting scorecard", err.Error())
+		return
+	}
+	if !success {
+		resp.Diagnostics.AddError("Error deleting scorecard", "API did not confirm deletion.")
+		return
+	}
+	// No need to set state, resource will be removed by Terraform if this method returns successfully
+}
+
+func (r *scorecardResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
+func modelToRequestBody(ctx context.Context, plan scorecardModel) (map[string]interface{}, error) {
+	tflog.Debug(ctx, "Converting plan to request body")
+
+	scorecardType := plan.Type.ValueString()
+
 	// Construct API request payload
 	payload := map[string]interface{}{
 		// Required fields
@@ -432,22 +639,10 @@ func (r *scorecardResource) Create(ctx context.Context, req resource.CreateReque
 	}
 	payload["checks"] = checks
 
-	// Create Scorecard (apiResp is a struct of type APIResponse)
-	apiResp, err := r.client.CreateScorecard(ctx, payload)
-	if err != nil {
-		resp.Diagnostics.AddError("Error creating scorecard", err.Error())
-		return
-	}
-
-	// Shallow copy of plan to preserve values
-	oldPlan := plan
-	mapApiResponseToTerraformModel(ctx, apiResp, &plan, &oldPlan)
-
-	diags = resp.State.Set(ctx, plan)
-	resp.Diagnostics.Append(diags...)
+	return payload, nil
 }
 
-func mapApiResponseToTerraformModel(ctx context.Context, apiResp *dxapi.APIResponse, plan *scorecardModel, oldPlan *scorecardModel) {
+func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, plan *scorecardModel, oldPlan *scorecardModel) {
 	tflog.Debug(ctx, "Mapping API response to Terraform model")
 
 	// ************** Helper functions **************
@@ -591,186 +786,4 @@ func mapApiResponseToTerraformModel(ctx context.Context, apiResp *dxapi.APIRespo
 	} else {
 		plan.Checks = oldPlan.Checks
 	}
-}
-
-func (r *scorecardResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state scorecardModel
-
-	// Load existing state
-	diags := req.State.Get(ctx, &state)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// Extract ID
-	id := state.Id.ValueString()
-	if id == "" {
-		resp.Diagnostics.AddError("Missing ID", "The resource ID is missing from the state")
-		return
-	}
-
-	// Call the API to get the latest scorecard data
-	apiResp, err := r.client.GetScorecard(ctx, id)
-	if err != nil {
-		// TODO - implement resource not found error handling
-		// 	// Resource no longer exists remotely — remove from state
-		// 	resp.State.RemoveResource(ctx)
-		// 	return
-		// }
-		resp.Diagnostics.AddError(
-			"Error reading scorecard",
-			fmt.Sprintf("Could not read scorecard ID %s: %s", id, err.Error()),
-		)
-		return
-	}
-
-	// Map API response to Terraform state model
-	// Shallow copy of plan to preserve values
-	oldState := state
-	mapApiResponseToTerraformModel(ctx, apiResp, &state, &oldState)
-	// state.Id = types.StringValue(apiResp.Scorecard.Id)
-	// state.Name = types.StringValue(apiResp.Scorecard.Name)
-	// // state.Description = types.StringValue(apiResp.Scorecard.Description)
-	// state.Type = types.StringValue(apiResp.Scorecard.Type)
-	// Map other fields as needed
-	// ...
-
-	diags = resp.State.Set(ctx, &state)
-	resp.Diagnostics.Append(diags...)
-}
-
-func (r *scorecardResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan scorecardModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...) // Get the desired state
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// Build the payload, similar to Create, but include the id
-	payload := map[string]interface{}{
-		"id":                         plan.Id.ValueString(),
-		"name":                       plan.Name.ValueString(),
-		"type":                       plan.Type.ValueString(),
-		"entity_filter_type":         plan.EntityFilterType.ValueString(),
-		"evaluation_frequency_hours": plan.EvaluationFrequency.ValueInt32(),
-	}
-
-	scorecardType := plan.Type.ValueString()
-	if scorecardType == "LEVEL" {
-		payload["empty_level_label"] = plan.EmptyLevelLabel.ValueString()
-		payload["empty_level_color"] = plan.EmptyLevelColor.ValueString()
-		levels := []map[string]interface{}{}
-		for _, level := range plan.Levels {
-			levels = append(levels, map[string]interface{}{
-				"key":   level.Key.ValueString(),
-				"id":    level.Id.ValueString(),
-				"name":  level.Name.ValueString(),
-				"color": level.Color.ValueString(),
-				"rank":  level.Rank.ValueInt32(),
-			})
-		}
-		payload["levels"] = levels
-	}
-	if scorecardType == "POINTS" {
-		checkGroups := []map[string]interface{}{}
-		for _, group := range plan.CheckGroups {
-			checkGroups = append(checkGroups, map[string]interface{}{
-				"key":      group.Key.ValueString(),
-				"id":       group.Id.ValueString(),
-				"name":     group.Name.ValueString(),
-				"ordering": group.Ordering.ValueInt32(),
-			})
-		}
-		payload["check_groups"] = checkGroups
-	}
-	if !plan.Description.IsNull() && !plan.Description.IsUnknown() {
-		payload["description"] = plan.Description.ValueString()
-	}
-	if !plan.Published.IsNull() && !plan.Published.IsUnknown() {
-		payload["published"] = plan.Published.ValueBool()
-	}
-	if len(plan.EntityFilterTypeIdentifiers) > 0 {
-		identifiers := make([]string, 0, len(plan.EntityFilterTypeIdentifiers))
-		for _, id := range plan.EntityFilterTypeIdentifiers {
-			if !id.IsNull() && !id.IsUnknown() {
-				identifiers = append(identifiers, id.ValueString())
-			}
-		}
-		payload["entity_filter_type_identifiers"] = identifiers
-	}
-	if !plan.EntityFilterSql.IsNull() && !plan.EntityFilterSql.IsUnknown() {
-		payload["entity_filter_sql"] = plan.EntityFilterSql.ValueString()
-	}
-	checks := []map[string]interface{}{}
-	for _, check := range plan.Checks {
-		checkPayload := map[string]interface{}{
-			"id":                    check.Id.ValueString(),
-			"name":                  check.Name.ValueString(),
-			"description":           check.Description.ValueString(),
-			"ordering":              check.Ordering,
-			"sql":                   check.Sql.ValueString(),
-			"filter_sql":            check.FilterSql.ValueString(),
-			"filter_message":        check.FilterMessage.ValueString(),
-			"output_enabled":        check.OutputEnabled.ValueBool(),
-			"output_type":           check.OutputType.ValueString(),
-			"output_aggregation":    check.OutputAggregation.ValueString(),
-			"output_custom_options": nil,
-			"estimated_dev_days":    check.EstimatedDevDays,
-			"external_url":          check.ExternalUrl.ValueString(),
-			"published":             check.Published.ValueBool(),
-		}
-		if scorecardType == "LEVEL" {
-			checkPayload["scorecard_level_key"] = check.ScorecardLevelKey.ValueString()
-		}
-		if scorecardType == "POINTS" {
-			checkPayload["scorecard_check_group_key"] = check.ScorecardCheckGroupKey.ValueString()
-			checkPayload["points"] = check.Points
-		}
-		checks = append(checks, checkPayload)
-	}
-	payload["checks"] = checks
-
-	apiResp, err := r.client.UpdateScorecard(ctx, payload)
-	if err != nil {
-		resp.Diagnostics.AddError("Error updating scorecard", err.Error())
-		return
-	}
-
-	oldPlan := plan
-	mapApiResponseToTerraformModel(ctx, apiResp, &plan, &oldPlan)
-
-	// Map API response to Terraform state model
-
-	diags := resp.State.Set(ctx, plan)
-	resp.Diagnostics.Append(diags...)
-}
-
-func (r *scorecardResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state scorecardModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &state)...) // Get the current state
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	id := state.Id.ValueString()
-	if id == "" {
-		resp.Diagnostics.AddError("Missing ID", "The resource ID is missing from the state")
-		return
-	}
-
-	success, err := r.client.DeleteScorecard(ctx, id)
-	if err != nil {
-		resp.Diagnostics.AddError("Error deleting scorecard", err.Error())
-		return
-	}
-	if !success {
-		resp.Diagnostics.AddError("Error deleting scorecard", "API did not confirm deletion.")
-		return
-	}
-	// No need to set state, resource will be removed by Terraform if this method returns successfully
-}
-
-func (r *scorecardResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
