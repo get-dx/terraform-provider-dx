@@ -85,6 +85,8 @@ type APIResponse struct {
 }
 
 func (c *Client) CreateScorecard(ctx context.Context, payload map[string]interface{}) (*APIResponse, error) {
+	tflog.Debug(ctx, "Calling CreateScorecard")
+
 	body, err := json.MarshalIndent(payload, "", "  ")
 	if err != nil {
 		return nil, fmt.Errorf("marshaling payload: %w", err)
@@ -173,6 +175,8 @@ func (c *Client) GetScorecard(ctx context.Context, id string) (*APIResponse, err
 }
 
 func (c *Client) UpdateScorecard(ctx context.Context, payload map[string]interface{}) (*APIResponse, error) {
+	tflog.Debug(ctx, "Calling UpdateScorecard")
+
 	body, err := json.MarshalIndent(payload, "", "  ")
 	if err != nil {
 		return nil, fmt.Errorf("marshaling payload: %w", err)
@@ -187,6 +191,8 @@ func (c *Client) UpdateScorecard(ctx context.Context, payload map[string]interfa
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+c.token)
 
+	tflog.Debug(ctx, fmt.Sprintf("Request body:\n%s", string(body)))
+
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("making HTTP request: %w", err)
@@ -195,6 +201,15 @@ func (c *Client) UpdateScorecard(ctx context.Context, payload map[string]interfa
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		body, _ := io.ReadAll(resp.Body)
+
+		// format the JSON nicely
+		var prettyJSON bytes.Buffer
+		if err := json.Indent(&prettyJSON, body, "", "  "); err == nil {
+			tflog.Debug(ctx, fmt.Sprintf("Error response body:\n%s", prettyJSON.String()))
+		} else {
+			tflog.Debug(ctx, fmt.Sprintf("Error response body (raw):\n%s", string(body)))
+		}
+
 		return nil, fmt.Errorf("unexpected status code: %d, response body: %s", resp.StatusCode, string(body))
 	}
 
@@ -205,9 +220,11 @@ func (c *Client) UpdateScorecard(ctx context.Context, payload map[string]interfa
 
 	// Log the API response for debugging
 	if respJson, err := json.MarshalIndent(apiResp, "", "  "); err == nil {
-		fmt.Printf("[DEBUG] API Response from CreateScorecard:\n%s\n", string(respJson))
+		tflog.Debug(ctx, fmt.Sprintf("API Response from UpdateScorecard:\n%s", string(respJson)))
 	} else {
-		fmt.Printf("[DEBUG] Could not marshal API response: %v", err)
+		tflog.Debug(ctx, "Could not marshal API response", map[string]interface{}{
+			"error": err,
+		})
 	}
 
 	return &apiResp, nil
