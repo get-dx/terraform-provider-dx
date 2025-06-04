@@ -59,7 +59,7 @@ type APICheck struct {
 	Id                     *string        `json:"id"`
 	Name                   *string        `json:"name"`
 	Description            *string        `json:"description"`
-	Ordering               *int           `json:"ordering"`
+	Ordering               int            `json:"ordering"`
 	Sql                    *string        `json:"sql"`
 	FilterSql              *string        `json:"filter_sql"`
 	FilterMessage          *string        `json:"filter_message"`
@@ -85,7 +85,7 @@ type APIResponse struct {
 }
 
 func (c *Client) CreateScorecard(ctx context.Context, payload map[string]interface{}) (*APIResponse, error) {
-	body, err := json.Marshal(payload)
+	body, err := json.MarshalIndent(payload, "", "  ")
 	if err != nil {
 		return nil, fmt.Errorf("marshaling payload: %w", err)
 	}
@@ -98,6 +98,8 @@ func (c *Client) CreateScorecard(ctx context.Context, payload map[string]interfa
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+c.token)
+
+	tflog.Debug(ctx, fmt.Sprintf("Request body:\n%s", string(body)))
 
 	// Make the request
 	resp, err := c.httpClient.Do(req)
@@ -173,7 +175,7 @@ func (c *Client) GetScorecard(ctx context.Context, id string) (*APIResponse, err
 }
 
 func (c *Client) UpdateScorecard(ctx context.Context, payload map[string]interface{}) (*APIResponse, error) {
-	body, err := json.Marshal(payload)
+	body, err := json.MarshalIndent(payload, "", "  ")
 	if err != nil {
 		return nil, fmt.Errorf("marshaling payload: %w", err)
 	}

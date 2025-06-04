@@ -10,6 +10,7 @@ import (
 
 	"terraform-provider-dx/internal/provider/dxapi"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -17,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -77,7 +79,7 @@ type checkModel struct {
 	Id            types.String `tfsdk:"id"`
 	Name          types.String `tfsdk:"name"`
 	Description   types.String `tfsdk:"description"`
-	Ordering      types.Number `tfsdk:"ordering"`
+	Ordering      types.Int32  `tfsdk:"ordering"`
 	Sql           types.String `tfsdk:"sql"`
 	FilterSql     types.String `tfsdk:"filter_sql"`
 	FilterMessage types.String `tfsdk:"filter_message"`
@@ -85,7 +87,7 @@ type checkModel struct {
 
 	OutputType          types.String `tfsdk:"output_type"`
 	OutputAggregation   types.String `tfsdk:"output_aggregation"`
-	OutputCustomOptions types.String `tfsdk:"output_custom_options"` //TODO figure out how to model this
+	OutputCustomOptions types.Object `tfsdk:"output_custom_options"` //TODO figure out how to model this
 
 	EstimatedDevDays types.Number `tfsdk:"estimated_dev_days"`
 	ExternalUrl      types.String `tfsdk:"external_url"`
@@ -93,12 +95,10 @@ type checkModel struct {
 
 	// Additional fields for level based scorecards
 	ScorecardLevelKey types.String `tfsdk:"scorecard_level_key"`
-	Level             levelModel   `tfsdk:"level"`
 
 	// Additional fields for points based scorecards
-	ScorecardCheckGroupKey types.String    `tfsdk:"scorecard_check_group_key"`
-	CheckGroup             checkGroupModel `tfsdk:"check_group"`
-	Points                 types.Number    `tfsdk:"points"`
+	ScorecardCheckGroupKey types.String `tfsdk:"scorecard_check_group_key"`
+	Points                 types.Number `tfsdk:"points"`
 }
 
 func (r *scorecardResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -240,47 +240,33 @@ func (r *scorecardResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 				Description: "List of checks that are applied to entities in the scorecard.",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"id":                    schema.StringAttribute{Computed: true},
-						"name":                  schema.StringAttribute{Required: true},
-						"description":           schema.StringAttribute{Required: true},
-						"ordering":              schema.NumberAttribute{Required: true},
-						"sql":                   schema.StringAttribute{Required: true},
-						"filter_sql":            schema.StringAttribute{Required: true},
-						"filter_message":        schema.StringAttribute{Required: true},
-						"output_enabled":        schema.BoolAttribute{Required: true},
-						"output_type":           schema.StringAttribute{Required: true},
-						"output_aggregation":    schema.StringAttribute{Required: true},
-						"output_custom_options": schema.StringAttribute{Required: true}, // JSON string (you may eventually want to use a map)
-						"estimated_dev_days":    schema.NumberAttribute{Required: true},
-						"external_url":          schema.StringAttribute{Required: true},
-						"published":             schema.BoolAttribute{Required: true},
+						"id":                 schema.StringAttribute{Computed: true},
+						"name":               schema.StringAttribute{Required: true},
+						"description":        schema.StringAttribute{Required: true},
+						"ordering":           schema.Int32Attribute{Required: true},
+						"sql":                schema.StringAttribute{Required: true},
+						"filter_sql":         schema.StringAttribute{Required: true},
+						"filter_message":     schema.StringAttribute{Required: true},
+						"output_enabled":     schema.BoolAttribute{Required: true},
+						"output_type":        schema.StringAttribute{Required: true},
+						"output_aggregation": schema.StringAttribute{Required: true},
+						"output_custom_options": schema.SingleNestedAttribute{
+							Optional: true,
+							Attributes: map[string]schema.Attribute{
+								"unit":     schema.StringAttribute{Required: true, Description: "The unit of the output, e.g. `widget`"},
+								"decimals": schema.NumberAttribute{Required: true, Description: "The number of decimals to display, or `auto` for default behavior."},
+							},
+						},
+						"estimated_dev_days": schema.NumberAttribute{Required: true},
+						"external_url":       schema.StringAttribute{Required: true},
+						"published":          schema.BoolAttribute{Required: true},
 
 						// Fields for level-based scorecards
 						"scorecard_level_key": schema.StringAttribute{Optional: true},
-						"level": schema.SingleNestedAttribute{
-							Optional: true,
-							Attributes: map[string]schema.Attribute{
-								"key":   schema.StringAttribute{Required: true},
-								"id":    schema.StringAttribute{Computed: true},
-								"name":  schema.StringAttribute{Required: true},
-								"color": schema.StringAttribute{Required: true},
-								"rank":  schema.NumberAttribute{Required: true},
-							},
-						},
 
 						// Fields for points-based scorecards
 						"scorecard_check_group_key": schema.StringAttribute{Optional: true},
-						"check_group": schema.SingleNestedAttribute{
-							Optional:    true,
-							Description: "Optional check group. If provided, all its fields (except 'id') are required.",
-							Attributes: map[string]schema.Attribute{
-								"key":      schema.StringAttribute{Required: true},
-								"id":       schema.StringAttribute{Computed: true},
-								"name":     schema.StringAttribute{Required: true},
-								"ordering": schema.NumberAttribute{Required: true},
-							},
-						},
-						"points": schema.NumberAttribute{Optional: true},
+						"points":                    schema.NumberAttribute{Optional: true},
 					},
 				},
 			},
@@ -289,13 +275,19 @@ func (r *scorecardResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 }
 
 func (r *scorecardResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	tflog.Debug(ctx, "Creating scorecard resource!")
+
 	// Retrieve values from plan
 	var plan scorecardModel
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
+		tflog.Debug(ctx, "Plan has errors, returning early")
+
 		return
 	}
+
+	tflog.Debug(ctx, "Got plan, validating...")
 
 	// Validate required fields for CREATE endpoint
 	if plan.Name.IsNull() || plan.Name.IsUnknown() {
@@ -406,14 +398,14 @@ func (r *scorecardResource) Create(ctx context.Context, req resource.CreateReque
 		checkPayload := map[string]interface{}{
 			"name":                  check.Name.ValueString(),
 			"description":           check.Description.ValueString(),
-			"ordering":              check.Ordering,
+			"ordering":              check.Ordering.ValueInt32(),
 			"sql":                   check.Sql.ValueString(),
 			"filter_sql":            check.FilterSql.ValueString(),
 			"filter_message":        check.FilterMessage.ValueString(),
 			"output_enabled":        check.OutputEnabled.ValueBool(),
 			"output_type":           check.OutputType.ValueString(),
 			"output_aggregation":    check.OutputAggregation.ValueString(),
-			"output_custom_options": check.OutputCustomOptions.ValueString(),
+			"output_custom_options": nil,
 			"estimated_dev_days":    check.EstimatedDevDays,
 			"external_url":          check.ExternalUrl.ValueString(),
 			"published":             check.Published.ValueBool(),
@@ -422,23 +414,11 @@ func (r *scorecardResource) Create(ctx context.Context, req resource.CreateReque
 		// Add LEVEL-specific check fields
 		if scorecardType == "LEVEL" {
 			checkPayload["scorecard_level_key"] = check.ScorecardLevelKey.ValueString()
-			checkPayload["level"] = map[string]interface{}{
-				"key":   check.Level.Key.ValueString(),
-				"id":    check.Level.Id.ValueString(),
-				"name":  check.Level.Name.ValueString(),
-				"color": check.Level.Color.ValueString(),
-				"rank":  check.Level.Rank.ValueBigFloat(),
-			}
 		}
 
 		// Add POINTS-specific check fields
 		if scorecardType == "POINTS" {
 			checkPayload["scorecard_check_group_key"] = check.ScorecardCheckGroupKey.ValueString()
-			checkPayload["check_group"] = map[string]interface{}{
-				"key":      check.CheckGroup.Key.ValueString(),
-				"name":     check.CheckGroup.Name.ValueString(),
-				"ordering": check.CheckGroup.Ordering,
-			}
 			checkPayload["points"] = check.Points
 		}
 
@@ -455,13 +435,14 @@ func (r *scorecardResource) Create(ctx context.Context, req resource.CreateReque
 
 	// Shallow copy of plan to preserve values
 	oldPlan := plan
-	mapApiResponseToTerraformModel(apiResp, &plan, &oldPlan)
+	mapApiResponseToTerraformModel(ctx, apiResp, &plan, &oldPlan)
 
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
 }
 
-func mapApiResponseToTerraformModel(apiResp *dxapi.APIResponse, plan *scorecardModel, oldPlan *scorecardModel) {
+func mapApiResponseToTerraformModel(ctx context.Context, apiResp *dxapi.APIResponse, plan *scorecardModel, oldPlan *scorecardModel) {
+	tflog.Debug(ctx, "Mapping API response to Terraform model")
 
 	// ************** Helper functions **************
 
@@ -570,40 +551,28 @@ func mapApiResponseToTerraformModel(apiResp *dxapi.APIResponse, plan *scorecardM
 				prevCheck = oldPlan.Checks[i]
 			}
 			plan.Checks[i] = checkModel{
-				Id:                  stringOrNull(chk.Id),
-				Name:                stringOrNull(chk.Name),
-				Description:         stringOrNull(chk.Description),
-				Ordering:            numberOrNull(chk.Ordering),
-				Sql:                 stringOrNull(chk.Sql),
-				FilterSql:           stringOrNull(chk.FilterSql),
-				FilterMessage:       stringOrNull(chk.FilterMessage),
-				OutputEnabled:       boolApiToTF(chk.OutputEnabled, plan.Checks[i].OutputEnabled),
-				OutputType:          stringOrNull(chk.OutputType),
-				OutputAggregation:   stringOrNull(chk.OutputAggregation),
-				OutputCustomOptions: stringOrNull(chk.OutputCustomOptions),
-				EstimatedDevDays:    numberOrNull(chk.EstimatedDevDays),
-				ExternalUrl:         stringOrNull(chk.ExternalUrl),
-				Published:           boolApiToTF(chk.Published, plan.Checks[i].Published),
+				Id:                stringOrNull(chk.Id),
+				Name:              stringOrNull(chk.Name),
+				Description:       stringOrNull(chk.Description),
+				Ordering:          types.Int32Value(int32(chk.Ordering)),
+				Sql:               stringOrNull(chk.Sql),
+				FilterSql:         stringOrNull(chk.FilterSql),
+				FilterMessage:     stringOrNull(chk.FilterMessage),
+				OutputEnabled:     boolApiToTF(chk.OutputEnabled, plan.Checks[i].OutputEnabled),
+				OutputType:        stringOrNull(chk.OutputType),
+				OutputAggregation: stringOrNull(chk.OutputAggregation),
+				OutputCustomOptions: types.ObjectNull(map[string]attr.Type{
+					"unit":     types.StringType,
+					"decimals": types.NumberType,
+				}),
+				EstimatedDevDays: numberOrNull(chk.EstimatedDevDays),
+				ExternalUrl:      stringOrNull(chk.ExternalUrl),
+				Published:        boolApiToTF(chk.Published, plan.Checks[i].Published),
 				// Key not returned by API. Leave same as plan.
 				ScorecardLevelKey: prevCheck.ScorecardLevelKey,
-				Level: levelModel{
-					// Key not returned by API. Leave same as plan.
-					Key:   prevCheck.Level.Key,
-					Id:    stringOrNull(chk.Level.Id),
-					Name:  stringOrNull(chk.Level.Name),
-					Color: stringOrNull(chk.Level.Color),
-					Rank:  numberOrNull(chk.Level.Rank),
-				},
 				// Key not returned by API. Leave same as plan.
 				ScorecardCheckGroupKey: prevCheck.ScorecardCheckGroupKey,
-				CheckGroup: checkGroupModel{
-					// Key not returned by API. Leave same as plan.
-					Key:      prevCheck.CheckGroup.Key,
-					Id:       stringOrNull(chk.CheckGroup.Id),
-					Name:     stringOrNull(chk.CheckGroup.Name),
-					Ordering: numberOrNull(chk.CheckGroup.Ordering),
-				},
-				Points: numberOrNull(chk.Points),
+				Points:                 numberOrNull(chk.Points),
 			}
 		}
 	} else {
@@ -646,7 +615,7 @@ func (r *scorecardResource) Read(ctx context.Context, req resource.ReadRequest, 
 	// Map API response to Terraform state model
 	// Shallow copy of plan to preserve values
 	oldState := state
-	mapApiResponseToTerraformModel(apiResp, &state, &oldState)
+	mapApiResponseToTerraformModel(ctx, apiResp, &state, &oldState)
 	// state.Id = types.StringValue(apiResp.Scorecard.Id)
 	// state.Name = types.StringValue(apiResp.Scorecard.Name)
 	// // state.Description = types.StringValue(apiResp.Scorecard.Description)
@@ -733,29 +702,16 @@ func (r *scorecardResource) Update(ctx context.Context, req resource.UpdateReque
 			"output_enabled":        check.OutputEnabled.ValueBool(),
 			"output_type":           check.OutputType.ValueString(),
 			"output_aggregation":    check.OutputAggregation.ValueString(),
-			"output_custom_options": check.OutputCustomOptions.ValueString(),
+			"output_custom_options": nil,
 			"estimated_dev_days":    check.EstimatedDevDays,
 			"external_url":          check.ExternalUrl.ValueString(),
 			"published":             check.Published.ValueBool(),
 		}
 		if scorecardType == "LEVEL" {
 			checkPayload["scorecard_level_key"] = check.ScorecardLevelKey.ValueString()
-			checkPayload["level"] = map[string]interface{}{
-				"key":   check.Level.Key.ValueString(),
-				"id":    check.Level.Id.ValueString(),
-				"name":  check.Level.Name.ValueString(),
-				"color": check.Level.Color.ValueString(),
-				"rank":  check.Level.Rank.ValueBigFloat(),
-			}
 		}
 		if scorecardType == "POINTS" {
 			checkPayload["scorecard_check_group_key"] = check.ScorecardCheckGroupKey.ValueString()
-			checkPayload["check_group"] = map[string]interface{}{
-				"key":      check.CheckGroup.Key.ValueString(),
-				"id":       check.CheckGroup.Id.ValueString(),
-				"name":     check.CheckGroup.Name.ValueString(),
-				"ordering": check.CheckGroup.Ordering,
-			}
 			checkPayload["points"] = check.Points
 		}
 		checks = append(checks, checkPayload)
@@ -769,7 +725,7 @@ func (r *scorecardResource) Update(ctx context.Context, req resource.UpdateReque
 	}
 
 	oldPlan := plan
-	mapApiResponseToTerraformModel(apiResp, &plan, &oldPlan)
+	mapApiResponseToTerraformModel(ctx, apiResp, &plan, &oldPlan)
 
 	// Map API response to Terraform state model
 
