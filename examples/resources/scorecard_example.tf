@@ -46,7 +46,11 @@ resource "dx_scorecard" "example" {
     {
       name                  = "Test Check"
       description           = "This is a test check"
-      sql                   = "select 'PASS' as status, 123 as output"
+      sql                   = <<-EOT
+        select
+          'PASS' as status,
+          123 as output
+      EOT
       scorecard_level_key   = "bronze"
       output_enabled        = true
       output_type           = "duration_seconds"
