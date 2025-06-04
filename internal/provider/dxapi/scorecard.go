@@ -22,7 +22,7 @@ type APIScorecard struct {
 	Name                string `json:"name"`
 	Type                string `json:"type"`
 	EntityFilterType    string `json:"entity_filter_type"`
-	EvaluationFrequency int    `json:"evaluation_frequency_hours"`
+	EvaluationFrequency int32  `json:"evaluation_frequency_hours"`
 
 	// Conditionally required fields for levels based scorecards
 	EmptyLevelLabel *string     `json:"empty_level_label"`
@@ -45,21 +45,21 @@ type APILevel struct {
 	Id    *string `json:"id"`
 	Name  *string `json:"name"`
 	Color *string `json:"color"`
-	Rank  *int    `json:"rank"`
+	Rank  *int32  `json:"rank"`
 }
 
 type APICheckGroup struct {
 	Key      *string `json:"key"`
 	Id       *string `json:"id"`
 	Name     *string `json:"name"`
-	Ordering *int    `json:"ordering"`
+	Ordering *int32  `json:"ordering"`
 }
 
 type APICheck struct {
 	Id                     *string        `json:"id"`
 	Name                   *string        `json:"name"`
 	Description            *string        `json:"description"`
-	Ordering               int            `json:"ordering"`
+	Ordering               int32          `json:"ordering"`
 	Sql                    *string        `json:"sql"`
 	FilterSql              *string        `json:"filter_sql"`
 	FilterMessage          *string        `json:"filter_message"`

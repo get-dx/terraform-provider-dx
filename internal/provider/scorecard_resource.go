@@ -6,7 +6,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"math/big"
 
 	"terraform-provider-dx/internal/provider/dxapi"
 
@@ -14,7 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/numberplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -42,7 +41,7 @@ type scorecardModel struct {
 	Name                types.String `tfsdk:"name"`
 	Type                types.String `tfsdk:"type"`
 	EntityFilterType    types.String `tfsdk:"entity_filter_type"`
-	EvaluationFrequency types.Number `tfsdk:"evaluation_frequency_hours"`
+	EvaluationFrequency types.Int32  `tfsdk:"evaluation_frequency_hours"`
 
 	// Conditionally required fields for levels based scorecards
 	EmptyLevelLabel types.String `tfsdk:"empty_level_label"`
@@ -65,14 +64,14 @@ type levelModel struct {
 	Id    types.String `tfsdk:"id"`
 	Name  types.String `tfsdk:"name"`
 	Color types.String `tfsdk:"color"`
-	Rank  types.Number `tfsdk:"rank"`
+	Rank  types.Int32  `tfsdk:"rank"`
 }
 
 type checkGroupModel struct {
 	Key      types.String `tfsdk:"key"`
 	Id       types.String `tfsdk:"id"`
 	Name     types.String `tfsdk:"name"`
-	Ordering types.Number `tfsdk:"ordering"`
+	Ordering types.Int32  `tfsdk:"ordering"`
 }
 
 type checkModel struct {
@@ -167,14 +166,14 @@ func (r *scorecardResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"evaluation_frequency_hours": schema.NumberAttribute{
+			"evaluation_frequency_hours": schema.Int32Attribute{
 				Required:    true,
 				Description: "How often the scorecard is evaluated (in hours). [2|4|8|24]",
 				// Validators: []validator.Number{
 				// 	numbervalidator.OneOf(2, 4, 8, 24),
 				// },
-				PlanModifiers: []planmodifier.Number{
-					numberplanmodifier.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.Int32{
+					int32planmodifier.UseStateForUnknown(),
 				},
 			},
 
@@ -196,7 +195,7 @@ func (r *scorecardResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 						"id":    schema.StringAttribute{Computed: true},
 						"name":  schema.StringAttribute{Required: true},
 						"color": schema.StringAttribute{Required: true},
-						"rank":  schema.NumberAttribute{Required: true},
+						"rank":  schema.Int32Attribute{Required: true},
 					},
 				},
 			},
@@ -339,7 +338,7 @@ func (r *scorecardResource) Create(ctx context.Context, req resource.CreateReque
 		"name":                       plan.Name.ValueString(),
 		"type":                       scorecardType,
 		"entity_filter_type":         plan.EntityFilterType.ValueString(),
-		"evaluation_frequency_hours": plan.EvaluationFrequency.ValueBigFloat(),
+		"evaluation_frequency_hours": plan.EvaluationFrequency.ValueInt32(),
 	}
 
 	// Add LEVEL-specific required fields
@@ -353,7 +352,7 @@ func (r *scorecardResource) Create(ctx context.Context, req resource.CreateReque
 				"key":   level.Key.ValueString(),
 				"name":  level.Name.ValueString(),
 				"color": level.Color.ValueString(),
-				"rank":  level.Rank.ValueBigFloat(),
+				"rank":  level.Rank.ValueInt32(),
 			})
 		}
 		payload["levels"] = levels
@@ -470,13 +469,6 @@ func mapApiResponseToTerraformModel(ctx context.Context, apiResp *dxapi.APIRespo
 	}
 
 	// Helper checks for and handles nil ints
-	numberOrNull := func(n *int) types.Number {
-		if n != nil {
-			return types.NumberValue(big.NewFloat(float64(*n)))
-		}
-		return types.NumberNull()
-	}
-
 	float32OrNull := func(f *float32) types.Float32 {
 		if f != nil {
 			return types.Float32Value(*f)
@@ -496,7 +488,7 @@ func mapApiResponseToTerraformModel(ctx context.Context, apiResp *dxapi.APIRespo
 	plan.Name = types.StringValue(apiResp.Scorecard.Name)
 	plan.Type = types.StringValue(apiResp.Scorecard.Type)
 	plan.EntityFilterType = types.StringValue(apiResp.Scorecard.EntityFilterType)
-	plan.EvaluationFrequency = types.NumberValue(big.NewFloat(float64(apiResp.Scorecard.EvaluationFrequency)))
+	plan.EvaluationFrequency = types.Int32Value(int32(apiResp.Scorecard.EvaluationFrequency))
 
 	// ************** Conditionally required fields for levels based scorecards **************
 	plan.EmptyLevelLabel = stringOrNull(apiResp.Scorecard.EmptyLevelLabel)
@@ -517,7 +509,7 @@ func mapApiResponseToTerraformModel(ctx context.Context, apiResp *dxapi.APIRespo
 				Id:    stringOrNull(lvl.Id),
 				Name:  stringOrNull(lvl.Name),
 				Color: stringOrNull(lvl.Color),
-				Rank:  numberOrNull(lvl.Rank),
+				Rank:  int32OrNull(lvl.Rank),
 			}
 		}
 	} else {
@@ -540,7 +532,7 @@ func mapApiResponseToTerraformModel(ctx context.Context, apiResp *dxapi.APIRespo
 				Key:      prevCheckGroup.Key,
 				Id:       stringOrNull(grp.Id),
 				Name:     stringOrNull(grp.Name),
-				Ordering: numberOrNull(grp.Ordering),
+				Ordering: int32OrNull(grp.Ordering),
 			}
 		}
 	} else {
@@ -661,7 +653,7 @@ func (r *scorecardResource) Update(ctx context.Context, req resource.UpdateReque
 		"name":                       plan.Name.ValueString(),
 		"type":                       plan.Type.ValueString(),
 		"entity_filter_type":         plan.EntityFilterType.ValueString(),
-		"evaluation_frequency_hours": plan.EvaluationFrequency.ValueBigFloat(),
+		"evaluation_frequency_hours": plan.EvaluationFrequency.ValueInt32(),
 	}
 
 	scorecardType := plan.Type.ValueString()
@@ -675,7 +667,7 @@ func (r *scorecardResource) Update(ctx context.Context, req resource.UpdateReque
 				"id":    level.Id.ValueString(),
 				"name":  level.Name.ValueString(),
 				"color": level.Color.ValueString(),
-				"rank":  level.Rank.ValueBigFloat(),
+				"rank":  level.Rank.ValueInt32(),
 			})
 		}
 		payload["levels"] = levels
@@ -687,7 +679,7 @@ func (r *scorecardResource) Update(ctx context.Context, req resource.UpdateReque
 				"key":      group.Key.ValueString(),
 				"id":       group.Id.ValueString(),
 				"name":     group.Name.ValueString(),
-				"ordering": group.Ordering,
+				"ordering": group.Ordering.ValueInt32(),
 			})
 		}
 		payload["check_groups"] = checkGroups
