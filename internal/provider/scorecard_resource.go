@@ -552,23 +552,26 @@ func modelToRequestBody(ctx context.Context, plan scorecardModel, setIds bool) (
 		}
 
 		checkPayload := map[string]interface{}{
-			"name":                  check.Name.ValueString(),
-			"description":           check.Description.ValueString(),
-			"ordering":              check.Ordering.ValueInt32(),
-			"sql":                   check.Sql.ValueString(),
-			"filter_sql":            check.FilterSql.ValueString(),
-			"filter_message":        check.FilterMessage.ValueString(),
-			"output_enabled":        check.OutputEnabled.ValueBool(),
-			"output_type":           check.OutputType.ValueString(),
-			"output_aggregation":    check.OutputAggregation.ValueString(),
-			"output_custom_options": nil,
-			"estimated_dev_days":    estimatedDevDaysValue,
-			"external_url":          check.ExternalUrl.ValueString(),
-			"published":             check.Published.ValueBool(),
+			"name":               check.Name.ValueString(),
+			"description":        check.Description.ValueString(),
+			"ordering":           check.Ordering.ValueInt32(),
+			"sql":                check.Sql.ValueString(),
+			"filter_sql":         check.FilterSql.ValueString(),
+			"filter_message":     check.FilterMessage.ValueString(),
+			"output_enabled":     check.OutputEnabled.ValueBool(),
+			"output_type":        check.OutputType.ValueString(),
+			"output_aggregation": check.OutputAggregation.ValueString(),
+			"estimated_dev_days": estimatedDevDaysValue,
+			"external_url":       check.ExternalUrl.ValueString(),
+			"published":          check.Published.ValueBool(),
 		}
 
 		if setIds {
 			checkPayload["id"] = check.Id.ValueString()
+		}
+
+		if check.OutputType.ValueString() == "custom" {
+			return nil, fmt.Errorf("output type of `custom` is not yet supported")
 		}
 
 		// Add LEVEL-specific check fields

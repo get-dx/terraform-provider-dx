@@ -53,25 +53,30 @@ type APICheckGroup struct {
 }
 
 type APICheck struct {
-	Id                     *string        `json:"id"`
-	Name                   *string        `json:"name"`
-	Description            *string        `json:"description"`
-	Ordering               int32          `json:"ordering"`
-	Sql                    *string        `json:"sql"`
-	FilterSql              *string        `json:"filter_sql"`
-	FilterMessage          *string        `json:"filter_message"`
-	OutputEnabled          bool           `json:"output_enabled"`
-	OutputType             *string        `json:"output_type"`
-	OutputAggregation      *string        `json:"output_aggregation"`
-	OutputCustomOptions    *string        `json:"output_custom_options"`
-	EstimatedDevDays       *float32       `json:"estimated_dev_days"`
-	ExternalUrl            *string        `json:"external_url"`
-	Published              bool           `json:"published"`
-	ScorecardLevelKey      *string        `json:"scorecard_level_key"`
-	Level                  *APILevel      `json:"level"`
-	ScorecardCheckGroupKey *string        `json:"scorecard_check_group_key"`
-	CheckGroup             *APICheckGroup `json:"check_group"`
-	Points                 *int32         `json:"points"`
+	Id                     *string                 `json:"id"`
+	Name                   *string                 `json:"name"`
+	Description            *string                 `json:"description"`
+	Ordering               int32                   `json:"ordering"`
+	Sql                    *string                 `json:"sql"`
+	FilterSql              *string                 `json:"filter_sql"`
+	FilterMessage          *string                 `json:"filter_message"`
+	OutputEnabled          bool                    `json:"output_enabled"`
+	OutputType             *string                 `json:"output_type"`
+	OutputAggregation      *string                 `json:"output_aggregation"`
+	OutputCustomOptions    *APIOutputCustomOptions `json:"output_custom_options"`
+	EstimatedDevDays       *float32                `json:"estimated_dev_days"`
+	ExternalUrl            *string                 `json:"external_url"`
+	Published              bool                    `json:"published"`
+	ScorecardLevelKey      *string                 `json:"scorecard_level_key"`
+	Level                  *APILevel               `json:"level"`
+	ScorecardCheckGroupKey *string                 `json:"scorecard_check_group_key"`
+	CheckGroup             *APICheckGroup          `json:"check_group"`
+	Points                 *int32                  `json:"points"`
+}
+
+type APIOutputCustomOptions struct {
+	Unit     string `json:"unit"`
+	Decimals *int32 `json:"decimals"` // TODO: "auto" or number
 }
 
 // APIResponse is the top-level response from the DX API for scorecard endpoints
