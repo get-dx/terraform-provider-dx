@@ -722,7 +722,7 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, plan *
 				}),
 				EstimatedDevDays: float32OrNull(chk.EstimatedDevDays),
 				ExternalUrl:      stringOrNull(chk.ExternalUrl),
-				Published:        boolApiToTF(chk.Published, plan.Checks[i].Published),
+				Published:        types.BoolValue(chk.Published),
 				// Key not returned by API. Leave same as plan.
 				ScorecardLevelKey: prevCheck.ScorecardLevelKey,
 				// Key not returned by API. Leave same as plan.
