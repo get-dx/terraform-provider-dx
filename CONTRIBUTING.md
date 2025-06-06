@@ -83,7 +83,7 @@ Run the following:
 go generate
 ```
 
-## Adding Dependencies
+### Adding Dependencies
 
 This provider uses [Go modules](https://github.com/golang/go/wiki/Modules).
 Please see the Go documentation for the most up to date information about using Go modules.
@@ -96,3 +96,18 @@ go mod tidy
 ```
 
 Then commit the changes to `go.mod` and `go.sum`.
+
+## Publishing (for maintainers)
+
+- Update [CHANGELOG.md](./CHANGELOG.md) with release notes.
+
+- Create a tag and push it:
+
+  ```shell
+  git tag v0.1.0         # Replace with the new version
+  git push --tags
+  ```
+
+- The [Release action](https://github.com/get-dx/terraform-provider-dx/actions/workflows/release.yml) will run based off of the tag trigger. The action will build the provider for several architectures, then create a [release](https://github.com/get-dx/terraform-provider-dx/releases) and attach the assets to it.
+
+- Once the release has been published, within a minute or two, the release will automatically propagate to the Terraform registry and will be listed as the `latest` version on the [provider overview page](https://registry.terraform.io/providers/get-dx/dx/latest).
