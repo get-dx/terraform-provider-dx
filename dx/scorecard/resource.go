@@ -1,107 +1,37 @@
-package provider
+package scorecard
 
 import (
 	"context"
 	"fmt"
 
-	"terraform-provider-dx/internal/provider/dxapi"
+	"terraform-provider-dx/dx/dxapi"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
-var _ resource.Resource = &scorecardResource{}
+var _ resource.Resource = &ScorecardResource{}
 
 // var _ resource.ResourceWithImportState = &scorecardResource{}
 
 func NewScorecardResource() resource.Resource {
-	return &scorecardResource{}
+	return &ScorecardResource{}
 }
 
 // scorecardResource defines the resource implementation.
-type scorecardResource struct {
+type ScorecardResource struct {
 	client *dxapi.Client
 }
 
-// scorecardModel describes the resource data model.
-type scorecardModel struct {
-	// Required fields
-	Id                  types.String `tfsdk:"id"`
-	Name                types.String `tfsdk:"name"`
-	Type                types.String `tfsdk:"type"`
-	EntityFilterType    types.String `tfsdk:"entity_filter_type"`
-	EvaluationFrequency types.Int32  `tfsdk:"evaluation_frequency_hours"`
-
-	// Conditionally required fields for levels based scorecards
-	EmptyLevelLabel types.String `tfsdk:"empty_level_label"`
-	EmptyLevelColor types.String `tfsdk:"empty_level_color"`
-	Levels          []levelModel `tfsdk:"levels"`
-
-	// Conditionally required fields for points based scorecards
-	CheckGroups []checkGroupModel `tfsdk:"check_groups"`
-
-	// Optional fields
-	Description                 types.String   `tfsdk:"description"`
-	Published                   types.Bool     `tfsdk:"published"`
-	EntityFilterTypeIdentifiers []types.String `tfsdk:"entity_filter_type_identifiers"`
-	EntityFilterSql             types.String   `tfsdk:"entity_filter_sql"`
-	Checks                      []checkModel   `tfsdk:"checks"`
-}
-
-type levelModel struct {
-	Key   types.String `tfsdk:"key"`
-	Id    types.String `tfsdk:"id"`
-	Name  types.String `tfsdk:"name"`
-	Color types.String `tfsdk:"color"`
-	Rank  types.Int32  `tfsdk:"rank"`
-}
-
-type checkGroupModel struct {
-	Key      types.String `tfsdk:"key"`
-	Id       types.String `tfsdk:"id"`
-	Name     types.String `tfsdk:"name"`
-	Ordering types.Int32  `tfsdk:"ordering"`
-}
-
-type checkModel struct {
-	Id            types.String `tfsdk:"id"`
-	Name          types.String `tfsdk:"name"`
-	Description   types.String `tfsdk:"description"`
-	Ordering      types.Int32  `tfsdk:"ordering"`
-	Sql           types.String `tfsdk:"sql"`
-	FilterSql     types.String `tfsdk:"filter_sql"`
-	FilterMessage types.String `tfsdk:"filter_message"`
-	OutputEnabled types.Bool   `tfsdk:"output_enabled"`
-
-	OutputType          types.String `tfsdk:"output_type"`
-	OutputAggregation   types.String `tfsdk:"output_aggregation"`
-	OutputCustomOptions types.Object `tfsdk:"output_custom_options"` //TODO figure out how to model this
-
-	EstimatedDevDays types.Float32 `tfsdk:"estimated_dev_days"`
-	ExternalUrl      types.String  `tfsdk:"external_url"`
-	Published        types.Bool    `tfsdk:"published"`
-
-	// Additional fields for level based scorecards
-	ScorecardLevelKey types.String `tfsdk:"scorecard_level_key"`
-
-	// Additional fields for points based scorecards
-	ScorecardCheckGroupKey types.String `tfsdk:"scorecard_check_group_key"`
-	Points                 types.Int32  `tfsdk:"points"`
-}
-
-func (r *scorecardResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *ScorecardResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_scorecard"
 }
 
-func (r *scorecardResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *ScorecardResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	// Prevent panic if the provider has not been configured.
 	if req.ProviderData == nil {
 		return
@@ -125,169 +55,11 @@ func (r *scorecardResource) Configure(ctx context.Context, req resource.Configur
 	}
 }
 
-func (r *scorecardResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = schema.Schema{
-		Description: "Manages a DX Scorecard.",
-		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed:    true,
-				Description: "The unique ID of the scorecard.",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"name": schema.StringAttribute{
-				Required:    true,
-				Description: "The name of the scorecard.",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"type": schema.StringAttribute{
-				Required:    true,
-				Description: "The type of scorecard. Options: 'LEVEL', 'POINTS'.",
-				// Validators: []validator.String{
-				// 	stringvalidator.OneOf("LEVEL", "POINTS"),
-				// },
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"entity_filter_type": schema.StringAttribute{
-				Required:    true,
-				Description: "The filtering strategy when deciding what entities this scorecard should assess. Options: 'entity_types', 'sql'",
-				// Validators: []validator.String{
-				// 	stringvalidator.OneOf("entity_types", "sql"),
-				// },
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"evaluation_frequency_hours": schema.Int32Attribute{
-				Required:    true,
-				Description: "How often the scorecard is evaluated (in hours). [2|4|8|24]",
-				// Validators: []validator.Number{
-				// 	numbervalidator.OneOf(2, 4, 8, 24),
-				// },
-				PlanModifiers: []planmodifier.Int32{
-					int32planmodifier.UseStateForUnknown(),
-				},
-			},
-
-			// Conditionally required for levels-based scorecards
-			"empty_level_label": schema.StringAttribute{
-				Optional:    true,
-				Description: "The label to display when an entity has not achieved any levels in the scorecard (levels scorecards only).",
-			},
-			"empty_level_color": schema.StringAttribute{
-				Optional:    true,
-				Description: "The color hex code to display when an entity has not achieved any levels in the scorecard (levels scorecards only).",
-			},
-			"levels": schema.ListNestedAttribute{
-				Optional:    true,
-				Description: "The levels that can be achieved in this scorecard (levels scorecards only).",
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"key": schema.StringAttribute{Required: true},
-						"id": schema.StringAttribute{
-							Computed: true,
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							}},
-						"name":  schema.StringAttribute{Required: true},
-						"color": schema.StringAttribute{Required: true},
-						"rank":  schema.Int32Attribute{Required: true},
-					},
-				},
-			},
-
-			// Conditionally required for points-based scorecards
-			"check_groups": schema.ListNestedAttribute{
-				Optional:    true,
-				Description: "Groups of checks, to help organize the scorecard for entity owners (points scorecards only).",
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"key": schema.StringAttribute{Required: true},
-						"id": schema.StringAttribute{
-							Computed: true,
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							}},
-						"name":     schema.StringAttribute{Required: true},
-						"ordering": schema.NumberAttribute{Required: true},
-					},
-				},
-			},
-
-			// Optional metadata
-			"description": schema.StringAttribute{
-				Optional:    true,
-				Description: "Description of the scorecard.",
-			},
-			"published": schema.BoolAttribute{
-				Optional:    true,
-				Description: "Whether the scorecard is published.",
-			},
-			"entity_filter_type_identifiers": schema.ListAttribute{
-				Optional:    true,
-				ElementType: types.StringType,
-				Description: "List of entity type identifiers that the scorecard should run against.",
-			},
-			"entity_filter_sql": schema.StringAttribute{
-				Optional:    true,
-				Description: "Custom SQL used to filter entities that the scorecard should run against.",
-			},
-
-			// For now, all check field are required. This may change in the future.
-			"checks": schema.ListNestedAttribute{
-				Optional:    true,
-				Description: "List of checks that are applied to entities in the scorecard.",
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Computed: true,
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							},
-						},
-						"name":               schema.StringAttribute{Required: true},
-						"description":        schema.StringAttribute{Required: true},
-						"ordering":           schema.Int32Attribute{Required: true},
-						"sql":                schema.StringAttribute{Required: true},
-						"filter_sql":         schema.StringAttribute{Required: true},
-						"filter_message":     schema.StringAttribute{Required: true},
-						"output_enabled":     schema.BoolAttribute{Required: true},
-						"output_type":        schema.StringAttribute{Required: true},
-						"output_aggregation": schema.StringAttribute{Required: true},
-						"output_custom_options": schema.SingleNestedAttribute{
-							Optional: true,
-							Attributes: map[string]schema.Attribute{
-								"unit":     schema.StringAttribute{Required: true, Description: "The unit of the output, e.g. `widget`"},
-								"decimals": schema.NumberAttribute{Required: true, Description: "The number of decimals to display, or `auto` for default behavior."},
-							},
-						},
-						"estimated_dev_days": schema.Float32Attribute{Optional: true},
-						"external_url":       schema.StringAttribute{Required: true},
-						"published":          schema.BoolAttribute{Required: true},
-
-						// Fields for level-based scorecards
-						"scorecard_level_key": schema.StringAttribute{Optional: true},
-
-						// Fields for points-based scorecards
-						"scorecard_check_group_key": schema.StringAttribute{Optional: true},
-						"points":                    schema.Int32Attribute{Optional: true},
-					},
-				},
-			},
-		},
-	}
-}
-
-func (r *scorecardResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+func (r *ScorecardResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	tflog.Debug(ctx, "Creating scorecard resource!")
 
 	// Retrieve values from plan
-	var plan scorecardModel
+	var plan ScorecardModel
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -363,8 +135,8 @@ func (r *scorecardResource) Create(ctx context.Context, req resource.CreateReque
 	resp.Diagnostics.Append(diags...)
 }
 
-func (r *scorecardResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state scorecardModel
+func (r *ScorecardResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var state ScorecardModel
 
 	// Load existing state
 	diags := req.State.Get(ctx, &state)
@@ -410,8 +182,8 @@ func (r *scorecardResource) Read(ctx context.Context, req resource.ReadRequest, 
 	resp.Diagnostics.Append(diags...)
 }
 
-func (r *scorecardResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan scorecardModel
+func (r *ScorecardResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan ScorecardModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...) // Get the desired state
 	if resp.Diagnostics.HasError() {
 		return
@@ -437,8 +209,8 @@ func (r *scorecardResource) Update(ctx context.Context, req resource.UpdateReque
 	resp.Diagnostics.Append(diags...)
 }
 
-func (r *scorecardResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state scorecardModel
+func (r *ScorecardResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var state ScorecardModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...) // Get the current state
 	if resp.Diagnostics.HasError() {
 		return
@@ -462,11 +234,11 @@ func (r *scorecardResource) Delete(ctx context.Context, req resource.DeleteReque
 	// No need to set state, resource will be removed by Terraform if this method returns successfully
 }
 
-func (r *scorecardResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *ScorecardResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-func modelToRequestBody(ctx context.Context, plan scorecardModel, setIds bool) (map[string]interface{}, error) {
+func modelToRequestBody(ctx context.Context, plan ScorecardModel, setIds bool) (map[string]interface{}, error) {
 	tflog.Debug(ctx, "Converting plan to request body")
 
 	scorecardType := plan.Type.ValueString()
@@ -592,7 +364,7 @@ func modelToRequestBody(ctx context.Context, plan scorecardModel, setIds bool) (
 	return payload, nil
 }
 
-func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, plan *scorecardModel, oldPlan *scorecardModel) {
+func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, plan *ScorecardModel, oldPlan *ScorecardModel) {
 	tflog.Debug(ctx, "Mapping API response to Terraform model")
 
 	// ************** Helper functions **************
@@ -642,13 +414,13 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, plan *
 	// If there are levels in the API response, update the plan.Levels
 	if len(apiResp.Scorecard.Levels) > 0 {
 
-		plan.Levels = make([]levelModel, len(apiResp.Scorecard.Levels))
+		plan.Levels = make([]LevelModel, len(apiResp.Scorecard.Levels))
 		for i, lvl := range apiResp.Scorecard.Levels {
-			var oldLevel levelModel
+			var oldLevel LevelModel
 			if i < len(oldPlan.Levels) {
 				oldLevel = oldPlan.Levels[i]
 			}
-			plan.Levels[i] = levelModel{
+			plan.Levels[i] = LevelModel{
 				// Key not returned by API. Leave same as plan.
 				Key:   oldLevel.Key,
 				Id:    stringOrNull(lvl.Id),
@@ -666,13 +438,13 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, plan *
 	// If there are check groups in the API response, update the plan.CheckGroups
 	if len(apiResp.Scorecard.CheckGroups) > 0 {
 
-		plan.CheckGroups = make([]checkGroupModel, len(apiResp.Scorecard.CheckGroups))
+		plan.CheckGroups = make([]CheckGroupModel, len(apiResp.Scorecard.CheckGroups))
 		for i, grp := range apiResp.Scorecard.CheckGroups {
-			var prevCheckGroup checkGroupModel
+			var prevCheckGroup CheckGroupModel
 			if i < len(oldPlan.CheckGroups) {
 				prevCheckGroup = oldPlan.CheckGroups[i]
 			}
-			plan.CheckGroups[i] = checkGroupModel{
+			plan.CheckGroups[i] = CheckGroupModel{
 				// Key not returned by API. Leave same as plan.
 				Key:      prevCheckGroup.Key,
 				Id:       stringOrNull(grp.Id),
@@ -702,13 +474,13 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, plan *
 
 	// If there are checks in the API response, update the plan.Checks
 	if len(apiResp.Scorecard.Checks) > 0 {
-		plan.Checks = make([]checkModel, len(apiResp.Scorecard.Checks))
+		plan.Checks = make([]CheckModel, len(apiResp.Scorecard.Checks))
 		for i, chk := range apiResp.Scorecard.Checks {
-			var prevCheck checkModel
+			var prevCheck CheckModel
 			if i < len(oldPlan.Checks) {
 				prevCheck = oldPlan.Checks[i]
 			}
-			plan.Checks[i] = checkModel{
+			plan.Checks[i] = CheckModel{
 				Id:                stringOrNull(chk.Id),
 				Name:              stringOrNull(chk.Name),
 				Description:       stringOrNull(chk.Description),
