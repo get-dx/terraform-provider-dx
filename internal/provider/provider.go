@@ -53,7 +53,7 @@ func (p *DxProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *p
 		Attributes: map[string]schema.Attribute{
 			"api_token": schema.StringAttribute{
 				Description: "DX Web API token for authentication.",
-				Required:    true,
+				Optional:    true,
 				Sensitive:   true,
 			},
 		},
@@ -73,11 +73,14 @@ func (p *DxProvider) Configure(ctx context.Context, req provider.ConfigureReques
 	}
 
 	token := config.ApiToken.ValueString()
-
+	envToken := os.Getenv("DX_WEB_API_TOKEN")
+	if envToken != "" {
+		token = envToken
+	}
 	if token == "" {
 		resp.Diagnostics.AddError(
 			"Missing API Token",
-			"The provider could not retrieve an API token. This is required to authenticate with the DX API.",
+			"The provider must be configured with either `api_token` in the configuration or `DX_WEB_API_TOKEN` in the environment. This is required to authenticate with the DX API.",
 		)
 		return
 	}

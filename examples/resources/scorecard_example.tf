@@ -7,9 +7,7 @@ terraform {
   }
 }
 
-provider "dx" {
-  api_token = "<your api token>"
-}
+provider "dx" {}
 
 resource "dx_scorecard" "example" {
   name                           = "Terraform Provider Scorecard"
@@ -63,9 +61,9 @@ resource "dx_scorecard" "example" {
       output_custom_options = null
     },
     {
-      name                  = "Another Check"
-      scorecard_level_key   = "silver"
-      ordering              = 0
+      name                = "Another Check"
+      scorecard_level_key = "silver"
+      ordering            = 0
 
       description           = "This is a another test check"
       sql                   = <<-EOT
