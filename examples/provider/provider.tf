@@ -51,9 +51,9 @@ resource "dx_scorecard" "my_example_scorecard" {
   ]
   checks = [
     {
-      name                  = "Test Check"
-      scorecard_level_key   = "bronze"
-      ordering              = 0
+      name                = "Test Check"
+      scorecard_level_key = "bronze"
+      ordering            = 0
 
       description           = "This is a test check"
       sql                   = <<-EOT
