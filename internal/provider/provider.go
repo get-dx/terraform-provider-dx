@@ -15,11 +15,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
-// Ensure dxProvider satisfies various provider interfaces.
+// Ensure DxProvider satisfies various provider interfaces.
 var (
 	_ provider.Provider = &DxProvider{}
-	// _ provider.ProviderWithFunctions = &dxProvider{}
-	// _ provider.ProviderWithEphemeralResources = &dxProvider{}
 )
 
 func New(version string) func() provider.Provider {
@@ -30,7 +28,7 @@ func New(version string) func() provider.Provider {
 	}
 }
 
-// dxProvider defines the provider implementation.
+// DxProvider defines the provider implementation.
 type DxProvider struct {
 	// version is set to the provider version on release, "dev" when the
 	// provider is built and ran locally, and "test" when running acceptance
@@ -40,7 +38,7 @@ type DxProvider struct {
 	Version string
 }
 
-// dxProviderModel describes the provider data model.
+// DxProviderModel describes the provider data model.
 type DxProviderModel struct {
 	ApiToken types.String `tfsdk:"api_token"`
 }
