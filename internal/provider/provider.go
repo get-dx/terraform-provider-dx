@@ -90,7 +90,7 @@ func (p *DxProvider) Configure(ctx context.Context, req provider.ConfigureReques
 	if baseURL == "" {
 		baseURL = "https://api.getdx.com"
 	}
-	client := dxapi.NewClient(baseURL, token)
+	client := dxapi.NewClient(baseURL, token, p.Version)
 	// p.client = client
 
 	resp.ResourceData = client

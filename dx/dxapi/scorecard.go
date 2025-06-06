@@ -100,8 +100,7 @@ func (c *Client) CreateScorecard(ctx context.Context, payload map[string]interfa
 		return nil, fmt.Errorf("creating request: %w", err)
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+c.token)
+	setRequestHeaders(req, c)
 
 	tflog.Debug(ctx, fmt.Sprintf("Request body:\n%s", string(body)))
 
@@ -143,8 +142,7 @@ func (c *Client) GetScorecard(ctx context.Context, id string) (*APIResponse, err
 		return nil, fmt.Errorf("creating request: %w", err)
 	}
 
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Authorization", "Bearer "+c.token)
+	setRequestHeaders(req, c)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -190,8 +188,7 @@ func (c *Client) UpdateScorecard(ctx context.Context, payload map[string]interfa
 		return nil, fmt.Errorf("creating request: %w", err)
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+c.token)
+	setRequestHeaders(req, c)
 
 	tflog.Debug(ctx, fmt.Sprintf("Request body:\n%s", string(body)))
 
@@ -245,8 +242,7 @@ func (c *Client) DeleteScorecard(ctx context.Context, id string) (bool, error) {
 		return false, fmt.Errorf("creating request: %w", err)
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+c.token)
+	setRequestHeaders(req, c)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -260,4 +256,11 @@ func (c *Client) DeleteScorecard(ctx context.Context, id string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func setRequestHeaders(req *http.Request, client *Client) {
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+client.token)
+	req.Header.Set("X-Client-Type", "terraform-provider-dx")
+	req.Header.Set("X-Client-Version", client.version)
 }
