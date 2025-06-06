@@ -30,7 +30,7 @@ Follow these steps to run the locally-built provider rather than the one from th
   ```terraform
   provider_installation {
     dev_overrides {
-      "registry.terraform.io/local/dx" = "/path/to/your/go/bin"
+      "registry.terraform.io/get-dx/dx" = "/path/to/your/go/bin"
     }
     direct {}
   }
@@ -42,7 +42,7 @@ Follow these steps to run the locally-built provider rather than the one from th
   terraform {
     required_providers {
       dx = {
-        source = "registry.terraform.io/local/dx"
+        source = "registry.terraform.io/get-dx/dx"
       }
     }
   }

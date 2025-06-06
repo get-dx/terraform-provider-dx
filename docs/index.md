@@ -15,7 +15,7 @@ Interact with the DX Web API and declaratively manage Service Cloud resources.
 terraform {
   required_providers {
     dx = {
-      source  = "registry.terraform.io/local/dx"
+      source  = "registry.terraform.io/get-dx/dx"
       version = "0.1.0"
     }
   }

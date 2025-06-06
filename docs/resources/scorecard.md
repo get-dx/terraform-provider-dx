@@ -16,8 +16,8 @@ Manages a DX Scorecard.
 terraform {
   required_providers {
     dx = {
-      source  = "registry.terraform.io/local/dx"
-      version = "0.1.0"
+      source  = "registry.terraform.io/get-dx/dx"
+      version = "~> 0.1.0"
     }
   }
 }
