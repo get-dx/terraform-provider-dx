@@ -158,16 +158,16 @@ Required:
 - `filter_sql` (String)
 - `name` (String)
 - `ordering` (Number)
-- `output_aggregation` (String)
 - `output_enabled` (Boolean)
-- `output_type` (String)
 - `published` (Boolean)
 - `sql` (String)
 
 Optional:
 
 - `estimated_dev_days` (Number)
+- `output_aggregation` (String)
 - `output_custom_options` (Attributes) (see [below for nested schema](#nestedatt--checks--output_custom_options))
+- `output_type` (String)
 - `points` (Number)
 - `scorecard_check_group_key` (String)
 - `scorecard_level_key` (String)
