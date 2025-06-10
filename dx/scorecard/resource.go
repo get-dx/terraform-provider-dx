@@ -331,8 +331,8 @@ func modelToRequestBody(ctx context.Context, plan ScorecardModel, setIds bool) (
 			"filter_sql":         check.FilterSql.ValueString(),
 			"filter_message":     check.FilterMessage.ValueString(),
 			"output_enabled":     check.OutputEnabled.ValueBool(),
-			"output_type":        check.OutputType.ValueString(),
-			"output_aggregation": check.OutputAggregation.ValueString(),
+			"output_type":        nil,
+			"output_aggregation": nil,
 			"estimated_dev_days": estimatedDevDaysValue,
 			"external_url":       check.ExternalUrl.ValueString(),
 			"published":          check.Published.ValueBool(),
@@ -340,6 +340,11 @@ func modelToRequestBody(ctx context.Context, plan ScorecardModel, setIds bool) (
 
 		if setIds {
 			checkPayload["id"] = check.Id.ValueString()
+		}
+
+		if checkPayload["output_enabled"] == true {
+			checkPayload["output_type"] = check.OutputType.ValueString()
+			checkPayload["output_aggregation"] = check.OutputAggregation.ValueString()
 		}
 
 		if check.OutputType.ValueString() == "custom" {
@@ -354,7 +359,7 @@ func modelToRequestBody(ctx context.Context, plan ScorecardModel, setIds bool) (
 		// Add POINTS-specific check fields
 		if scorecardType == "POINTS" {
 			checkPayload["scorecard_check_group_key"] = check.ScorecardCheckGroupKey.ValueString()
-			checkPayload["points"] = check.Points
+			checkPayload["points"] = check.Points.ValueInt32()
 		}
 
 		checks = append(checks, checkPayload)
@@ -488,7 +493,7 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, plan *
 				Sql:               stringOrNull(chk.Sql),
 				FilterSql:         stringOrNull(chk.FilterSql),
 				FilterMessage:     stringOrNull(chk.FilterMessage),
-				OutputEnabled:     boolApiToTF(chk.OutputEnabled, plan.Checks[i].OutputEnabled),
+				OutputEnabled:     types.BoolValue(chk.OutputEnabled),
 				OutputType:        stringOrNull(chk.OutputType),
 				OutputAggregation: stringOrNull(chk.OutputAggregation),
 				OutputCustomOptions: types.ObjectNull(map[string]attr.Type{

@@ -34,7 +34,7 @@ func CheckGroupSchema() map[string]schema.Attribute {
 				stringplanmodifier.UseStateForUnknown(),
 			}},
 		"name":     schema.StringAttribute{Required: true},
-		"ordering": schema.NumberAttribute{Required: true},
+		"ordering": schema.Int32Attribute{Required: true},
 	}
 }
 
@@ -53,8 +53,8 @@ func CheckSchema() map[string]schema.Attribute {
 		"filter_sql":         schema.StringAttribute{Required: true},
 		"filter_message":     schema.StringAttribute{Required: true},
 		"output_enabled":     schema.BoolAttribute{Required: true},
-		"output_type":        schema.StringAttribute{Required: true},
-		"output_aggregation": schema.StringAttribute{Required: true},
+		"output_type":        schema.StringAttribute{Optional: true},
+		"output_aggregation": schema.StringAttribute{Optional: true},
 		"output_custom_options": schema.SingleNestedAttribute{
 			Optional: true,
 			Attributes: map[string]schema.Attribute{
