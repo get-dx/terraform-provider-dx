@@ -34,7 +34,7 @@ func CheckGroupSchema() map[string]schema.Attribute {
 				stringplanmodifier.UseStateForUnknown(),
 			}},
 		"name":     schema.StringAttribute{Required: true},
-		"ordering": schema.NumberAttribute{Required: true},
+		"ordering": schema.Int32Attribute{Required: true},
 	}
 }
 

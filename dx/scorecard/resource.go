@@ -359,7 +359,7 @@ func modelToRequestBody(ctx context.Context, plan ScorecardModel, setIds bool) (
 		// Add POINTS-specific check fields
 		if scorecardType == "POINTS" {
 			checkPayload["scorecard_check_group_key"] = check.ScorecardCheckGroupKey.ValueString()
-			checkPayload["points"] = check.Points
+			checkPayload["points"] = check.Points.ValueInt32()
 		}
 
 		checks = append(checks, checkPayload)
