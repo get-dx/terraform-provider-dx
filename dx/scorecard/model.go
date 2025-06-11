@@ -46,6 +46,7 @@ type CheckGroupModel struct {
 
 type CheckModel struct {
 	Id            types.String `tfsdk:"id"`
+	Key           types.String `tfsdk:"key"`
 	Name          types.String `tfsdk:"name"`
 	Description   types.String `tfsdk:"description"`
 	Ordering      types.Int32  `tfsdk:"ordering"`

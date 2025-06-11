@@ -3,6 +3,7 @@ package scorecard
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	"terraform-provider-dx/dx/dxapi"
 
@@ -315,55 +316,107 @@ func modelToRequestBody(ctx context.Context, plan ScorecardModel, setIds bool) (
 
 	// Add checks
 	checks := []map[string]interface{}{}
-	for _, check := range plan.Checks {
+	for _, planCheck := range plan.Checks {
 		var estimatedDevDaysValue interface{}
-		if check.EstimatedDevDays.IsNull() || check.EstimatedDevDays.IsUnknown() {
+		if planCheck.EstimatedDevDays.IsNull() || planCheck.EstimatedDevDays.IsUnknown() {
 			estimatedDevDaysValue = nil
 		} else {
-			estimatedDevDaysValue = check.EstimatedDevDays.ValueFloat32()
+			estimatedDevDaysValue = planCheck.EstimatedDevDays.ValueFloat32()
 		}
 
 		checkPayload := map[string]interface{}{
-			"name":               check.Name.ValueString(),
-			"description":        check.Description.ValueString(),
-			"ordering":           check.Ordering.ValueInt32(),
-			"sql":                check.Sql.ValueString(),
-			"filter_sql":         check.FilterSql.ValueString(),
-			"filter_message":     check.FilterMessage.ValueString(),
-			"output_enabled":     check.OutputEnabled.ValueBool(),
+			"name":               planCheck.Name.ValueString(),
+			"description":        planCheck.Description.ValueString(),
+			"ordering":           planCheck.Ordering.ValueInt32(),
+			"sql":                planCheck.Sql.ValueString(),
+			"filter_sql":         planCheck.FilterSql.ValueString(),
+			"filter_message":     planCheck.FilterMessage.ValueString(),
+			"output_enabled":     planCheck.OutputEnabled.ValueBool(),
 			"output_type":        nil,
 			"output_aggregation": nil,
 			"estimated_dev_days": estimatedDevDaysValue,
-			"external_url":       check.ExternalUrl.ValueString(),
-			"published":          check.Published.ValueBool(),
+			"external_url":       planCheck.ExternalUrl.ValueString(),
+			"published":          planCheck.Published.ValueBool(),
 		}
 
 		if setIds {
-			checkPayload["id"] = check.Id.ValueString()
+			checkPayload["id"] = planCheck.Id.ValueString()
 		}
 
 		if checkPayload["output_enabled"] == true {
-			checkPayload["output_type"] = check.OutputType.ValueString()
-			checkPayload["output_aggregation"] = check.OutputAggregation.ValueString()
+			checkPayload["output_type"] = planCheck.OutputType.ValueString()
+			checkPayload["output_aggregation"] = planCheck.OutputAggregation.ValueString()
 		}
 
-		if check.OutputType.ValueString() == "custom" {
+		if planCheck.OutputType.ValueString() == "custom" {
 			return nil, fmt.Errorf("output type of `custom` is not yet supported")
 		}
 
 		// Add LEVEL-specific check fields
 		if scorecardType == "LEVEL" {
-			checkPayload["scorecard_level_key"] = check.ScorecardLevelKey.ValueString()
+			checkPayload["scorecard_level_key"] = planCheck.ScorecardLevelKey.ValueString()
 		}
 
 		// Add POINTS-specific check fields
 		if scorecardType == "POINTS" {
-			checkPayload["scorecard_check_group_key"] = check.ScorecardCheckGroupKey.ValueString()
-			checkPayload["points"] = check.Points.ValueInt32()
+			checkPayload["scorecard_check_group_key"] = planCheck.ScorecardCheckGroupKey.ValueString()
+			checkPayload["points"] = planCheck.Points.ValueInt32()
 		}
 
 		checks = append(checks, checkPayload)
 	}
+
+	// Sort checks based on scorecard type
+	if scorecardType == "LEVEL" {
+		// Create a map of level keys to their ranks for efficient lookup
+		levelRanks := make(map[string]int32)
+		for _, level := range plan.Levels {
+			levelRanks[level.Key.ValueString()] = level.Rank.ValueInt32()
+		}
+
+		// Sort checks by level rank first, then by ordering
+		sort.Slice(checks, func(i, j int) bool {
+			checkI := checks[i]
+			checkJ := checks[j]
+
+			// Get level ranks for both checks
+			rankI := levelRanks[checkI["scorecard_level_key"].(string)]
+			rankJ := levelRanks[checkJ["scorecard_level_key"].(string)]
+
+			// If ranks are different, sort by rank
+			if rankI != rankJ {
+				return rankI < rankJ
+			}
+
+			// If ranks are the same, sort by ordering
+			return checkI["ordering"].(int32) < checkJ["ordering"].(int32)
+		})
+	} else if scorecardType == "POINTS" {
+		// Create a map of check group keys to their ordering for efficient lookup
+		groupOrderings := make(map[string]int32)
+		for _, group := range plan.CheckGroups {
+			groupOrderings[group.Key.ValueString()] = group.Ordering.ValueInt32()
+		}
+
+		// Sort checks by group ordering first, then by check ordering
+		sort.Slice(checks, func(i, j int) bool {
+			checkI := checks[i]
+			checkJ := checks[j]
+
+			// Get group orderings for both checks
+			orderingI := groupOrderings[checkI["scorecard_check_group_key"].(string)]
+			orderingJ := groupOrderings[checkJ["scorecard_check_group_key"].(string)]
+
+			// If group orderings are different, sort by group ordering
+			if orderingI != orderingJ {
+				return orderingI < orderingJ
+			}
+
+			// If group orderings are the same, sort by check ordering
+			return checkI["ordering"].(int32) < checkJ["ordering"].(int32)
+		})
+	}
+
 	payload["checks"] = checks
 
 	return payload, nil
