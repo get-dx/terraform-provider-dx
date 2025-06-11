@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.2.0] - 2025-06-11
+
+### Changed
+
+- BREAKING: Restructured the `dx_scorecard` resource so the following attributes are now maps instead of lists:
+
+  - `levels`
+  - `check_groups`
+  - `checks`
+
+  This allows the provider to keep track of the identity of these objects and pass their IDs to updates, so check history is preserved.
+
 ## [0.1.2] - 2025-06-10
 
 ### Changed
@@ -28,6 +40,7 @@ Initial published release.
 - Provider
 - `dx_scorecard` resource
 
+[0.2.0]: https://github.com/get-dx/terraform-provider-dx/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/get-dx/terraform-provider-dx/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/get-dx/terraform-provider-dx/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/get-dx/terraform-provider-dx/releases/tag/v0.1.0
