@@ -16,7 +16,7 @@ terraform {
   required_providers {
     dx = {
       source  = "registry.terraform.io/get-dx/dx"
-      version = "0.1.0"
+      version = "~> 0.1.0"
     }
   }
 }
@@ -43,28 +43,26 @@ resource "dx_scorecard" "my_example_scorecard" {
   empty_level_color              = "#cccccc"
   published                      = true
 
-  levels = [
-    {
-      key   = "bronze"
+  levels = {
+    bronze = {
       name  = "Bronze"
       color = "#FB923C"
       rank  = 1
     },
-    {
-      key   = "silver"
+    silver = {
       name  = "Silver"
       color = "#9CA3AF"
       rank  = 2
     },
-    {
-      key   = "gold"
+    gold = {
       name  = "Gold"
       color = "#FBBF24"
       rank  = 3
     },
-  ]
-  checks = [
-    {
+  }
+
+  checks = {
+    test_check = {
       name                = "Test Check"
       scorecard_level_key = "bronze"
       ordering            = 0
@@ -85,7 +83,7 @@ resource "dx_scorecard" "my_example_scorecard" {
       filter_sql            = ""
       output_custom_options = null
     },
-    {
+    another_check = {
       name                = "Another Check"
       scorecard_level_key = "silver"
       ordering            = 0
@@ -113,7 +111,7 @@ resource "dx_scorecard" "my_example_scorecard" {
       filter_sql            = ""
       output_custom_options = null
     }
-  ]
+  }
 }
 ```
 

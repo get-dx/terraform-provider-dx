@@ -24,7 +24,7 @@ terraform {
 
 provider "dx" {}
 
-resource "dx_scorecard" "example" {
+resource "dx_scorecard" "level_based_example" {
   name                           = "Terraform Provider Scorecard"
   description                    = "This is a test scorecard"
   type                           = "LEVEL"
@@ -35,28 +35,26 @@ resource "dx_scorecard" "example" {
   empty_level_color              = "#cccccc"
   published                      = true
 
-  levels = [
-    {
-      key   = "bronze"
+  levels = {
+    bronze = {
       name  = "Bronze"
       color = "#FB923C"
       rank  = 1
     },
-    {
-      key   = "silver"
+    silver = {
       name  = "Silver"
       color = "#9CA3AF"
       rank  = 2
     },
-    {
-      key   = "gold"
+    gold = {
       name  = "Gold"
       color = "#FBBF24"
       rank  = 3
     },
-  ]
-  checks = [
-    {
+  }
+
+  checks = {
+    test_check = {
       name                = "Test Check"
       scorecard_level_key = "bronze"
       ordering            = 0
@@ -75,10 +73,11 @@ resource "dx_scorecard" "example" {
       filter_sql            = ""
       output_custom_options = null
     },
-    {
+
+    another_check = {
       name                = "Another Check"
-      scorecard_level_key = "silver"
-      ordering            = 0
+      scorecard_level_key = "bronze"
+      ordering            = 1
 
       description           = "This is a another test check"
       sql                   = <<-EOT
@@ -102,8 +101,91 @@ resource "dx_scorecard" "example" {
       filter_message        = ""
       filter_sql            = ""
       output_custom_options = null
-    }
-  ]
+    },
+
+    neat_silver_check = {
+      name                = "Neat silver check"
+      scorecard_level_key = "silver"
+      ordering            = 0
+
+      description           = "This is a neat silver check"
+      sql                   = <<-EOT
+        select 'PASS' as status, 123 as output
+      EOT
+      output_enabled        = true
+      output_type           = "duration_seconds"
+      output_aggregation    = "median"
+      external_url          = "http://example.com"
+      published             = true
+      estimated_dev_days    = 1.5
+      filter_message        = ""
+      filter_sql            = ""
+      output_custom_options = null
+    },
+  }
+}
+
+resource "dx_scorecard" "points_based_example" {
+  name                           = "Terraform Provider Scorecard - points"
+  description                    = "This is a test scorecard"
+  type                           = "POINTS"
+  entity_filter_type             = "entity_types"
+  entity_filter_type_identifiers = ["service"]
+  evaluation_frequency_hours     = 2
+  published                      = true
+
+  check_groups = {
+    group_1 = {
+      name     = "First group"
+      ordering = 0
+    },
+    group_2 = {
+      name     = "Second group"
+      ordering = 1
+    },
+  }
+
+  checks = {
+    check_1 = {
+      name                      = "Check 1"
+      scorecard_check_group_key = "group_1"
+      ordering                  = 0
+
+      description           = "This is a check in the first group"
+      sql                   = <<-EOT
+        select 'PASS' as status, 123 as output
+      EOT
+      output_enabled        = false
+      external_url          = "http://example.com"
+      published             = true
+      estimated_dev_days    = 1.5
+      filter_message        = ""
+      filter_sql            = ""
+      output_custom_options = null
+      points                = 10
+    },
+
+    check_2 = {
+      name                      = "Check 2"
+      scorecard_check_group_key = "group_2"
+      ordering                  = 0
+
+      description           = "This is a check in the second group"
+      sql                   = <<-EOT
+        select 'PASS' as status, 123 as output
+      EOT
+      output_enabled        = true
+      output_type           = "duration_seconds"
+      output_aggregation    = "median"
+      external_url          = "http://example.com"
+      published             = true
+      estimated_dev_days    = 1.5
+      filter_message        = ""
+      filter_sql            = ""
+      output_custom_options = null
+      points                = 20
+    },
+  }
 }
 ```
 
@@ -119,14 +201,14 @@ resource "dx_scorecard" "example" {
 
 ### Optional
 
-- `check_groups` (Attributes List) Groups of checks, to help organize the scorecard for entity owners (points scorecards only). (see [below for nested schema](#nestedatt--check_groups))
-- `checks` (Attributes List) List of checks that are applied to entities in the scorecard. (see [below for nested schema](#nestedatt--checks))
+- `check_groups` (Attributes Map) Groups of checks, to help organize the scorecard for entity owners (points scorecards only). (see [below for nested schema](#nestedatt--check_groups))
+- `checks` (Attributes Map) List of checks that are applied to entities in the scorecard. (see [below for nested schema](#nestedatt--checks))
 - `description` (String) Description of the scorecard.
 - `empty_level_color` (String) The color hex code to display when an entity has not achieved any levels in the scorecard (levels scorecards only).
 - `empty_level_label` (String) The label to display when an entity has not achieved any levels in the scorecard (levels scorecards only).
 - `entity_filter_sql` (String) Custom SQL used to filter entities that the scorecard should run against.
 - `entity_filter_type_identifiers` (List of String) List of entity type identifiers that the scorecard should run against.
-- `levels` (Attributes List) The levels that can be achieved in this scorecard (levels scorecards only). (see [below for nested schema](#nestedatt--levels))
+- `levels` (Attributes Map) The levels that can be achieved in this scorecard (levels scorecards only). (see [below for nested schema](#nestedatt--levels))
 - `published` (Boolean) Whether the scorecard is published.
 
 ### Read-Only
@@ -138,7 +220,6 @@ resource "dx_scorecard" "example" {
 
 Required:
 
-- `key` (String)
 - `name` (String)
 - `ordering` (Number)
 
@@ -192,7 +273,6 @@ Required:
 Required:
 
 - `color` (String)
-- `key` (String)
 - `name` (String)
 - `rank` (Number)
 
