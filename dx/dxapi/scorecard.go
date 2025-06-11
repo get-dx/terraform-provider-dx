@@ -79,8 +79,13 @@ type APIOutputCustomOptions struct {
 	Decimals *int32 `json:"decimals"` // TODO: "auto" or number
 }
 
-// APIResponse is the top-level response from the DX API for scorecard endpoints
-// (e.g., { "ok": true, "scorecard": { ... } })
+// APIResponse is the top-level response from the DX API for scorecard endpoints.
+//
+// Example:
+//
+// ```json
+// { "ok": true, "scorecard": { ... } }
+// ```
 type APIResponse struct {
 	Ok        bool         `json:"ok"`
 	Scorecard APIScorecard `json:"scorecard"`

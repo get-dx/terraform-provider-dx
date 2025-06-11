@@ -501,7 +501,7 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 			Id:                stringOrNull(chk.Id),
 			Name:              stringOrNull(chk.Name),
 			Description:       stringOrNull(chk.Description),
-			Ordering:          types.Int32Value(int32(chk.Ordering)),
+			Ordering:          types.Int32Value(chk.Ordering),
 			Sql:               stringOrNull(chk.Sql),
 			FilterSql:         stringOrNull(chk.FilterSql),
 			FilterMessage:     stringOrNull(chk.FilterMessage),
