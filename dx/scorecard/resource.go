@@ -422,7 +422,7 @@ func modelToRequestBody(ctx context.Context, plan ScorecardModel, setIds bool) (
 	return payload, nil
 }
 
-func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, plan *ScorecardModel, oldPlan *ScorecardModel) {
+func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state *ScorecardModel, oldPlan *ScorecardModel) {
 	tflog.Debug(ctx, "Mapping API response to Terraform model")
 
 	// ************** Helper functions **************
@@ -459,26 +459,26 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, plan *
 	}
 
 	// ************** Required fields **************
-	plan.Id = types.StringValue(apiResp.Scorecard.Id)
-	plan.Name = types.StringValue(apiResp.Scorecard.Name)
-	plan.Type = types.StringValue(apiResp.Scorecard.Type)
-	plan.EntityFilterType = types.StringValue(apiResp.Scorecard.EntityFilterType)
-	plan.EvaluationFrequency = types.Int32Value(int32(apiResp.Scorecard.EvaluationFrequency))
+	state.Id = types.StringValue(apiResp.Scorecard.Id)
+	state.Name = types.StringValue(apiResp.Scorecard.Name)
+	state.Type = types.StringValue(apiResp.Scorecard.Type)
+	state.EntityFilterType = types.StringValue(apiResp.Scorecard.EntityFilterType)
+	state.EvaluationFrequency = types.Int32Value(int32(apiResp.Scorecard.EvaluationFrequency))
 
 	// ************** Conditionally required fields for levels based scorecards **************
-	plan.EmptyLevelLabel = stringOrNull(apiResp.Scorecard.EmptyLevelLabel)
-	plan.EmptyLevelColor = stringOrNull(apiResp.Scorecard.EmptyLevelColor)
+	state.EmptyLevelLabel = stringOrNull(apiResp.Scorecard.EmptyLevelLabel)
+	state.EmptyLevelColor = stringOrNull(apiResp.Scorecard.EmptyLevelColor)
 
 	// If there are levels in the API response, update the plan.Levels
 	if len(apiResp.Scorecard.Levels) > 0 {
 
-		plan.Levels = make([]LevelModel, len(apiResp.Scorecard.Levels))
+		state.Levels = make([]LevelModel, len(apiResp.Scorecard.Levels))
 		for i, lvl := range apiResp.Scorecard.Levels {
 			var oldLevel LevelModel
 			if i < len(oldPlan.Levels) {
 				oldLevel = oldPlan.Levels[i]
 			}
-			plan.Levels[i] = LevelModel{
+			state.Levels[i] = LevelModel{
 				// Key not returned by API. Leave same as plan.
 				Key:   oldLevel.Key,
 				Id:    stringOrNull(lvl.Id),
@@ -488,7 +488,7 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, plan *
 			}
 		}
 	} else {
-		plan.Levels = oldPlan.Levels
+		state.Levels = oldPlan.Levels
 	}
 
 	// ************** Conditionally required fields for points based scorecards **************
@@ -496,13 +496,13 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, plan *
 	// If there are check groups in the API response, update the plan.CheckGroups
 	if len(apiResp.Scorecard.CheckGroups) > 0 {
 
-		plan.CheckGroups = make([]CheckGroupModel, len(apiResp.Scorecard.CheckGroups))
+		state.CheckGroups = make([]CheckGroupModel, len(apiResp.Scorecard.CheckGroups))
 		for i, grp := range apiResp.Scorecard.CheckGroups {
 			var prevCheckGroup CheckGroupModel
 			if i < len(oldPlan.CheckGroups) {
 				prevCheckGroup = oldPlan.CheckGroups[i]
 			}
-			plan.CheckGroups[i] = CheckGroupModel{
+			state.CheckGroups[i] = CheckGroupModel{
 				// Key not returned by API. Leave same as plan.
 				Key:      prevCheckGroup.Key,
 				Id:       stringOrNull(grp.Id),
@@ -511,13 +511,13 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, plan *
 			}
 		}
 	} else {
-		plan.CheckGroups = oldPlan.CheckGroups
+		state.CheckGroups = oldPlan.CheckGroups
 	}
 
 	// ************** Optional fields **************
-	plan.Description = stringOrNull(apiResp.Scorecard.Description)
-	plan.EntityFilterSql = stringOrNull(apiResp.Scorecard.EntityFilterSql)
-	plan.Published = boolApiToTF(apiResp.Scorecard.Published, plan.Published)
+	state.Description = stringOrNull(apiResp.Scorecard.Description)
+	state.EntityFilterSql = stringOrNull(apiResp.Scorecard.EntityFilterSql)
+	state.Published = boolApiToTF(apiResp.Scorecard.Published, state.Published)
 
 	// If there are entity filter type identifiers, update the plan.EntityFilterTypeIdentifiers
 	if len(apiResp.Scorecard.EntityFilterTypeIdentifiers) > 0 {
@@ -525,20 +525,20 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, plan *
 		for i, id := range apiResp.Scorecard.EntityFilterTypeIdentifiers {
 			identifiers[i] = stringOrNull(id)
 		}
-		plan.EntityFilterTypeIdentifiers = identifiers
+		state.EntityFilterTypeIdentifiers = identifiers
 	} else {
-		plan.EntityFilterTypeIdentifiers = oldPlan.EntityFilterTypeIdentifiers
+		state.EntityFilterTypeIdentifiers = oldPlan.EntityFilterTypeIdentifiers
 	}
 
 	// If there are checks in the API response, update the plan.Checks
 	if len(apiResp.Scorecard.Checks) > 0 {
-		plan.Checks = make([]CheckModel, len(apiResp.Scorecard.Checks))
+		state.Checks = make([]CheckModel, len(apiResp.Scorecard.Checks))
 		for i, chk := range apiResp.Scorecard.Checks {
 			var prevCheck CheckModel
 			if i < len(oldPlan.Checks) {
 				prevCheck = oldPlan.Checks[i]
 			}
-			plan.Checks[i] = CheckModel{
+			state.Checks[i] = CheckModel{
 				Id:                stringOrNull(chk.Id),
 				Name:              stringOrNull(chk.Name),
 				Description:       stringOrNull(chk.Description),
@@ -564,6 +564,6 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, plan *
 			}
 		}
 	} else {
-		plan.Checks = oldPlan.Checks
+		state.Checks = oldPlan.Checks
 	}
 }
