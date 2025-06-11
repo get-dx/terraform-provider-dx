@@ -411,7 +411,7 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 	state.Name = types.StringValue(apiResp.Scorecard.Name)
 	state.Type = types.StringValue(apiResp.Scorecard.Type)
 	state.EntityFilterType = types.StringValue(apiResp.Scorecard.EntityFilterType)
-	state.EvaluationFrequency = types.Int32Value(int32(apiResp.Scorecard.EvaluationFrequency))
+	state.EvaluationFrequency = types.Int32Value(apiResp.Scorecard.EvaluationFrequency)
 
 	// ************** Conditionally required fields for levels based scorecards **************
 	state.EmptyLevelLabel = stringOrNull(apiResp.Scorecard.EmptyLevelLabel)
