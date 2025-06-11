@@ -14,12 +14,12 @@ type ScorecardModel struct {
 	EvaluationFrequency types.Int32  `tfsdk:"evaluation_frequency_hours"`
 
 	// Conditionally required fields for levels based scorecards
-	EmptyLevelLabel types.String `tfsdk:"empty_level_label"`
-	EmptyLevelColor types.String `tfsdk:"empty_level_color"`
-	Levels          []LevelModel `tfsdk:"levels"`
+	EmptyLevelLabel types.String          `tfsdk:"empty_level_label"`
+	EmptyLevelColor types.String          `tfsdk:"empty_level_color"`
+	Levels          map[string]LevelModel `tfsdk:"levels"`
 
 	// Conditionally required fields for points based scorecards
-	CheckGroups []CheckGroupModel `tfsdk:"check_groups"`
+	CheckGroups map[string]CheckGroupModel `tfsdk:"check_groups"`
 
 	// Optional fields
 	Description                 types.String          `tfsdk:"description"`
@@ -30,7 +30,6 @@ type ScorecardModel struct {
 }
 
 type LevelModel struct {
-	Key   types.String `tfsdk:"key"`
 	Id    types.String `tfsdk:"id"`
 	Name  types.String `tfsdk:"name"`
 	Color types.String `tfsdk:"color"`
@@ -38,7 +37,6 @@ type LevelModel struct {
 }
 
 type CheckGroupModel struct {
-	Key      types.String `tfsdk:"key"`
 	Id       types.String `tfsdk:"id"`
 	Name     types.String `tfsdk:"name"`
 	Ordering types.Int32  `tfsdk:"ordering"`

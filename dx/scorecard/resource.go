@@ -262,9 +262,9 @@ func modelToRequestBody(ctx context.Context, plan ScorecardModel, setIds bool) (
 		payload["empty_level_color"] = plan.EmptyLevelColor.ValueString()
 
 		levels := []map[string]interface{}{}
-		for _, planLevel := range plan.Levels {
+		for planLevelKey, planLevel := range plan.Levels {
 			level := map[string]interface{}{
-				"key":   planLevel.Key.ValueString(),
+				"key":   planLevelKey,
 				"name":  planLevel.Name.ValueString(),
 				"color": planLevel.Color.ValueString(),
 				"rank":  planLevel.Rank.ValueInt32(),
@@ -280,9 +280,9 @@ func modelToRequestBody(ctx context.Context, plan ScorecardModel, setIds bool) (
 	// Add POINTS-specific required fields
 	if scorecardType == "POINTS" {
 		checkGroups := []map[string]interface{}{}
-		for _, planCheckGroup := range plan.CheckGroups {
+		for planCheckGroupKey, planCheckGroup := range plan.CheckGroups {
 			checkGroup := map[string]interface{}{
-				"key":      planCheckGroup.Key.ValueString(),
+				"key":      planCheckGroupKey,
 				"name":     planCheckGroup.Name.ValueString(),
 				"ordering": planCheckGroup.Ordering.ValueInt32(),
 			}
@@ -419,16 +419,25 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 
 	// If there are levels in the API response, update the plan.Levels
 	if len(apiResp.Scorecard.Levels) > 0 {
-
-		state.Levels = make([]LevelModel, len(apiResp.Scorecard.Levels))
-		for i, lvl := range apiResp.Scorecard.Levels {
-			var oldLevel LevelModel
-			if i < len(oldPlan.Levels) {
-				oldLevel = oldPlan.Levels[i]
+		state.Levels = make(map[string]LevelModel)
+		orderedLevelKeys := getOrderedLevelKeys(*oldPlan)
+		for idxResp, lvl := range apiResp.Scorecard.Levels {
+			// Find the previous level, based on mapping the response index back to the level's key
+			var prevLevel *LevelModel
+			prevLevelKey := orderedLevelKeys[idxResp]
+			if idxResp < len(orderedLevelKeys) {
+				foundPrevLevel := oldPlan.Levels[prevLevelKey]
+				prevLevel = &foundPrevLevel
+				tflog.Info(ctx, fmt.Sprintf("Response level with index %d has key `%s`, found previous level with name `%s`", idxResp, prevLevelKey, prevLevel.Name.ValueString()))
+			} else {
+				prevLevel = nil
 			}
-			state.Levels[i] = LevelModel{
-				// Key not returned by API. Leave same as plan.
-				Key:   oldLevel.Key,
+
+			if prevLevel == nil {
+				panic(fmt.Sprintf("No previous level found for level %s", *lvl.Id))
+			}
+
+			state.Levels[prevLevelKey] = LevelModel{
 				Id:    stringOrNull(lvl.Id),
 				Name:  stringOrNull(lvl.Name),
 				Color: stringOrNull(lvl.Color),
@@ -443,16 +452,25 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 
 	// If there are check groups in the API response, update the state.CheckGroups
 	if len(apiResp.Scorecard.CheckGroups) > 0 {
-
-		state.CheckGroups = make([]CheckGroupModel, len(apiResp.Scorecard.CheckGroups))
-		for i, grp := range apiResp.Scorecard.CheckGroups {
-			var prevCheckGroup CheckGroupModel
-			if i < len(oldPlan.CheckGroups) {
-				prevCheckGroup = oldPlan.CheckGroups[i]
+		state.CheckGroups = make(map[string]CheckGroupModel)
+		orderedCheckGroupKeys := getOrderedCheckGroupKeys(*oldPlan)
+		for idxResp, grp := range apiResp.Scorecard.CheckGroups {
+			// Find the previous check group, based on mapping the response index back to the check group's key
+			var prevCheckGroup *CheckGroupModel
+			prevCheckGroupKey := orderedCheckGroupKeys[idxResp]
+			if idxResp < len(orderedCheckGroupKeys) {
+				foundPrevCheckGroup := oldPlan.CheckGroups[prevCheckGroupKey]
+				prevCheckGroup = &foundPrevCheckGroup
+				tflog.Info(ctx, fmt.Sprintf("Response check group with index %d has key `%s`, found previous check group with name `%s`", idxResp, prevCheckGroupKey, prevCheckGroup.Name.ValueString()))
+			} else {
+				prevCheckGroup = nil
 			}
-			state.CheckGroups[i] = CheckGroupModel{
-				// Key not returned by API. Leave same as plan.
-				Key:      prevCheckGroup.Key,
+
+			if prevCheckGroup == nil {
+				panic(fmt.Sprintf("No previous check group found for check group %s", *grp.Id))
+			}
+
+			state.CheckGroups[prevCheckGroupKey] = CheckGroupModel{
 				Id:       stringOrNull(grp.Id),
 				Name:     stringOrNull(grp.Name),
 				Ordering: int32OrNull(grp.Ordering),
@@ -524,6 +542,70 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 	}
 }
 
+// Create a list of level keys, ordered by their rank.
+func getOrderedLevelKeys(plan ScorecardModel) []string {
+	type levelInfo struct {
+		key  string
+		rank int32
+	}
+
+	// Create slice to hold level information for sorting
+	levels := make([]levelInfo, 0, len(plan.Levels))
+
+	// Collect level information
+	for levelKey, level := range plan.Levels {
+		levels = append(levels, levelInfo{
+			key:  levelKey,
+			rank: level.Rank.ValueInt32(),
+		})
+	}
+
+	// Sort the levels based on rank
+	sort.Slice(levels, func(i, j int) bool {
+		return levels[i].rank < levels[j].rank
+	})
+
+	// Extract just the keys in sorted order
+	orderedKeys := make([]string, len(levels))
+	for i, level := range levels {
+		orderedKeys[i] = level.key
+	}
+
+	return orderedKeys
+}
+
+// Create a list of check group keys, ordered by their ordering.
+func getOrderedCheckGroupKeys(plan ScorecardModel) []string {
+	type checkGroupInfo struct {
+		key      string
+		ordering int32
+	}
+
+	// Create slice to hold check group information for sorting
+	checkGroups := make([]checkGroupInfo, 0, len(plan.CheckGroups))
+
+	// Collect check group information
+	for groupKey, group := range plan.CheckGroups {
+		checkGroups = append(checkGroups, checkGroupInfo{
+			key:      groupKey,
+			ordering: group.Ordering.ValueInt32(),
+		})
+	}
+
+	// Sort the check groups based on ordering
+	sort.Slice(checkGroups, func(i, j int) bool {
+		return checkGroups[i].ordering < checkGroups[j].ordering
+	})
+
+	// Extract just the keys in sorted order
+	orderedKeys := make([]string, len(checkGroups))
+	for i, group := range checkGroups {
+		orderedKeys[i] = group.key
+	}
+
+	return orderedKeys
+}
+
 // Create a list of check keys, ordered by their level/check-group, then their ordering within that grouping.
 func getOrderedCheckKeys(plan ScorecardModel) []string {
 	type checkInfo struct {
@@ -538,8 +620,8 @@ func getOrderedCheckKeys(plan ScorecardModel) []string {
 	if plan.Type.ValueString() == "LEVEL" {
 		// Create a map of level keys to their ranks for efficient lookup
 		levelRanks := make(map[string]int32)
-		for _, level := range plan.Levels {
-			levelRanks[level.Key.ValueString()] = level.Rank.ValueInt32()
+		for levelKey, level := range plan.Levels {
+			levelRanks[levelKey] = level.Rank.ValueInt32()
 		}
 
 		// Collect check information with level ranks
@@ -554,8 +636,8 @@ func getOrderedCheckKeys(plan ScorecardModel) []string {
 	} else if plan.Type.ValueString() == "POINTS" {
 		// Create a map of check group keys to their ordering for efficient lookup
 		groupOrderings := make(map[string]int32)
-		for _, group := range plan.CheckGroups {
-			groupOrderings[group.Key.ValueString()] = group.Ordering.ValueInt32()
+		for groupKey, group := range plan.CheckGroups {
+			groupOrderings[groupKey] = group.Ordering.ValueInt32()
 		}
 
 		// Collect check information with group orderings
