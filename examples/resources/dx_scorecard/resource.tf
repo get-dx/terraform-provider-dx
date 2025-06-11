@@ -40,8 +40,8 @@ resource "dx_scorecard" "example" {
       rank  = 3
     },
   ]
-  checks = [
-    {
+  checks = {
+    test_check = {
       name                = "Test Check"
       scorecard_level_key = "bronze"
       ordering            = 0
@@ -60,10 +60,11 @@ resource "dx_scorecard" "example" {
       filter_sql            = ""
       output_custom_options = null
     },
-    {
+
+    another_check = {
       name                = "Another Check"
-      scorecard_level_key = "silver"
-      ordering            = 0
+      scorecard_level_key = "bronze"
+      ordering            = 1
 
       description           = "This is a another test check"
       sql                   = <<-EOT
@@ -87,6 +88,26 @@ resource "dx_scorecard" "example" {
       filter_message        = ""
       filter_sql            = ""
       output_custom_options = null
-    }
-  ]
+    },
+
+    neat_silver_check = {
+      name                = "Neat silver check"
+      scorecard_level_key = "silver"
+      ordering            = 0
+
+      description           = "This is a neat silver check"
+      sql                   = <<-EOT
+        select 'PASS' as status, 123 as output
+      EOT
+      output_enabled        = true
+      output_type           = "duration_seconds"
+      output_aggregation    = "median"
+      external_url          = "http://example.com"
+      published             = true
+      estimated_dev_days    = 1.5
+      filter_message        = ""
+      filter_sql            = ""
+      output_custom_options = null
+    },
+  }
 }
