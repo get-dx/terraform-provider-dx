@@ -79,15 +79,20 @@ type APIOutputCustomOptions struct {
 	Decimals *int32 `json:"decimals"` // TODO: "auto" or number
 }
 
-// APIResponse is the top-level response from the DX API for scorecard endpoints
-// (e.g., { "ok": true, "scorecard": { ... } })
+// APIResponse is the top-level response from the DX API for scorecard endpoints.
+//
+// Example:
+//
+// ```json
+// { "ok": true, "scorecard": { ... } }
+// ```
 type APIResponse struct {
 	Ok        bool         `json:"ok"`
 	Scorecard APIScorecard `json:"scorecard"`
 }
 
 func (c *Client) CreateScorecard(ctx context.Context, payload map[string]interface{}) (*APIResponse, error) {
-	tflog.Debug(ctx, "Calling CreateScorecard")
+	tflog.Info(ctx, "Calling CreateScorecard")
 
 	body, err := json.MarshalIndent(payload, "", "  ")
 	if err != nil {
@@ -102,7 +107,7 @@ func (c *Client) CreateScorecard(ctx context.Context, payload map[string]interfa
 
 	setRequestHeaders(req, c)
 
-	tflog.Debug(ctx, fmt.Sprintf("Request body:\n%s", string(body)))
+	tflog.Info(ctx, fmt.Sprintf("Request body:\n%s", string(body)))
 
 	// Make the request
 	resp, err := c.httpClient.Do(req)
@@ -124,7 +129,7 @@ func (c *Client) CreateScorecard(ctx context.Context, payload map[string]interfa
 
 	// Log the API response for debugging
 	if respJson, err := json.MarshalIndent(apiResp, "", "  "); err == nil {
-		tflog.Debug(ctx, fmt.Sprintf("API Response from CreateScorecard:\n%s", string(respJson)))
+		tflog.Info(ctx, fmt.Sprintf("API Response from CreateScorecard:\n%s", string(respJson)))
 	} else {
 		tflog.Debug(ctx, "Could not marshal API response", map[string]interface{}{
 			"error": err,
@@ -175,7 +180,7 @@ func (c *Client) GetScorecard(ctx context.Context, id string) (*APIResponse, err
 }
 
 func (c *Client) UpdateScorecard(ctx context.Context, payload map[string]interface{}) (*APIResponse, error) {
-	tflog.Debug(ctx, "Calling UpdateScorecard")
+	tflog.Info(ctx, "Calling UpdateScorecard")
 
 	body, err := json.MarshalIndent(payload, "", "  ")
 	if err != nil {
@@ -190,7 +195,7 @@ func (c *Client) UpdateScorecard(ctx context.Context, payload map[string]interfa
 
 	setRequestHeaders(req, c)
 
-	tflog.Debug(ctx, fmt.Sprintf("Request body:\n%s", string(body)))
+	tflog.Info(ctx, fmt.Sprintf("Request body:\n%s", string(body)))
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -219,7 +224,7 @@ func (c *Client) UpdateScorecard(ctx context.Context, payload map[string]interfa
 
 	// Log the API response for debugging
 	if respJson, err := json.MarshalIndent(apiResp, "", "  "); err == nil {
-		tflog.Debug(ctx, fmt.Sprintf("API Response from UpdateScorecard:\n%s", string(respJson)))
+		tflog.Info(ctx, fmt.Sprintf("API Response from UpdateScorecard:\n%s", string(respJson)))
 	} else {
 		tflog.Debug(ctx, "Could not marshal API response", map[string]interface{}{
 			"error": err,

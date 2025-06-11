@@ -14,23 +14,22 @@ type ScorecardModel struct {
 	EvaluationFrequency types.Int32  `tfsdk:"evaluation_frequency_hours"`
 
 	// Conditionally required fields for levels based scorecards
-	EmptyLevelLabel types.String `tfsdk:"empty_level_label"`
-	EmptyLevelColor types.String `tfsdk:"empty_level_color"`
-	Levels          []LevelModel `tfsdk:"levels"`
+	EmptyLevelLabel types.String          `tfsdk:"empty_level_label"`
+	EmptyLevelColor types.String          `tfsdk:"empty_level_color"`
+	Levels          map[string]LevelModel `tfsdk:"levels"`
 
 	// Conditionally required fields for points based scorecards
-	CheckGroups []CheckGroupModel `tfsdk:"check_groups"`
+	CheckGroups map[string]CheckGroupModel `tfsdk:"check_groups"`
 
 	// Optional fields
-	Description                 types.String   `tfsdk:"description"`
-	Published                   types.Bool     `tfsdk:"published"`
-	EntityFilterTypeIdentifiers []types.String `tfsdk:"entity_filter_type_identifiers"`
-	EntityFilterSql             types.String   `tfsdk:"entity_filter_sql"`
-	Checks                      []CheckModel   `tfsdk:"checks"`
+	Description                 types.String          `tfsdk:"description"`
+	Published                   types.Bool            `tfsdk:"published"`
+	EntityFilterTypeIdentifiers []types.String        `tfsdk:"entity_filter_type_identifiers"`
+	EntityFilterSql             types.String          `tfsdk:"entity_filter_sql"`
+	Checks                      map[string]CheckModel `tfsdk:"checks"`
 }
 
 type LevelModel struct {
-	Key   types.String `tfsdk:"key"`
 	Id    types.String `tfsdk:"id"`
 	Name  types.String `tfsdk:"name"`
 	Color types.String `tfsdk:"color"`
@@ -38,7 +37,6 @@ type LevelModel struct {
 }
 
 type CheckGroupModel struct {
-	Key      types.String `tfsdk:"key"`
 	Id       types.String `tfsdk:"id"`
 	Name     types.String `tfsdk:"name"`
 	Ordering types.Int32  `tfsdk:"ordering"`

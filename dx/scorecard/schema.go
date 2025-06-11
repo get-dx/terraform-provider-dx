@@ -13,7 +13,6 @@ import (
 
 func LevelSchema() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
-		"key": schema.StringAttribute{Required: true},
 		"id": schema.StringAttribute{
 			Computed: true,
 			PlanModifiers: []planmodifier.String{
@@ -27,7 +26,6 @@ func LevelSchema() map[string]schema.Attribute {
 
 func CheckGroupSchema() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
-		"key": schema.StringAttribute{Required: true},
 		"id": schema.StringAttribute{
 			Computed: true,
 			PlanModifiers: []planmodifier.String{
@@ -131,7 +129,7 @@ func ScorecardSchema() map[string]schema.Attribute {
 			Optional:    true,
 			Description: "The color hex code to display when an entity has not achieved any levels in the scorecard (levels scorecards only).",
 		},
-		"levels": schema.ListNestedAttribute{
+		"levels": schema.MapNestedAttribute{
 			Optional:    true,
 			Description: "The levels that can be achieved in this scorecard (levels scorecards only).",
 			NestedObject: schema.NestedAttributeObject{
@@ -140,7 +138,7 @@ func ScorecardSchema() map[string]schema.Attribute {
 		},
 
 		// Conditionally required for points-based scorecards
-		"check_groups": schema.ListNestedAttribute{
+		"check_groups": schema.MapNestedAttribute{
 			Optional:    true,
 			Description: "Groups of checks, to help organize the scorecard for entity owners (points scorecards only).",
 			NestedObject: schema.NestedAttributeObject{
@@ -168,7 +166,7 @@ func ScorecardSchema() map[string]schema.Attribute {
 		},
 
 		// For now, all check field are required. This may change in the future.
-		"checks": schema.ListNestedAttribute{
+		"checks": schema.MapNestedAttribute{
 			Optional:    true,
 			Description: "List of checks that are applied to entities in the scorecard.",
 			NestedObject: schema.NestedAttributeObject{
