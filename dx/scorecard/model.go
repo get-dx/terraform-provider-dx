@@ -22,11 +22,11 @@ type ScorecardModel struct {
 	CheckGroups []CheckGroupModel `tfsdk:"check_groups"`
 
 	// Optional fields
-	Description                 types.String   `tfsdk:"description"`
-	Published                   types.Bool     `tfsdk:"published"`
-	EntityFilterTypeIdentifiers []types.String `tfsdk:"entity_filter_type_identifiers"`
-	EntityFilterSql             types.String   `tfsdk:"entity_filter_sql"`
-	Checks                      []CheckModel   `tfsdk:"checks"`
+	Description                 types.String          `tfsdk:"description"`
+	Published                   types.Bool            `tfsdk:"published"`
+	EntityFilterTypeIdentifiers []types.String        `tfsdk:"entity_filter_type_identifiers"`
+	EntityFilterSql             types.String          `tfsdk:"entity_filter_sql"`
+	Checks                      map[string]CheckModel `tfsdk:"checks"`
 }
 
 type LevelModel struct {
@@ -46,7 +46,6 @@ type CheckGroupModel struct {
 
 type CheckModel struct {
 	Id            types.String `tfsdk:"id"`
-	Key           types.String `tfsdk:"key"`
 	Name          types.String `tfsdk:"name"`
 	Description   types.String `tfsdk:"description"`
 	Ordering      types.Int32  `tfsdk:"ordering"`

@@ -365,58 +365,6 @@ func modelToRequestBody(ctx context.Context, plan ScorecardModel, setIds bool) (
 
 		checks = append(checks, checkPayload)
 	}
-
-	// Sort checks based on scorecard type
-	if scorecardType == "LEVEL" {
-		// Create a map of level keys to their ranks for efficient lookup
-		levelRanks := make(map[string]int32)
-		for _, level := range plan.Levels {
-			levelRanks[level.Key.ValueString()] = level.Rank.ValueInt32()
-		}
-
-		// Sort checks by level rank first, then by ordering
-		sort.Slice(checks, func(i, j int) bool {
-			checkI := checks[i]
-			checkJ := checks[j]
-
-			// Get level ranks for both checks
-			rankI := levelRanks[checkI["scorecard_level_key"].(string)]
-			rankJ := levelRanks[checkJ["scorecard_level_key"].(string)]
-
-			// If ranks are different, sort by rank
-			if rankI != rankJ {
-				return rankI < rankJ
-			}
-
-			// If ranks are the same, sort by ordering
-			return checkI["ordering"].(int32) < checkJ["ordering"].(int32)
-		})
-	} else if scorecardType == "POINTS" {
-		// Create a map of check group keys to their ordering for efficient lookup
-		groupOrderings := make(map[string]int32)
-		for _, group := range plan.CheckGroups {
-			groupOrderings[group.Key.ValueString()] = group.Ordering.ValueInt32()
-		}
-
-		// Sort checks by group ordering first, then by check ordering
-		sort.Slice(checks, func(i, j int) bool {
-			checkI := checks[i]
-			checkJ := checks[j]
-
-			// Get group orderings for both checks
-			orderingI := groupOrderings[checkI["scorecard_check_group_key"].(string)]
-			orderingJ := groupOrderings[checkJ["scorecard_check_group_key"].(string)]
-
-			// If group orderings are different, sort by group ordering
-			if orderingI != orderingJ {
-				return orderingI < orderingJ
-			}
-
-			// If group orderings are the same, sort by check ordering
-			return checkI["ordering"].(int32) < checkJ["ordering"].(int32)
-		})
-	}
-
 	payload["checks"] = checks
 
 	return payload, nil
@@ -493,7 +441,7 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 
 	// ************** Conditionally required fields for points based scorecards **************
 
-	// If there are check groups in the API response, update the plan.CheckGroups
+	// If there are check groups in the API response, update the state.CheckGroups
 	if len(apiResp.Scorecard.CheckGroups) > 0 {
 
 		state.CheckGroups = make([]CheckGroupModel, len(apiResp.Scorecard.CheckGroups))
@@ -519,7 +467,7 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 	state.EntityFilterSql = stringOrNull(apiResp.Scorecard.EntityFilterSql)
 	state.Published = boolApiToTF(apiResp.Scorecard.Published, state.Published)
 
-	// If there are entity filter type identifiers, update the plan.EntityFilterTypeIdentifiers
+	// If there are entity filter type identifiers, update the state.EntityFilterTypeIdentifiers
 	if len(apiResp.Scorecard.EntityFilterTypeIdentifiers) > 0 {
 		identifiers := make([]types.String, len(apiResp.Scorecard.EntityFilterTypeIdentifiers))
 		for i, id := range apiResp.Scorecard.EntityFilterTypeIdentifiers {
@@ -530,40 +478,110 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 		state.EntityFilterTypeIdentifiers = oldPlan.EntityFilterTypeIdentifiers
 	}
 
-	// If there are checks in the API response, update the plan.Checks
-	if len(apiResp.Scorecard.Checks) > 0 {
-		state.Checks = make([]CheckModel, len(apiResp.Scorecard.Checks))
-		for i, chk := range apiResp.Scorecard.Checks {
-			var prevCheck CheckModel
-			if i < len(oldPlan.Checks) {
-				prevCheck = oldPlan.Checks[i]
-			}
-			state.Checks[i] = CheckModel{
-				Id:                stringOrNull(chk.Id),
-				Name:              stringOrNull(chk.Name),
-				Description:       stringOrNull(chk.Description),
-				Ordering:          types.Int32Value(int32(chk.Ordering)),
-				Sql:               stringOrNull(chk.Sql),
-				FilterSql:         stringOrNull(chk.FilterSql),
-				FilterMessage:     stringOrNull(chk.FilterMessage),
-				OutputEnabled:     types.BoolValue(chk.OutputEnabled),
-				OutputType:        stringOrNull(chk.OutputType),
-				OutputAggregation: stringOrNull(chk.OutputAggregation),
-				OutputCustomOptions: types.ObjectNull(map[string]attr.Type{
-					"unit":     types.StringType,
-					"decimals": types.NumberType,
-				}),
-				EstimatedDevDays: float32OrNull(chk.EstimatedDevDays),
-				ExternalUrl:      stringOrNull(chk.ExternalUrl),
-				Published:        types.BoolValue(chk.Published),
-				// Key not returned by API. Leave same as plan.
-				ScorecardLevelKey: prevCheck.ScorecardLevelKey,
-				// Key not returned by API. Leave same as plan.
-				ScorecardCheckGroupKey: prevCheck.ScorecardCheckGroupKey,
-				Points:                 int32OrNull(chk.Points),
-			}
+	// Update the state.Checks
+	orderedCheckKeys := getOrderedCheckKeys(*oldPlan)
+	state.Checks = make(map[string]CheckModel)
+	for idxResp, chk := range apiResp.Scorecard.Checks {
+		// Find the previous check, based on mapping the response index back to the check's key
+		var prevCheck *CheckModel
+		prevCheckKey := orderedCheckKeys[idxResp]
+		if idxResp < len(orderedCheckKeys) {
+			foundPrevCheck := oldPlan.Checks[prevCheckKey]
+			prevCheck = &foundPrevCheck
+			tflog.Info(ctx, fmt.Sprintf("Response check with index %d has key `%s`, found previous check with name `%s`", idxResp, prevCheckKey, prevCheck.Name.ValueString()))
+		} else {
+			prevCheck = nil
 		}
-	} else {
-		state.Checks = oldPlan.Checks
+
+		if prevCheck == nil {
+			panic(fmt.Sprintf("No previous check found for check %s", *chk.Id))
+		}
+
+		state.Checks[prevCheckKey] = CheckModel{
+			Id:                stringOrNull(chk.Id),
+			Name:              stringOrNull(chk.Name),
+			Description:       stringOrNull(chk.Description),
+			Ordering:          types.Int32Value(int32(chk.Ordering)),
+			Sql:               stringOrNull(chk.Sql),
+			FilterSql:         stringOrNull(chk.FilterSql),
+			FilterMessage:     stringOrNull(chk.FilterMessage),
+			OutputEnabled:     types.BoolValue(chk.OutputEnabled),
+			OutputType:        stringOrNull(chk.OutputType),
+			OutputAggregation: stringOrNull(chk.OutputAggregation),
+			OutputCustomOptions: types.ObjectNull(map[string]attr.Type{
+				"unit":     types.StringType,
+				"decimals": types.NumberType,
+			}),
+			EstimatedDevDays: float32OrNull(chk.EstimatedDevDays),
+			ExternalUrl:      stringOrNull(chk.ExternalUrl),
+			Published:        types.BoolValue(chk.Published),
+			// Key not returned by API. Leave same as plan.
+			ScorecardLevelKey: prevCheck.ScorecardLevelKey,
+			// Key not returned by API. Leave same as plan.
+			ScorecardCheckGroupKey: prevCheck.ScorecardCheckGroupKey,
+			Points:                 int32OrNull(chk.Points),
+		}
 	}
+}
+
+// Create a list of check keys, ordered by their level/check-group, then their ordering within that grouping.
+func getOrderedCheckKeys(plan ScorecardModel) []string {
+	type checkInfo struct {
+		key          string
+		ordering     int32
+		groupingRank int32
+	}
+
+	// Create slice to hold check information for sorting
+	checks := make([]checkInfo, 0, len(plan.Checks))
+
+	if plan.Type.ValueString() == "LEVEL" {
+		// Create a map of level keys to their ranks for efficient lookup
+		levelRanks := make(map[string]int32)
+		for _, level := range plan.Levels {
+			levelRanks[level.Key.ValueString()] = level.Rank.ValueInt32()
+		}
+
+		// Collect check information with level ranks
+		for key, check := range plan.Checks {
+			levelKey := check.ScorecardLevelKey.ValueString()
+			checks = append(checks, checkInfo{
+				key:          key,
+				ordering:     check.Ordering.ValueInt32(),
+				groupingRank: levelRanks[levelKey],
+			})
+		}
+	} else if plan.Type.ValueString() == "POINTS" {
+		// Create a map of check group keys to their ordering for efficient lookup
+		groupOrderings := make(map[string]int32)
+		for _, group := range plan.CheckGroups {
+			groupOrderings[group.Key.ValueString()] = group.Ordering.ValueInt32()
+		}
+
+		// Collect check information with group orderings
+		for key, check := range plan.Checks {
+			groupKey := check.ScorecardCheckGroupKey.ValueString()
+			checks = append(checks, checkInfo{
+				key:          key,
+				ordering:     check.Ordering.ValueInt32(),
+				groupingRank: groupOrderings[groupKey],
+			})
+		}
+	}
+
+	// Sort the checks based on rank and ordering
+	sort.Slice(checks, func(i, j int) bool {
+		if checks[i].groupingRank != checks[j].groupingRank {
+			return checks[i].groupingRank < checks[j].groupingRank
+		}
+		return checks[i].ordering < checks[j].ordering
+	})
+
+	// Extract just the keys in sorted order
+	orderedKeys := make([]string, len(checks))
+	for i, check := range checks {
+		orderedKeys[i] = check.key
+	}
+
+	return orderedKeys
 }

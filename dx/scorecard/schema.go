@@ -46,7 +46,6 @@ func CheckSchema() map[string]schema.Attribute {
 				stringplanmodifier.UseStateForUnknown(),
 			},
 		},
-		"key":                schema.StringAttribute{Required: true, Description: "The Terraform key for the check. This makes it possible to preserve history when reordering checks."},
 		"name":               schema.StringAttribute{Required: true},
 		"description":        schema.StringAttribute{Required: true},
 		"ordering":           schema.Int32Attribute{Required: true},
@@ -169,7 +168,7 @@ func ScorecardSchema() map[string]schema.Attribute {
 		},
 
 		// For now, all check field are required. This may change in the future.
-		"checks": schema.SetNestedAttribute{
+		"checks": schema.MapNestedAttribute{
 			Optional:    true,
 			Description: "List of checks that are applied to entities in the scorecard.",
 			NestedObject: schema.NestedAttributeObject{
