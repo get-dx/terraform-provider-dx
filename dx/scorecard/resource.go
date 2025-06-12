@@ -139,6 +139,8 @@ func (r *ScorecardResource) Create(ctx context.Context, req resource.CreateReque
 }
 
 func (r *ScorecardResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	tflog.Info(ctx, "Reading scorecard resource")
+
 	var state ScorecardModel
 
 	// Load existing state
@@ -147,6 +149,8 @@ func (r *ScorecardResource) Read(ctx context.Context, req resource.ReadRequest, 
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	tflog.Info(ctx, fmt.Sprintf("Prior state, before reading from API: %v", state))
 
 	// Extract ID
 	id := state.Id.ValueString()
@@ -427,7 +431,7 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 		orderedLevelKeys := getOrderedLevelKeys(*oldPlan)
 		for idxResp, lvl := range apiResp.Scorecard.Levels {
 			levelName := *lvl.Name
-			levelKey := nameToKey(levelName)
+			levelKey := nameToKey(ctx, levelName)
 
 			if idxResp < len(orderedLevelKeys) {
 				levelKey = orderedLevelKeys[idxResp]
@@ -665,6 +669,8 @@ func getOrderedCheckKeys(plan ScorecardModel) []string {
 }
 
 // Convert a level/check-group/check name to a key.
-func nameToKey(name string) string {
-	return strings.ReplaceAll(strings.ToLower(name), " ", "_")
+func nameToKey(ctx context.Context, name string) string {
+	result := strings.ReplaceAll(strings.ToLower(name), " ", "_")
+	tflog.Info(ctx, fmt.Sprintf("Converted name `%s` to key `%s`", name, result))
+	return result
 }
