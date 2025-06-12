@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strings"
 
 	"terraform-provider-dx/dx/dxapi"
 
@@ -15,9 +16,10 @@ import (
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
-var _ resource.Resource = &ScorecardResource{}
-
-// var _ resource.ResourceWithImportState = &scorecardResource{}
+var (
+	_ resource.Resource                = &ScorecardResource{}
+	_ resource.ResourceWithImportState = &ScorecardResource{}
+)
 
 func NewScorecardResource() resource.Resource {
 	return &ScorecardResource{}
@@ -236,6 +238,8 @@ func (r *ScorecardResource) Delete(ctx context.Context, req resource.DeleteReque
 }
 
 func (r *ScorecardResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	tflog.Info(ctx, "Importing scorecard state")
+
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
@@ -419,31 +423,24 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 
 	// If there are levels in the API response, update the plan.Levels
 	if len(apiResp.Scorecard.Levels) > 0 {
-		state.Levels = make(map[string]LevelModel)
+		newLevels := make(map[string]LevelModel)
 		orderedLevelKeys := getOrderedLevelKeys(*oldPlan)
 		for idxResp, lvl := range apiResp.Scorecard.Levels {
-			// Find the previous level, based on mapping the response index back to the level's key
-			var prevLevel *LevelModel
-			prevLevelKey := orderedLevelKeys[idxResp]
+			levelName := *lvl.Name
+			levelKey := nameToKey(levelName)
+
 			if idxResp < len(orderedLevelKeys) {
-				foundPrevLevel := oldPlan.Levels[prevLevelKey]
-				prevLevel = &foundPrevLevel
-				tflog.Info(ctx, fmt.Sprintf("Response level with index %d has key `%s`, found previous level with name `%s`", idxResp, prevLevelKey, prevLevel.Name.ValueString()))
-			} else {
-				prevLevel = nil
+				levelKey = orderedLevelKeys[idxResp]
 			}
 
-			if prevLevel == nil {
-				panic(fmt.Sprintf("No previous level found for level %s", *lvl.Id))
-			}
-
-			state.Levels[prevLevelKey] = LevelModel{
-				Id:    stringOrNull(lvl.Id),
-				Name:  stringOrNull(lvl.Name),
-				Color: stringOrNull(lvl.Color),
-				Rank:  int32OrNull(lvl.Rank),
+			newLevels[levelKey] = LevelModel{
+				Id:    types.StringValue(*lvl.Id),
+				Name:  types.StringValue(levelName),
+				Color: types.StringValue(*lvl.Color),
+				Rank:  types.Int32Value(*lvl.Rank),
 			}
 		}
+		state.Levels = newLevels
 	} else {
 		state.Levels = oldPlan.Levels
 	}
@@ -666,4 +663,9 @@ func getOrderedCheckKeys(plan ScorecardModel) []string {
 	}
 
 	return orderedKeys
+}
+
+// Convert a level/check-group/check name to a key.
+func nameToKey(name string) string {
+	return strings.ReplaceAll(strings.ToLower(name), " ", "_")
 }
