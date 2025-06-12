@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- Fixed handling of associations when importing. When there is no previous key in state, we fallback to _generating_ one by converting the item's name to snake case.
+
 ## [0.2.1] - 2025-06-11
 
 ### Changed
