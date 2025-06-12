@@ -167,9 +167,7 @@ func (c *Client) GetScorecard(ctx context.Context, id string) (*APIResponse, err
 
 	// Log the API response for debugging
 	if respJson, err := json.MarshalIndent(apiResp, "", "  "); err == nil {
-		tflog.Debug(ctx, "API Response from CreateScorecard", map[string]interface{}{
-			"response": string(respJson),
-		})
+		tflog.Info(ctx, fmt.Sprintf("API Response from GetScorecard:\n%s", string(respJson)))
 	} else {
 		tflog.Debug(ctx, "Could not marshal API response", map[string]interface{}{
 			"error": err,
