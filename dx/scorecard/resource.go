@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"sort"
-	"strings"
 
 	"terraform-provider-dx/dx/dxapi"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/iancoleman/strcase"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -670,7 +670,7 @@ func getOrderedCheckKeys(plan ScorecardModel) []string {
 
 // Convert a level/check-group/check name to a key.
 func nameToKey(ctx context.Context, name string) string {
-	result := strings.ReplaceAll(strings.ToLower(name), " ", "_")
+	result := strcase.ToSnake(name)
 	tflog.Info(ctx, fmt.Sprintf("Converted name `%s` to key `%s`", name, result))
 	return result
 }
