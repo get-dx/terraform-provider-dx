@@ -455,25 +455,17 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 		state.CheckGroups = make(map[string]CheckGroupModel)
 		orderedCheckGroupKeys := getOrderedCheckGroupKeys(*oldPlan)
 		for idxResp, grp := range apiResp.Scorecard.CheckGroups {
-			// Find the previous check group, based on mapping the response index back to the check group's key
-			var prevCheckGroup *CheckGroupModel
-			prevCheckGroupKey := orderedCheckGroupKeys[idxResp]
+			groupName := *grp.Name
+			groupKey := nameToKey(ctx, groupName)
+
 			if idxResp < len(orderedCheckGroupKeys) {
-				foundPrevCheckGroup := oldPlan.CheckGroups[prevCheckGroupKey]
-				prevCheckGroup = &foundPrevCheckGroup
-				tflog.Info(ctx, fmt.Sprintf("Response check group with index %d has key `%s`, found previous check group with name `%s`", idxResp, prevCheckGroupKey, prevCheckGroup.Name.ValueString()))
-			} else {
-				prevCheckGroup = nil
+				groupKey = orderedCheckGroupKeys[idxResp]
 			}
 
-			if prevCheckGroup == nil {
-				panic(fmt.Sprintf("No previous check group found for check group %s", *grp.Id))
-			}
-
-			state.CheckGroups[prevCheckGroupKey] = CheckGroupModel{
-				Id:       stringOrNull(grp.Id),
-				Name:     stringOrNull(grp.Name),
-				Ordering: int32OrNull(grp.Ordering),
+			state.CheckGroups[groupKey] = CheckGroupModel{
+				Id:       types.StringValue(*grp.Id),
+				Name:     types.StringValue(groupName),
+				Ordering: types.Int32Value(*grp.Ordering),
 			}
 		}
 	} else {
