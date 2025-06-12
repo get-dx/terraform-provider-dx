@@ -492,22 +492,44 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 	orderedCheckKeys := getOrderedCheckKeys(*oldPlan)
 	state.Checks = make(map[string]CheckModel)
 	for idxResp, chk := range apiResp.Scorecard.Checks {
+		var levelKey *string = nil
+		var checkGroupKey *string = nil
+
 		// Find the previous check, based on mapping the response index back to the check's key
 		var prevCheck *CheckModel
-		prevCheckKey := orderedCheckKeys[idxResp]
+		checkKey := nameToKey(ctx, *chk.Name)
 		if idxResp < len(orderedCheckKeys) {
-			foundPrevCheck := oldPlan.Checks[prevCheckKey]
+			// Grouping keys are not returned by the API, but we have found previous values to fallback to
+			checkKey = orderedCheckKeys[idxResp]
+			foundPrevCheck := oldPlan.Checks[checkKey]
 			prevCheck = &foundPrevCheck
-			tflog.Info(ctx, fmt.Sprintf("Response check with index %d has key `%s`, found previous check with name `%s`", idxResp, prevCheckKey, prevCheck.Name.ValueString()))
-		} else {
-			prevCheck = nil
+
+			var prevLevelKey *string = nil
+			if !prevCheck.ScorecardLevelKey.IsNull() {
+				prevLevelKeyVal := prevCheck.ScorecardLevelKey.ValueString()
+				prevLevelKey = &prevLevelKeyVal
+			}
+			levelKey = prevLevelKey
+
+			var prevCheckGroupKey *string = nil
+			if !prevCheck.ScorecardCheckGroupKey.IsNull() {
+				prevCheckGroupKeyVal := prevCheck.ScorecardCheckGroupKey.ValueString()
+				prevCheckGroupKey = &prevCheckGroupKeyVal
+			}
+			checkGroupKey = prevCheckGroupKey
+
+			tflog.Info(
+				ctx,
+				fmt.Sprintf(
+					"Response check with index %d has key `%s`, found previous check with name `%s`",
+					idxResp,
+					checkKey,
+					prevCheck.Name.ValueString(),
+				),
+			)
 		}
 
-		if prevCheck == nil {
-			panic(fmt.Sprintf("No previous check found for check %s", *chk.Id))
-		}
-
-		state.Checks[prevCheckKey] = CheckModel{
+		state.Checks[checkKey] = CheckModel{
 			Id:                stringOrNull(chk.Id),
 			Name:              stringOrNull(chk.Name),
 			Description:       stringOrNull(chk.Description),
@@ -525,11 +547,10 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 			EstimatedDevDays: float32OrNull(chk.EstimatedDevDays),
 			ExternalUrl:      stringOrNull(chk.ExternalUrl),
 			Published:        types.BoolValue(chk.Published),
-			// Key not returned by API. Leave same as plan.
-			ScorecardLevelKey: prevCheck.ScorecardLevelKey,
-			// Key not returned by API. Leave same as plan.
-			ScorecardCheckGroupKey: prevCheck.ScorecardCheckGroupKey,
-			Points:                 int32OrNull(chk.Points),
+			Points:           int32OrNull(chk.Points),
+
+			ScorecardLevelKey:      stringOrNull(levelKey),
+			ScorecardCheckGroupKey: stringOrNull(checkGroupKey),
 		}
 	}
 }
