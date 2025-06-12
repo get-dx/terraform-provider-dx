@@ -423,7 +423,7 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 
 	// If there are levels in the API response, update the plan.Levels
 	if len(apiResp.Scorecard.Levels) > 0 {
-		newLevels := make(map[string]LevelModel)
+		state.Levels = make(map[string]LevelModel)
 		orderedLevelKeys := getOrderedLevelKeys(*oldPlan)
 		for idxResp, lvl := range apiResp.Scorecard.Levels {
 			levelName := *lvl.Name
@@ -433,14 +433,13 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 				levelKey = orderedLevelKeys[idxResp]
 			}
 
-			newLevels[levelKey] = LevelModel{
+			state.Levels[levelKey] = LevelModel{
 				Id:    types.StringValue(*lvl.Id),
 				Name:  types.StringValue(levelName),
 				Color: types.StringValue(*lvl.Color),
 				Rank:  types.Int32Value(*lvl.Rank),
 			}
 		}
-		state.Levels = newLevels
 	} else {
 		state.Levels = oldPlan.Levels
 	}
