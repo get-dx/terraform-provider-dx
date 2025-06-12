@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.2.2] - 2025-06-12
+
 ### Changed
 
 - Fixed handling of associations when importing. When there is no previous key in state, we fallback to _generating_ one by converting the item's name to snake case.
@@ -50,6 +52,8 @@ Initial published release.
 - Provider
 - `dx_scorecard` resource
 
+[0.2.2]: https://github.com/get-dx/terraform-provider-dx/compare/v0.2.1...v0.2.2
+[0.2.1]: https://github.com/get-dx/terraform-provider-dx/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/get-dx/terraform-provider-dx/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/get-dx/terraform-provider-dx/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/get-dx/terraform-provider-dx/compare/v0.1.0...v0.1.1
