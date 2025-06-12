@@ -12,12 +12,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/iancoleman/strcase"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
-var _ resource.Resource = &ScorecardResource{}
-
-// var _ resource.ResourceWithImportState = &scorecardResource{}
+var (
+	_ resource.Resource                = &ScorecardResource{}
+	_ resource.ResourceWithImportState = &ScorecardResource{}
+)
 
 func NewScorecardResource() resource.Resource {
 	return &ScorecardResource{}
@@ -137,6 +139,8 @@ func (r *ScorecardResource) Create(ctx context.Context, req resource.CreateReque
 }
 
 func (r *ScorecardResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	tflog.Info(ctx, "Reading scorecard resource")
+
 	var state ScorecardModel
 
 	// Load existing state
@@ -145,6 +149,8 @@ func (r *ScorecardResource) Read(ctx context.Context, req resource.ReadRequest, 
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	tflog.Info(ctx, fmt.Sprintf("Prior state, before reading from API: %v", state))
 
 	// Extract ID
 	id := state.Id.ValueString()
@@ -236,6 +242,8 @@ func (r *ScorecardResource) Delete(ctx context.Context, req resource.DeleteReque
 }
 
 func (r *ScorecardResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	tflog.Info(ctx, "Importing scorecard state")
+
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
@@ -422,26 +430,18 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 		state.Levels = make(map[string]LevelModel)
 		orderedLevelKeys := getOrderedLevelKeys(*oldPlan)
 		for idxResp, lvl := range apiResp.Scorecard.Levels {
-			// Find the previous level, based on mapping the response index back to the level's key
-			var prevLevel *LevelModel
-			prevLevelKey := orderedLevelKeys[idxResp]
+			levelName := *lvl.Name
+			levelKey := nameToKey(ctx, levelName)
+
 			if idxResp < len(orderedLevelKeys) {
-				foundPrevLevel := oldPlan.Levels[prevLevelKey]
-				prevLevel = &foundPrevLevel
-				tflog.Info(ctx, fmt.Sprintf("Response level with index %d has key `%s`, found previous level with name `%s`", idxResp, prevLevelKey, prevLevel.Name.ValueString()))
-			} else {
-				prevLevel = nil
+				levelKey = orderedLevelKeys[idxResp]
 			}
 
-			if prevLevel == nil {
-				panic(fmt.Sprintf("No previous level found for level %s", *lvl.Id))
-			}
-
-			state.Levels[prevLevelKey] = LevelModel{
-				Id:    stringOrNull(lvl.Id),
-				Name:  stringOrNull(lvl.Name),
-				Color: stringOrNull(lvl.Color),
-				Rank:  int32OrNull(lvl.Rank),
+			state.Levels[levelKey] = LevelModel{
+				Id:    types.StringValue(*lvl.Id),
+				Name:  types.StringValue(levelName),
+				Color: types.StringValue(*lvl.Color),
+				Rank:  types.Int32Value(*lvl.Rank),
 			}
 		}
 	} else {
@@ -455,25 +455,17 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 		state.CheckGroups = make(map[string]CheckGroupModel)
 		orderedCheckGroupKeys := getOrderedCheckGroupKeys(*oldPlan)
 		for idxResp, grp := range apiResp.Scorecard.CheckGroups {
-			// Find the previous check group, based on mapping the response index back to the check group's key
-			var prevCheckGroup *CheckGroupModel
-			prevCheckGroupKey := orderedCheckGroupKeys[idxResp]
+			groupName := *grp.Name
+			groupKey := nameToKey(ctx, groupName)
+
 			if idxResp < len(orderedCheckGroupKeys) {
-				foundPrevCheckGroup := oldPlan.CheckGroups[prevCheckGroupKey]
-				prevCheckGroup = &foundPrevCheckGroup
-				tflog.Info(ctx, fmt.Sprintf("Response check group with index %d has key `%s`, found previous check group with name `%s`", idxResp, prevCheckGroupKey, prevCheckGroup.Name.ValueString()))
-			} else {
-				prevCheckGroup = nil
+				groupKey = orderedCheckGroupKeys[idxResp]
 			}
 
-			if prevCheckGroup == nil {
-				panic(fmt.Sprintf("No previous check group found for check group %s", *grp.Id))
-			}
-
-			state.CheckGroups[prevCheckGroupKey] = CheckGroupModel{
-				Id:       stringOrNull(grp.Id),
-				Name:     stringOrNull(grp.Name),
-				Ordering: int32OrNull(grp.Ordering),
+			state.CheckGroups[groupKey] = CheckGroupModel{
+				Id:       types.StringValue(*grp.Id),
+				Name:     types.StringValue(groupName),
+				Ordering: types.Int32Value(*grp.Ordering),
 			}
 		}
 	} else {
@@ -500,22 +492,44 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 	orderedCheckKeys := getOrderedCheckKeys(*oldPlan)
 	state.Checks = make(map[string]CheckModel)
 	for idxResp, chk := range apiResp.Scorecard.Checks {
+		var levelKey *string = nil
+		var checkGroupKey *string = nil
+
 		// Find the previous check, based on mapping the response index back to the check's key
 		var prevCheck *CheckModel
-		prevCheckKey := orderedCheckKeys[idxResp]
+		checkKey := nameToKey(ctx, *chk.Name)
 		if idxResp < len(orderedCheckKeys) {
-			foundPrevCheck := oldPlan.Checks[prevCheckKey]
+			// Grouping keys are not returned by the API, but we have found previous values to fallback to
+			checkKey = orderedCheckKeys[idxResp]
+			foundPrevCheck := oldPlan.Checks[checkKey]
 			prevCheck = &foundPrevCheck
-			tflog.Info(ctx, fmt.Sprintf("Response check with index %d has key `%s`, found previous check with name `%s`", idxResp, prevCheckKey, prevCheck.Name.ValueString()))
-		} else {
-			prevCheck = nil
+
+			var prevLevelKey *string = nil
+			if !prevCheck.ScorecardLevelKey.IsNull() {
+				prevLevelKeyVal := prevCheck.ScorecardLevelKey.ValueString()
+				prevLevelKey = &prevLevelKeyVal
+			}
+			levelKey = prevLevelKey
+
+			var prevCheckGroupKey *string = nil
+			if !prevCheck.ScorecardCheckGroupKey.IsNull() {
+				prevCheckGroupKeyVal := prevCheck.ScorecardCheckGroupKey.ValueString()
+				prevCheckGroupKey = &prevCheckGroupKeyVal
+			}
+			checkGroupKey = prevCheckGroupKey
+
+			tflog.Info(
+				ctx,
+				fmt.Sprintf(
+					"Response check with index %d has key `%s`, found previous check with name `%s`",
+					idxResp,
+					checkKey,
+					prevCheck.Name.ValueString(),
+				),
+			)
 		}
 
-		if prevCheck == nil {
-			panic(fmt.Sprintf("No previous check found for check %s", *chk.Id))
-		}
-
-		state.Checks[prevCheckKey] = CheckModel{
+		state.Checks[checkKey] = CheckModel{
 			Id:                stringOrNull(chk.Id),
 			Name:              stringOrNull(chk.Name),
 			Description:       stringOrNull(chk.Description),
@@ -533,11 +547,10 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 			EstimatedDevDays: float32OrNull(chk.EstimatedDevDays),
 			ExternalUrl:      stringOrNull(chk.ExternalUrl),
 			Published:        types.BoolValue(chk.Published),
-			// Key not returned by API. Leave same as plan.
-			ScorecardLevelKey: prevCheck.ScorecardLevelKey,
-			// Key not returned by API. Leave same as plan.
-			ScorecardCheckGroupKey: prevCheck.ScorecardCheckGroupKey,
-			Points:                 int32OrNull(chk.Points),
+			Points:           int32OrNull(chk.Points),
+
+			ScorecardLevelKey:      stringOrNull(levelKey),
+			ScorecardCheckGroupKey: stringOrNull(checkGroupKey),
 		}
 	}
 }
@@ -666,4 +679,11 @@ func getOrderedCheckKeys(plan ScorecardModel) []string {
 	}
 
 	return orderedKeys
+}
+
+// Convert a level/check-group/check name to a key.
+func nameToKey(ctx context.Context, name string) string {
+	result := strcase.ToSnake(name)
+	tflog.Info(ctx, fmt.Sprintf("Converted name `%s` to key `%s`", name, result))
+	return result
 }
