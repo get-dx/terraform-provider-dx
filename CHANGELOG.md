@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- Added more validation around level and check group keys within the checks map.
+  - Depending on the scorecard's type, either `scorecard_level_key` or `scorecard_check_group_key` must be present
+  - The value of the check's grouping key must match one of the defined groupings
+
 ## [0.2.2] - 2025-06-12
 
 ### Changed

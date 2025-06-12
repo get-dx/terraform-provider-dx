@@ -104,9 +104,41 @@ func (r *ScorecardResource) Create(ctx context.Context, req resource.CreateReque
 		if len(plan.Levels) == 0 {
 			resp.Diagnostics.AddError("Missing required field", "At least one 'level' must be specified for LEVEL scorecards.")
 		}
+
+		levelKeys := make(map[string]bool)
+		for levelKey := range plan.Levels {
+			levelKeys[levelKey] = true
+		}
+
+		for _, check := range plan.Checks {
+			if check.ScorecardLevelKey.IsNull() {
+				resp.Diagnostics.AddError("Missing required field", "The 'scorecard_level_key' field must be specified for checks in LEVEL scorecards.")
+			}
+
+			levelKey := check.ScorecardLevelKey.ValueString()
+			if !levelKeys[levelKey] {
+				resp.Diagnostics.AddError("Invalid value", fmt.Sprintf("The 'scorecard_level_key' field value of `%s` does not match any level keys", levelKey))
+			}
+		}
 	case "POINTS":
 		if len(plan.CheckGroups) == 0 {
 			resp.Diagnostics.AddError("Missing required field", "At least one 'check_group' must be specified for POINTS scorecards.")
+		}
+
+		checkGroupKeys := make(map[string]bool)
+		for checkGroupKey := range plan.CheckGroups {
+			checkGroupKeys[checkGroupKey] = true
+		}
+
+		for _, check := range plan.Checks {
+			if check.ScorecardCheckGroupKey.IsNull() {
+				resp.Diagnostics.AddError("Missing required field", "The 'scorecard_check_group_key' field must be specified for checks in POINTS scorecards.")
+			}
+
+			checkGroupKey := check.ScorecardCheckGroupKey.ValueString()
+			if !checkGroupKeys[checkGroupKey] {
+				resp.Diagnostics.AddError("Invalid value", fmt.Sprintf("The 'scorecard_check_group_key' field value of `%s` does not match any check group keys", checkGroupKey))
+			}
 		}
 	default:
 		resp.Diagnostics.AddError("Invalid scorecard type", fmt.Sprintf("Unsupported scorecard type: %s", scorecardType))
