@@ -57,9 +57,9 @@ type CheckModel struct {
 	FilterMessage types.String `tfsdk:"filter_message"`
 	OutputEnabled types.Bool   `tfsdk:"output_enabled"`
 
-	OutputType          types.String `tfsdk:"output_type"`
-	OutputAggregation   types.String `tfsdk:"output_aggregation"`
-	OutputCustomOptions types.Object `tfsdk:"output_custom_options"` //TODO figure out how to model this
+	OutputType          types.String              `tfsdk:"output_type"`
+	OutputAggregation   types.String              `tfsdk:"output_aggregation"`
+	OutputCustomOptions *OutputCustomOptionsModel `tfsdk:"output_custom_options"`
 
 	EstimatedDevDays types.Float32 `tfsdk:"estimated_dev_days"`
 	ExternalUrl      types.String  `tfsdk:"external_url"`
@@ -71,4 +71,9 @@ type CheckModel struct {
 	// Additional fields for points based scorecards
 	ScorecardCheckGroupKey types.String `tfsdk:"scorecard_check_group_key"`
 	Points                 types.Int32  `tfsdk:"points"`
+}
+
+type OutputCustomOptionsModel struct {
+	Unit     types.String `tfsdk:"unit"`
+	Decimals types.Int32  `tfsdk:"decimals"`
 }

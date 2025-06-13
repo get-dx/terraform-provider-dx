@@ -75,8 +75,37 @@ type APICheck struct {
 }
 
 type APIOutputCustomOptions struct {
-	Unit     string `json:"unit"`
-	Decimals *int32 `json:"decimals"` // TODO: "auto" or number
+	Unit     string            `json:"unit"`
+	Decimals APICustomDecimals `json:"decimals"`
+}
+
+type APICustomDecimals struct {
+	IsAuto     bool
+	FixedValue *int32
+}
+
+func (ios *APICustomDecimals) UnmarshalJSON(data []byte) error {
+	// Try to unmarshal as int32
+	var intVal int32
+	if err := json.Unmarshal(data, &intVal); err == nil {
+		ios.FixedValue = &intVal
+		ios.IsAuto = false
+		return nil
+	}
+
+	// Try to unmarshal as string
+	var strVal string
+	if err := json.Unmarshal(data, &strVal); err == nil {
+		if strVal == "auto" {
+			ios.FixedValue = nil
+			ios.IsAuto = true
+			return nil
+		} else {
+			return fmt.Errorf("APICustomDecimals: value is neither int32 nor the string 'auto': %s", string(data))
+		}
+	}
+
+	return fmt.Errorf("APICustomDecimals: value is neither int32 nor the string 'auto': %s", string(data))
 }
 
 // APIResponse is the top-level response from the DX API for scorecard endpoints.
