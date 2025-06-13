@@ -59,17 +59,20 @@ resource "dx_scorecard" "level_based_example" {
       scorecard_level_key = "bronze"
       ordering            = 0
 
-      description           = "This is a test check"
-      sql                   = <<-EOT
+      description    = "This is a test check"
+      sql            = <<-EOT
         select 'PASS' as status, 123 as output
       EOT
-      output_enabled        = true
-      output_type           = "duration_seconds"
-      output_aggregation    = "median"
-      external_url          = "http://example.com"
-      published             = true
-      estimated_dev_days    = 1.5
-      output_custom_options = null
+      output_enabled = true
+      output_type    = "custom"
+      output_custom_options = {
+        unit     = "widget"
+        decimals = 0
+      }
+      output_aggregation = "median"
+      external_url       = "http://example.com"
+      published          = true
+      estimated_dev_days = 1.5
     },
 
     another_check = {
@@ -77,7 +80,7 @@ resource "dx_scorecard" "level_based_example" {
       scorecard_level_key = "bronze"
       ordering            = 1
 
-      sql                   = <<-EOT
+      sql                = <<-EOT
         with random_number as (
           select ROUND(RANDOM() * 10) as value
         )
@@ -89,12 +92,11 @@ resource "dx_scorecard" "level_based_example" {
           value as output
         from random_number
       EOT
-      output_enabled        = true
-      output_type           = "duration_seconds"
-      output_aggregation    = "median"
-      published             = false
-      estimated_dev_days    = null
-      output_custom_options = null
+      output_enabled     = true
+      output_type        = "duration_seconds"
+      output_aggregation = "median"
+      published          = false
+      estimated_dev_days = null
     },
 
     neat_silver_check = {
@@ -102,14 +104,13 @@ resource "dx_scorecard" "level_based_example" {
       scorecard_level_key = "silver"
       ordering            = 0
 
-      description           = "This is a neat silver check"
-      sql                   = <<-EOT
+      description        = "This is a neat silver check"
+      sql                = <<-EOT
         select 'PASS' as status
       EOT
-      output_enabled        = false
-      published             = false
-      estimated_dev_days    = 1.5
-      output_custom_options = null
+      output_enabled     = false
+      published          = false
+      estimated_dev_days = 1.5
     },
   }
 }
@@ -140,16 +141,15 @@ resource "dx_scorecard" "points_based_example" {
       scorecard_check_group_key = "group_1"
       ordering                  = 0
 
-      description           = "This is a check in the first group"
-      sql                   = <<-EOT
+      description        = "This is a check in the first group"
+      sql                = <<-EOT
         select 'PASS' as status
       EOT
-      output_enabled        = false
-      external_url          = "http://example.com"
-      published             = true
-      estimated_dev_days    = 1.5
-      output_custom_options = null
-      points                = 10
+      output_enabled     = false
+      external_url       = "http://example.com"
+      published          = true
+      estimated_dev_days = 1.5
+      points             = 10
     },
 
     check_2 = {
@@ -157,17 +157,16 @@ resource "dx_scorecard" "points_based_example" {
       scorecard_check_group_key = "group_2"
       ordering                  = 0
 
-      sql                   = <<-EOT
+      sql                = <<-EOT
         select 'PASS' as status, 123 as output
       EOT
-      output_enabled        = true
-      output_type           = "duration_seconds"
-      output_aggregation    = "median"
-      external_url          = "http://example.com"
-      published             = true
-      estimated_dev_days    = 1.5
-      output_custom_options = null
-      points                = 20
+      output_enabled     = true
+      output_type        = "duration_seconds"
+      output_aggregation = "median"
+      external_url       = "http://example.com"
+      published          = true
+      estimated_dev_days = 1.5
+      points             = 20
     },
   }
 }
@@ -246,8 +245,11 @@ Read-Only:
 
 Required:
 
-- `decimals` (Number) The number of decimals to display, or `auto` for default behavior.
 - `unit` (String) The unit of the output, e.g. `widget`
+
+Optional:
+
+- `decimals` (Number) The number of decimals to display. If omitted or set to `null`, it will be interpreted as "auto".
 
 
 
