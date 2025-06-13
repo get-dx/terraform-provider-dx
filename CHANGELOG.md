@@ -11,13 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added support for `output_custom_options` in a check.
 
-## [0.3.0] - 2025-06-12
-
-### Added
-
-- Added support for `tags` on a scorecard.
+## [0.3.0] - 2025-06-13
 
 ### Changed
+
+- Added support for `tags` on a scorecard.
 
 - BREAKING: Made several check fields optional and treat the empty string `""` as if it is `null` in API responses.
 
