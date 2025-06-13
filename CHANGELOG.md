@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.3.1] - 2025-06-13
+
 ### Added
 
 - Added support for `output_custom_options` in a check.
