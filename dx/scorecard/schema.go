@@ -51,11 +51,11 @@ func CheckSchema() map[string]schema.Attribute {
 			},
 		},
 		"name":               schema.StringAttribute{Required: true},
-		"description":        schema.StringAttribute{Required: true},
+		"description":        schema.StringAttribute{Optional: true},
 		"ordering":           schema.Int32Attribute{Required: true},
 		"sql":                schema.StringAttribute{Required: true},
-		"filter_sql":         schema.StringAttribute{Required: true},
-		"filter_message":     schema.StringAttribute{Required: true},
+		"filter_sql":         schema.StringAttribute{Optional: true},
+		"filter_message":     schema.StringAttribute{Optional: true},
 		"output_enabled":     schema.BoolAttribute{Required: true},
 		"output_type":        schema.StringAttribute{Optional: true},
 		"output_aggregation": schema.StringAttribute{Optional: true},
@@ -67,7 +67,7 @@ func CheckSchema() map[string]schema.Attribute {
 			},
 		},
 		"estimated_dev_days": schema.Float32Attribute{Optional: true},
-		"external_url":       schema.StringAttribute{Required: true},
+		"external_url":       schema.StringAttribute{Optional: true},
 		"published":          schema.BoolAttribute{Required: true},
 
 		// Fields for level-based scorecards
