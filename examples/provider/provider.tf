@@ -29,6 +29,12 @@ resource "dx_scorecard" "my_example_scorecard" {
   empty_level_color              = "#cccccc"
   published                      = true
 
+  tags = [
+    { value = "terraform" },
+    { value = "test" },
+    { value = "production" },
+  ]
+
   levels = {
     bronze = {
       name  = "Bronze"

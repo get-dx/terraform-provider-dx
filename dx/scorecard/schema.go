@@ -24,6 +24,12 @@ func LevelSchema() map[string]schema.Attribute {
 	}
 }
 
+func TagSchema() map[string]schema.Attribute {
+	return map[string]schema.Attribute{
+		"value": schema.StringAttribute{Required: true, Description: "The value of the tag."},
+	}
+}
+
 func CheckGroupSchema() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"id": schema.StringAttribute{
@@ -117,6 +123,13 @@ func ScorecardSchema() map[string]schema.Attribute {
 			// },
 			PlanModifiers: []planmodifier.Int32{
 				int32planmodifier.UseStateForUnknown(),
+			},
+		},
+		"tags": schema.SetNestedAttribute{
+			Optional:    true,
+			Description: "List of tags to apply to the scorecard.",
+			NestedObject: schema.NestedAttributeObject{
+				Attributes: TagSchema(),
 			},
 		},
 
