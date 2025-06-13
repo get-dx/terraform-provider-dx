@@ -545,7 +545,7 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 				"decimals": types.NumberType,
 			}),
 			EstimatedDevDays: dx.Float32OrNull(chk.EstimatedDevDays),
-			ExternalUrl:      dx.StringOrNull(chk.ExternalUrl),
+			ExternalUrl:      dx.StringOrNullConvertEmpty(chk.ExternalUrl),
 			Published:        types.BoolValue(chk.Published),
 			Points:           dx.Int32OrNull(chk.Points),
 

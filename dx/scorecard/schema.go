@@ -61,7 +61,7 @@ func CheckSchema() map[string]schema.Attribute {
 			},
 		},
 		"estimated_dev_days": schema.Float32Attribute{Optional: true},
-		"external_url":       schema.StringAttribute{Required: true},
+		"external_url":       schema.StringAttribute{Optional: true},
 		"published":          schema.BoolAttribute{Required: true},
 
 		// Fields for level-based scorecards
