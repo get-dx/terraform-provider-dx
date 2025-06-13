@@ -57,7 +57,7 @@ func CheckSchema() map[string]schema.Attribute {
 			Optional: true,
 			Attributes: map[string]schema.Attribute{
 				"unit":     schema.StringAttribute{Required: true, Description: "The unit of the output, e.g. `widget`"},
-				"decimals": schema.NumberAttribute{Required: true, Description: "The number of decimals to display, or `auto` for default behavior."},
+				"decimals": schema.Int32Attribute{Optional: true, Description: "The number of decimals to display. If omitted or set to `null`, it will be interpreted as \"auto\"."},
 			},
 		},
 		"estimated_dev_days": schema.Float32Attribute{Optional: true},

@@ -8,7 +8,6 @@ import (
 	"terraform-provider-dx/dx"
 	"terraform-provider-dx/dx/dxapi"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -390,7 +389,21 @@ func modelToRequestBody(ctx context.Context, plan ScorecardModel, setIds bool) (
 		}
 
 		if planCheck.OutputType.ValueString() == "custom" {
-			return nil, fmt.Errorf("output type of `custom` is not yet supported")
+			planCustomOptions := planCheck.OutputCustomOptions
+			if planCustomOptions == nil {
+				return nil, fmt.Errorf("output_custom_options is required when output_type is `custom`")
+			}
+
+			planCustomOptionsVal := *planCustomOptions
+			customOptionsPayload := map[string]interface{}{
+				"unit":     planCustomOptionsVal.Unit.ValueString(),
+				"decimals": "auto",
+			}
+			if !planCustomOptionsVal.Decimals.IsNull() {
+				customOptionsPayload["decimals"] = planCustomOptionsVal.Decimals.ValueInt32()
+			}
+
+			checkPayload["output_custom_options"] = customOptionsPayload
 		}
 
 		// Add LEVEL-specific check fields
@@ -529,25 +542,40 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 			)
 		}
 
+		var outputCustomOptions *OutputCustomOptionsModel = nil
+		if chk.OutputCustomOptions != nil {
+			var decimalsValue *int32 = nil
+			decimals := chk.OutputCustomOptions.Decimals
+			if decimals.IsAuto {
+				outputCustomOptions = &OutputCustomOptionsModel{
+					Unit:     types.StringValue(chk.OutputCustomOptions.Unit),
+					Decimals: types.Int32Null(),
+				}
+			} else {
+				decimalsValue = decimals.FixedValue
+				outputCustomOptions = &OutputCustomOptionsModel{
+					Unit:     types.StringValue(chk.OutputCustomOptions.Unit),
+					Decimals: types.Int32Value(*decimalsValue),
+				}
+			}
+		}
+
 		state.Checks[checkKey] = CheckModel{
-			Id:                dx.StringOrNull(chk.Id),
-			Name:              dx.StringOrNull(chk.Name),
-			Description:       dx.StringOrNullConvertEmpty(chk.Description),
-			Ordering:          types.Int32Value(chk.Ordering),
-			Sql:               dx.StringOrNull(chk.Sql),
-			FilterSql:         dx.StringOrNullConvertEmpty(chk.FilterSql),
-			FilterMessage:     dx.StringOrNullConvertEmpty(chk.FilterMessage),
-			OutputEnabled:     types.BoolValue(chk.OutputEnabled),
-			OutputType:        dx.StringOrNull(chk.OutputType),
-			OutputAggregation: dx.StringOrNull(chk.OutputAggregation),
-			OutputCustomOptions: types.ObjectNull(map[string]attr.Type{
-				"unit":     types.StringType,
-				"decimals": types.NumberType,
-			}),
-			EstimatedDevDays: dx.Float32OrNull(chk.EstimatedDevDays),
-			ExternalUrl:      dx.StringOrNullConvertEmpty(chk.ExternalUrl),
-			Published:        types.BoolValue(chk.Published),
-			Points:           dx.Int32OrNull(chk.Points),
+			Id:                  dx.StringOrNull(chk.Id),
+			Name:                dx.StringOrNull(chk.Name),
+			Description:         dx.StringOrNullConvertEmpty(chk.Description),
+			Ordering:            types.Int32Value(chk.Ordering),
+			Sql:                 dx.StringOrNull(chk.Sql),
+			FilterSql:           dx.StringOrNullConvertEmpty(chk.FilterSql),
+			FilterMessage:       dx.StringOrNullConvertEmpty(chk.FilterMessage),
+			OutputEnabled:       types.BoolValue(chk.OutputEnabled),
+			OutputType:          dx.StringOrNull(chk.OutputType),
+			OutputAggregation:   dx.StringOrNull(chk.OutputAggregation),
+			OutputCustomOptions: outputCustomOptions,
+			EstimatedDevDays:    dx.Float32OrNull(chk.EstimatedDevDays),
+			ExternalUrl:         dx.StringOrNullConvertEmpty(chk.ExternalUrl),
+			Published:           types.BoolValue(chk.Published),
+			Points:              dx.Int32OrNull(chk.Points),
 
 			ScorecardLevelKey:      dx.StringOrNull(levelKey),
 			ScorecardCheckGroupKey: dx.StringOrNull(checkGroupKey),
