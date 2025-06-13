@@ -69,8 +69,6 @@ resource "dx_scorecard" "level_based_example" {
       external_url          = "http://example.com"
       published             = true
       estimated_dev_days    = 1.5
-      filter_message        = ""
-      filter_sql            = ""
       output_custom_options = null
     },
 
@@ -79,7 +77,6 @@ resource "dx_scorecard" "level_based_example" {
       scorecard_level_key = "bronze"
       ordering            = 1
 
-      description           = "This is a another test check"
       sql                   = <<-EOT
         with random_number as (
           select ROUND(RANDOM() * 10) as value
@@ -95,11 +92,8 @@ resource "dx_scorecard" "level_based_example" {
       output_enabled        = true
       output_type           = "duration_seconds"
       output_aggregation    = "median"
-      external_url          = "http://example.com"
       published             = false
       estimated_dev_days    = null
-      filter_message        = ""
-      filter_sql            = ""
       output_custom_options = null
     },
 
@@ -110,16 +104,11 @@ resource "dx_scorecard" "level_based_example" {
 
       description           = "This is a neat silver check"
       sql                   = <<-EOT
-        select 'PASS' as status, 123 as output
+        select 'PASS' as status
       EOT
-      output_enabled        = true
-      output_type           = "duration_seconds"
-      output_aggregation    = "median"
-      external_url          = "http://example.com"
-      published             = true
+      output_enabled        = false
+      published             = false
       estimated_dev_days    = 1.5
-      filter_message        = ""
-      filter_sql            = ""
       output_custom_options = null
     },
   }
@@ -153,14 +142,12 @@ resource "dx_scorecard" "points_based_example" {
 
       description           = "This is a check in the first group"
       sql                   = <<-EOT
-        select 'PASS' as status, 123 as output
+        select 'PASS' as status
       EOT
       output_enabled        = false
       external_url          = "http://example.com"
       published             = true
       estimated_dev_days    = 1.5
-      filter_message        = ""
-      filter_sql            = ""
       output_custom_options = null
       points                = 10
     },
@@ -170,7 +157,6 @@ resource "dx_scorecard" "points_based_example" {
       scorecard_check_group_key = "group_2"
       ordering                  = 0
 
-      description           = "This is a check in the second group"
       sql                   = <<-EOT
         select 'PASS' as status, 123 as output
       EOT
@@ -180,8 +166,6 @@ resource "dx_scorecard" "points_based_example" {
       external_url          = "http://example.com"
       published             = true
       estimated_dev_days    = 1.5
-      filter_message        = ""
-      filter_sql            = ""
       output_custom_options = null
       points                = 20
     },
@@ -233,7 +217,6 @@ Read-Only:
 
 Required:
 
-- `external_url` (String)
 - `name` (String)
 - `ordering` (Number)
 - `output_enabled` (Boolean)
@@ -244,6 +227,7 @@ Optional:
 
 - `description` (String)
 - `estimated_dev_days` (Number)
+- `external_url` (String)
 - `filter_message` (String)
 - `filter_sql` (String)
 - `output_aggregation` (String)
