@@ -35,6 +35,11 @@ resource "dx_scorecard" "level_based_example" {
   empty_level_color              = "#cccccc"
   published                      = true
 
+  tags = [
+    { value = "test" },
+    { value = "production" },
+  ]
+
   levels = {
     bronze = {
       name  = "Bronze"
@@ -210,6 +215,7 @@ resource "dx_scorecard" "points_based_example" {
 - `entity_filter_type_identifiers` (List of String) List of entity type identifiers that the scorecard should run against.
 - `levels` (Attributes Map) The levels that can be achieved in this scorecard (levels scorecards only). (see [below for nested schema](#nestedatt--levels))
 - `published` (Boolean) Whether the scorecard is published.
+- `tags` (Attributes Set) List of tags to apply to the scorecard. (see [below for nested schema](#nestedatt--tags))
 
 ### Read-Only
 
@@ -279,3 +285,11 @@ Required:
 Read-Only:
 
 - `id` (String)
+
+
+<a id="nestedatt--tags"></a>
+### Nested Schema for `tags`
+
+Required:
+
+- `value` (String) The value of the tag.
