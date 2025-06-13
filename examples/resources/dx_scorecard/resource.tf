@@ -20,6 +20,11 @@ resource "dx_scorecard" "level_based_example" {
   empty_level_color              = "#cccccc"
   published                      = true
 
+  tags = [
+    { value = "test" },
+    { value = "production" },
+  ]
+
   levels = {
     bronze = {
       name  = "Bronze"

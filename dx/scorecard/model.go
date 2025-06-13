@@ -12,6 +12,7 @@ type ScorecardModel struct {
 	Type                types.String `tfsdk:"type"`
 	EntityFilterType    types.String `tfsdk:"entity_filter_type"`
 	EvaluationFrequency types.Int32  `tfsdk:"evaluation_frequency_hours"`
+	Tags                []TagModel   `tfsdk:"tags"`
 
 	// Conditionally required fields for levels based scorecards
 	EmptyLevelLabel types.String          `tfsdk:"empty_level_label"`
@@ -27,6 +28,10 @@ type ScorecardModel struct {
 	EntityFilterTypeIdentifiers []types.String        `tfsdk:"entity_filter_type_identifiers"`
 	EntityFilterSql             types.String          `tfsdk:"entity_filter_sql"`
 	Checks                      map[string]CheckModel `tfsdk:"checks"`
+}
+
+type TagModel struct {
+	Value types.String `tfsdk:"value"`
 }
 
 type LevelModel struct {

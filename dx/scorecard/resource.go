@@ -91,6 +91,16 @@ func (r *ScorecardResource) Create(ctx context.Context, req resource.CreateReque
 		return
 	}
 
+	// Validate tags
+	if len(plan.Tags) > 0 {
+		for _, tag := range plan.Tags {
+			if tag.Value.IsNull() || tag.Value.IsUnknown() {
+				resp.Diagnostics.AddError("Missing required field", "The 'tags.value' field must be specified.")
+				return
+			}
+		}
+	}
+
 	// Validate required fields based on scorecard type
 	scorecardType := plan.Type.ValueString()
 	switch scorecardType {
@@ -292,6 +302,15 @@ func modelToRequestBody(ctx context.Context, plan ScorecardModel, setIds bool) (
 		"entity_filter_type":         plan.EntityFilterType.ValueString(),
 		"evaluation_frequency_hours": plan.EvaluationFrequency.ValueInt32(),
 	}
+
+	if len(plan.Tags) > 0 {
+		tags := []map[string]interface{}{}
+		for _, tag := range plan.Tags {
+			tags = append(tags, map[string]interface{}{"value": tag.Value.ValueString()})
+		}
+		payload["tags"] = tags
+	}
+
 	if setIds {
 		payload["id"] = plan.Id.ValueString()
 	}

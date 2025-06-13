@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Added support for `tags` on a scorecard.
+
 ### Changed
 
 - BREAKING: Made several check fields optional and treat the empty string `""` as if it is `null` in API responses.
