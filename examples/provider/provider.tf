@@ -53,26 +53,26 @@ resource "dx_scorecard" "my_example_scorecard" {
       scorecard_level_key = "bronze"
       ordering            = 0
 
-      description           = "This is a test check"
-      sql                   = <<-EOT
+      description        = "This is a test check"
+      sql                = <<-EOT
         select
           'PASS' as status,
           123 as output
       EOT
-      output_enabled        = true
-      output_type           = "duration_seconds"
-      output_aggregation    = "median"
-      external_url          = "http://example.com"
-      published             = true
-      estimated_dev_days    = 1.5
+      output_enabled     = true
+      output_type        = "duration_seconds"
+      output_aggregation = "median"
+      external_url       = "http://example.com"
+      published          = true
+      estimated_dev_days = 1.5
     },
     another_check = {
       name                = "Another Check"
       scorecard_level_key = "silver"
       ordering            = 0
 
-      description           = "This is a another test check"
-      sql                   = <<-EOT
+      description        = "This is a another test check"
+      sql                = <<-EOT
         with random_number as (
           select ROUND(RANDOM() * 10) as value
         )
@@ -84,11 +84,11 @@ resource "dx_scorecard" "my_example_scorecard" {
           value as output
         from random_number
       EOT
-      output_enabled        = true
-      output_type           = "duration_seconds"
-      output_aggregation    = "median"
-      external_url          = "http://example.com"
-      published             = false
+      output_enabled     = true
+      output_type        = "duration_seconds"
+      output_aggregation = "median"
+      external_url       = "http://example.com"
+      published          = false
     }
   }
 }
