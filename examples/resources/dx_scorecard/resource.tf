@@ -49,12 +49,15 @@ resource "dx_scorecard" "level_based_example" {
         select 'PASS' as status, 123 as output
       EOT
       output_enabled        = true
-      output_type           = "duration_seconds"
+      output_type           = "custom"
+      output_custom_options = {
+        unit     = "widget"
+        decimals = 0
+      }
       output_aggregation    = "median"
       external_url          = "http://example.com"
       published             = true
       estimated_dev_days    = 1.5
-      output_custom_options = null
     },
 
     another_check = {
@@ -79,7 +82,6 @@ resource "dx_scorecard" "level_based_example" {
       output_aggregation    = "median"
       published             = false
       estimated_dev_days    = null
-      output_custom_options = null
     },
 
     neat_silver_check = {
@@ -94,7 +96,6 @@ resource "dx_scorecard" "level_based_example" {
       output_enabled        = false
       published             = false
       estimated_dev_days    = 1.5
-      output_custom_options = null
     },
   }
 }
@@ -133,7 +134,6 @@ resource "dx_scorecard" "points_based_example" {
       external_url          = "http://example.com"
       published             = true
       estimated_dev_days    = 1.5
-      output_custom_options = null
       points                = 10
     },
 
@@ -151,7 +151,6 @@ resource "dx_scorecard" "points_based_example" {
       external_url          = "http://example.com"
       published             = true
       estimated_dev_days    = 1.5
-      output_custom_options = null
       points                = 20
     },
   }

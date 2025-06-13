@@ -65,9 +65,6 @@ resource "dx_scorecard" "my_example_scorecard" {
       external_url          = "http://example.com"
       published             = true
       estimated_dev_days    = 1.5
-      filter_message        = ""
-      filter_sql            = ""
-      output_custom_options = null
     },
     another_check = {
       name                = "Another Check"
@@ -92,10 +89,6 @@ resource "dx_scorecard" "my_example_scorecard" {
       output_aggregation    = "median"
       external_url          = "http://example.com"
       published             = false
-      estimated_dev_days    = null
-      filter_message        = ""
-      filter_sql            = ""
-      output_custom_options = null
     }
   }
 }
