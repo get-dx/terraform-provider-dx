@@ -544,7 +544,6 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 
 		var outputCustomOptions *OutputCustomOptionsModel = nil
 		if chk.OutputCustomOptions != nil {
-			var decimalsValue *int32 = nil
 			decimals := chk.OutputCustomOptions.Decimals
 			if decimals.IsAuto {
 				outputCustomOptions = &OutputCustomOptionsModel{
@@ -552,10 +551,10 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 					Decimals: types.Int32Null(),
 				}
 			} else {
-				decimalsValue = decimals.FixedValue
+				decimalsValue := *decimals.FixedValue
 				outputCustomOptions = &OutputCustomOptionsModel{
 					Unit:     types.StringValue(chk.OutputCustomOptions.Unit),
-					Decimals: types.Int32Value(*decimalsValue),
+					Decimals: types.Int32Value(decimalsValue),
 				}
 			}
 		}
