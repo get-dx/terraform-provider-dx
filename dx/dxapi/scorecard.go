@@ -85,7 +85,7 @@ type APIOutputCustomOptions struct {
 //
 // ```json
 // { "ok": true, "scorecard": { ... } }
-// ```
+// ```.
 type APIResponse struct {
 	Ok        bool         `json:"ok"`
 	Scorecard APIScorecard `json:"scorecard"`
