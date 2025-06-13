@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- BREAKING: Made several check fields optional and treat the empty string `""` as if it is `null` in API responses.
+
+  Changed fields:
+
+  - `check.description`
+  - `check.filter_message`
+  - `check.filter_sql`
+  - `check.external_url`
+
+  This is a (small) breaking change because values of `""` in _configuration files_ will be sent as requests, then the responses will be transformed into `null`, creating inconsistent state values. The fix is to either set these fields explicitly to `null` or remove them from the config file.
+
 - Added more validation around level and check group keys within the checks map.
   - Depending on the scorecard's type, either `scorecard_level_key` or `scorecard_check_group_key` must be present
   - The value of the check's grouping key must match one of the defined groupings

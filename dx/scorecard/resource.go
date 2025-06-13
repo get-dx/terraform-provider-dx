@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 
+	"terraform-provider-dx/dx"
 	"terraform-provider-dx/dx/dxapi"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -413,39 +414,6 @@ func modelToRequestBody(ctx context.Context, plan ScorecardModel, setIds bool) (
 func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state *ScorecardModel, oldPlan *ScorecardModel) {
 	tflog.Debug(ctx, "Mapping API response to Terraform model")
 
-	// ************** Helper functions **************
-
-	// Helper checks for and handles nil strings
-	stringOrNull := func(s *string) types.String {
-		if s != nil {
-			return types.StringValue(*s)
-		}
-		return types.StringNull()
-	}
-
-	// Helper preserves the value of a bool field if it's null in the plan
-	boolApiToTF := func(apiVal bool, planVal types.Bool) types.Bool {
-		if planVal.IsNull() && !apiVal {
-			return types.BoolNull()
-		}
-		return types.BoolValue(apiVal)
-	}
-
-	// Helper checks for and handles nil ints
-	float32OrNull := func(f *float32) types.Float32 {
-		if f != nil {
-			return types.Float32Value(*f)
-		}
-		return types.Float32Null()
-	}
-
-	int32OrNull := func(i *int32) types.Int32 {
-		if i != nil {
-			return types.Int32Value(*i)
-		}
-		return types.Int32Null()
-	}
-
 	// ************** Required fields **************
 	state.Id = types.StringValue(apiResp.Scorecard.Id)
 	state.Name = types.StringValue(apiResp.Scorecard.Name)
@@ -454,8 +422,8 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 	state.EvaluationFrequency = types.Int32Value(apiResp.Scorecard.EvaluationFrequency)
 
 	// ************** Conditionally required fields for levels based scorecards **************
-	state.EmptyLevelLabel = stringOrNull(apiResp.Scorecard.EmptyLevelLabel)
-	state.EmptyLevelColor = stringOrNull(apiResp.Scorecard.EmptyLevelColor)
+	state.EmptyLevelLabel = dx.StringOrNull(apiResp.Scorecard.EmptyLevelLabel)
+	state.EmptyLevelColor = dx.StringOrNull(apiResp.Scorecard.EmptyLevelColor)
 
 	// If there are levels in the API response, update the plan.Levels
 	if len(apiResp.Scorecard.Levels) > 0 {
@@ -505,15 +473,15 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 	}
 
 	// ************** Optional fields **************
-	state.Description = stringOrNull(apiResp.Scorecard.Description)
-	state.EntityFilterSql = stringOrNull(apiResp.Scorecard.EntityFilterSql)
-	state.Published = boolApiToTF(apiResp.Scorecard.Published, state.Published)
+	state.Description = dx.StringOrNull(apiResp.Scorecard.Description)
+	state.EntityFilterSql = dx.StringOrNullConvertEmpty(apiResp.Scorecard.EntityFilterSql)
+	state.Published = dx.BoolApiToTF(apiResp.Scorecard.Published, state.Published)
 
 	// If there are entity filter type identifiers, update the state.EntityFilterTypeIdentifiers
 	if len(apiResp.Scorecard.EntityFilterTypeIdentifiers) > 0 {
 		identifiers := make([]types.String, len(apiResp.Scorecard.EntityFilterTypeIdentifiers))
 		for i, id := range apiResp.Scorecard.EntityFilterTypeIdentifiers {
-			identifiers[i] = stringOrNull(id)
+			identifiers[i] = dx.StringOrNull(id)
 		}
 		state.EntityFilterTypeIdentifiers = identifiers
 	} else {
@@ -562,27 +530,27 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 		}
 
 		state.Checks[checkKey] = CheckModel{
-			Id:                stringOrNull(chk.Id),
-			Name:              stringOrNull(chk.Name),
-			Description:       stringOrNull(chk.Description),
+			Id:                dx.StringOrNull(chk.Id),
+			Name:              dx.StringOrNull(chk.Name),
+			Description:       dx.StringOrNullConvertEmpty(chk.Description),
 			Ordering:          types.Int32Value(chk.Ordering),
-			Sql:               stringOrNull(chk.Sql),
-			FilterSql:         stringOrNull(chk.FilterSql),
-			FilterMessage:     stringOrNull(chk.FilterMessage),
+			Sql:               dx.StringOrNull(chk.Sql),
+			FilterSql:         dx.StringOrNullConvertEmpty(chk.FilterSql),
+			FilterMessage:     dx.StringOrNullConvertEmpty(chk.FilterMessage),
 			OutputEnabled:     types.BoolValue(chk.OutputEnabled),
-			OutputType:        stringOrNull(chk.OutputType),
-			OutputAggregation: stringOrNull(chk.OutputAggregation),
+			OutputType:        dx.StringOrNull(chk.OutputType),
+			OutputAggregation: dx.StringOrNull(chk.OutputAggregation),
 			OutputCustomOptions: types.ObjectNull(map[string]attr.Type{
 				"unit":     types.StringType,
 				"decimals": types.NumberType,
 			}),
-			EstimatedDevDays: float32OrNull(chk.EstimatedDevDays),
-			ExternalUrl:      stringOrNull(chk.ExternalUrl),
+			EstimatedDevDays: dx.Float32OrNull(chk.EstimatedDevDays),
+			ExternalUrl:      dx.StringOrNullConvertEmpty(chk.ExternalUrl),
 			Published:        types.BoolValue(chk.Published),
-			Points:           int32OrNull(chk.Points),
+			Points:           dx.Int32OrNull(chk.Points),
 
-			ScorecardLevelKey:      stringOrNull(levelKey),
-			ScorecardCheckGroupKey: stringOrNull(checkGroupKey),
+			ScorecardLevelKey:      dx.StringOrNull(levelKey),
+			ScorecardCheckGroupKey: dx.StringOrNull(checkGroupKey),
 		}
 	}
 }
