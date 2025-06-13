@@ -233,10 +233,7 @@ Read-Only:
 
 Required:
 
-- `description` (String)
 - `external_url` (String)
-- `filter_message` (String)
-- `filter_sql` (String)
 - `name` (String)
 - `ordering` (Number)
 - `output_enabled` (Boolean)
@@ -245,7 +242,10 @@ Required:
 
 Optional:
 
+- `description` (String)
 - `estimated_dev_days` (Number)
+- `filter_message` (String)
+- `filter_sql` (String)
 - `output_aggregation` (String)
 - `output_custom_options` (Attributes) (see [below for nested schema](#nestedatt--checks--output_custom_options))
 - `output_type` (String)
