@@ -404,7 +404,9 @@ func modelToRequestBody(ctx context.Context, plan ScorecardModel, setIds bool) (
 
 		if checkPayload["output_enabled"] == true {
 			checkPayload["output_type"] = planCheck.OutputType.ValueString()
-			checkPayload["output_aggregation"] = planCheck.OutputAggregation.ValueString()
+			if !planCheck.OutputAggregation.IsNull() {
+				checkPayload["output_aggregation"] = planCheck.OutputAggregation.ValueString()
+			}
 		}
 
 		if planCheck.OutputType.ValueString() == "custom" {
