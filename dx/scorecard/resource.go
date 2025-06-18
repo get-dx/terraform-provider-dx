@@ -403,8 +403,11 @@ func modelToRequestBody(ctx context.Context, plan ScorecardModel, setIds bool) (
 		}
 
 		if checkPayload["output_enabled"] == true {
-			checkPayload["output_type"] = planCheck.OutputType.ValueString()
-			checkPayload["output_aggregation"] = planCheck.OutputAggregation.ValueString()
+			outputType := planCheck.OutputType.ValueString()
+			checkPayload["output_type"] = outputType
+			if isNumericOutputType(outputType) {
+				checkPayload["output_aggregation"] = planCheck.OutputAggregation.ValueString()
+			}
 		}
 
 		if planCheck.OutputType.ValueString() == "custom" {
@@ -732,4 +735,8 @@ func nameToKey(ctx context.Context, name string) string {
 	result := strcase.ToSnake(name)
 	tflog.Info(ctx, fmt.Sprintf("Converted name `%s` to key `%s`", name, result))
 	return result
+}
+
+func isNumericOutputType(outputType string) bool {
+	return outputType != "string"
 }
