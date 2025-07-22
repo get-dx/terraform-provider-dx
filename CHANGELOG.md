@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Docs
+
+- `README.md`: Corrected provider name and version string
+- `README.md`: Added section about compatibility with DX Web API
+- `CONTRIBUTING.md`: Added instructions for updating the version string when applicable
+- `CONTRIBUTING.md`: Correct instruction for generating docs
+
 ## [0.3.2] - 2025-06-18
 
 ### Changed

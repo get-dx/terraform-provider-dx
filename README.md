@@ -13,8 +13,8 @@ Add the following block into your Terraform files:
 terraform {
   required_providers {
     dx = {
-      source  = "registry.terraform.io/local/dx" # TODO: replace after publishing
-      version = "0.1.0"
+      source  = "registry.terraform.io/get-dx/dx"
+      version = "~> 0.3.0"
     }
   }
 }
@@ -42,6 +42,13 @@ This provider comes with the following resource types:
 - [`dx_scorecard`](docs/resources/scorecard.md)
 
 See the [examples/](examples/) directory for example usage.
+
+### Notes about compatibility with the DX Web API
+
+- The DX API will convert some optional string attributes from `null` to `""`. Therefore, to avoid inconsistent plan results in Terraform state, we treat `null` and `""` as semantically equal in the provider for these attributes. If you do not want to set a value for one of these attributes, please use `null` or omit the attribute. This applies to the following:
+  - `dx_scorecard.description`
+  - `dx_scorecard.checks.output_type`
+  - `dx_scorecard.checks.output_aggregation`
 
 ## Developing the Provider
 
