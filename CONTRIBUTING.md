@@ -82,7 +82,7 @@ terraform apply
 Run the following:
 
 ```shell
-go generate
+make generate
 ```
 
 ### Adding Dependencies
