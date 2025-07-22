@@ -13,8 +13,8 @@ Add the following block into your Terraform files:
 terraform {
   required_providers {
     dx = {
-      source  = "registry.terraform.io/local/dx" # TODO: replace after publishing
-      version = "0.1.0"
+      source  = "registry.terraform.io/get-dx/dx"
+      version = "~> 0.3.0"
     }
   }
 }

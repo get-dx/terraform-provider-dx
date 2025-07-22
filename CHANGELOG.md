@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Docs
+
+- `README.md`: Corrected provider name and version string
+- `CONTRIBUTING.md`: Added instructions for updating the version string when applicable
+
 ## [0.3.2] - 2025-06-18
 
 ### Changed

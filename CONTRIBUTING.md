@@ -103,6 +103,22 @@ Then commit the changes to `go.mod` and `go.sum`.
 
 - Update [CHANGELOG.md](./CHANGELOG.md) with release notes.
 
+- If applicable, update the version range in `README.md` and the examples:
+
+  ```diff
+   terraform {
+     required_providers {
+       dx = {
+         source  = "registry.terraform.io/get-dx/dx"
+  -      version = "~> 0.3.0"
+  +      version = "~> 0.4.0"
+       }
+     }
+   }
+  ```
+
+  (Make sure to check in any changes to generated docs afterward.)
+
 - Create a tag and push it:
 
   ```shell
