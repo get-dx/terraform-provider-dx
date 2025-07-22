@@ -43,6 +43,13 @@ This provider comes with the following resource types:
 
 See the [examples/](examples/) directory for example usage.
 
+### Notes about compatibility with the DX Web API
+
+- The DX API will convert some optional string attributes from `null` to `""`. Therefore, to avoid inconsistent plan results in Terraform state, we treat `null` and `""` as semantically equal in the provider for these attributes. If you do not want to set a value for one of these attributes, please use `null` or omit the attribute. This applies to the following:
+  - `dx_scorecard.description`
+  - `dx_scorecard.checks.output_type`
+  - `dx_scorecard.checks.output_aggregation`
+
 ## Developing the Provider
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md).
