@@ -1,6 +1,7 @@
 package scorecard_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -9,12 +10,12 @@ import (
 )
 
 func TestAccDxScorecardResourceCreateScorecard(t *testing.T) {
-	var testAccDxScorecardResourceBasic = `
-
+	scorecardName := fmt.Sprintf("Terraform Provider Scorecard %d", acctest.RandInt())
+	var testAccDxScorecardResourceBasic = fmt.Sprintf(`
 provider "dx" {}
 
 resource "dx_scorecard" "level_based_example" {
-  name                           = "Terraform Provider Scorecard"
+  name                           = "%s"
   description                    = "This is a test scorecard"
   type                           = "LEVEL"
   entity_filter_type             = "entity_types"
@@ -109,7 +110,7 @@ resource "dx_scorecard" "level_based_example" {
   }
 }
 
-`
+`, scorecardName)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -118,7 +119,7 @@ resource "dx_scorecard" "level_based_example" {
 			{
 				Config: testAccDxScorecardResourceBasic,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("dx_scorecard.level_based_example", "name", "Terraform Provider Scorecard"),
+					resource.TestCheckResourceAttr("dx_scorecard.level_based_example", "name", scorecardName),
 				),
 			},
 		},

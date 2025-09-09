@@ -1,6 +1,7 @@
 package acctest
 
 import (
+	"math/rand"
 	"os"
 	"terraform-provider-dx/internal/provider"
 	"testing"
@@ -23,4 +24,8 @@ func TestAccPreCheck(t *testing.T) {
 	if v := os.Getenv("DX_WEB_API_TOKEN"); v == "" {
 		t.Fatal("DX_WEB_API_TOKEN must be set for acceptance tests")
 	}
+}
+
+func RandInt() int {
+	return rand.Intn(1000000000)
 }
