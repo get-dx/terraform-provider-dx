@@ -15,6 +15,10 @@ on:
 permissions:
   contents: read
 
+env:
+  DX_WEB_API_URL: ${{ secrets.DX_WEB_API_URL }}
+  DX_WEB_API_TOKEN: ${{ secrets.DX_WEB_API_TOKEN }}
+
 jobs:
   # Ensure project builds before running testing matrix
   build:
