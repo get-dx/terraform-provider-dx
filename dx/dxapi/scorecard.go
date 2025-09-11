@@ -262,6 +262,9 @@ func (c *Client) UpdateScorecard(ctx context.Context, payload map[string]interfa
 }
 
 func (c *Client) DeleteScorecard(ctx context.Context, id string) (bool, error) {
+	tflog.Info(ctx, "Calling DeleteScorecard")
+	tflog.Info(ctx, fmt.Sprintf("Deleting scorecard with ID: %s", id))
+
 	payload := map[string]interface{}{"id": id}
 	body, err := json.Marshal(payload)
 	if err != nil {
