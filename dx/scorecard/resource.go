@@ -157,6 +157,12 @@ func (r *ScorecardResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 
+	tflog.Debug(ctx, "Got plan, validating...")
+	ValidateModel(plan, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	payload, err := modelToRequestBody(ctx, plan, true)
 	if err != nil {
 		resp.Diagnostics.AddError("Error converting plan to request body", err.Error())
