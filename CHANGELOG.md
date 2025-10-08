@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- BREAKING: Added validation that each check within a level or check group has a distinct `ordering` value. This protects against unexpected ordering changes in API responses, which can cause Terraform to incorrectly identify checks in the state. This is essentially a follow-up to the change in version 0.2.0.
+
 ### Docs
 
 - `README.md`: Corrected provider name and version string
