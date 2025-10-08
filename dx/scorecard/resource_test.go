@@ -138,6 +138,7 @@ resource "dx_scorecard" "level_based_example" {
   tags = [
     { value = "test" },
     { value = "production" },
+    { value = "Terraform Acceptance Test" },
   ]
 
   levels = {
