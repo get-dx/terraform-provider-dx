@@ -268,50 +268,12 @@ func ValidateModel(plan ScorecardModel, diags *diag.Diagnostics) {
 		}
 
 		// Validate that there are no duplicate ordering values for checks within the same level
-		levelOrderingMap := make(map[string]map[int32][]string) // levelKey -> ordering -> []checkKey
-
-		for checkKey, check := range plan.Checks {
-			if !check.ScorecardLevelKey.IsNull() && !check.Ordering.IsNull() {
-				levelKey := check.ScorecardLevelKey.ValueString()
-				ordering := check.Ordering.ValueInt32()
-
-				if levelOrderingMap[levelKey] == nil {
-					levelOrderingMap[levelKey] = make(map[int32][]string)
-				}
-
-				levelOrderingMap[levelKey][ordering] = append(levelOrderingMap[levelKey][ordering], checkKey)
+		validateNoDuplicateOrdering(plan.Checks, func(check CheckModel) string {
+			if !check.ScorecardLevelKey.IsNull() {
+				return check.ScorecardLevelKey.ValueString()
 			}
-		}
-
-		// Check for duplicates and report errors
-		for levelKey, orderingMap := range levelOrderingMap {
-			for ordering, checkKeys := range orderingMap {
-				if len(checkKeys) > 1 {
-					// Sort check keys for consistent error messages
-					sort.Strings(checkKeys)
-
-					// Create a comma-separated list of check keys with backticks
-					var formattedCheckKeys []string
-					for _, key := range checkKeys {
-						formattedCheckKeys = append(formattedCheckKeys, fmt.Sprintf("`%s`", key))
-					}
-
-					// Join the check keys with ", "
-					checkKeysStr := ""
-					for i, key := range formattedCheckKeys {
-						if i > 0 {
-							checkKeysStr += ", "
-						}
-						checkKeysStr += key
-					}
-
-					errorMsg := fmt.Sprintf("Level `%s`: the following checks have a duplicate ordering of %d: %s",
-						levelKey, ordering, checkKeysStr)
-
-					diags.AddError("Duplicate check ordering", errorMsg)
-				}
-			}
-		}
+			return ""
+		}, "Level", diags)
 
 	case "POINTS":
 		if len(plan.CheckGroups) == 0 {
@@ -335,52 +297,64 @@ func ValidateModel(plan ScorecardModel, diags *diag.Diagnostics) {
 		}
 
 		// Validate that there are no duplicate ordering values for checks within the same check group
-		checkGroupOrderingMap := make(map[string]map[int32][]string) // checkGroupKey -> ordering -> []checkKey
-
-		for checkKey, check := range plan.Checks {
-			if !check.ScorecardCheckGroupKey.IsNull() && !check.Ordering.IsNull() {
-				checkGroupKey := check.ScorecardCheckGroupKey.ValueString()
-				ordering := check.Ordering.ValueInt32()
-
-				if checkGroupOrderingMap[checkGroupKey] == nil {
-					checkGroupOrderingMap[checkGroupKey] = make(map[int32][]string)
-				}
-
-				checkGroupOrderingMap[checkGroupKey][ordering] = append(checkGroupOrderingMap[checkGroupKey][ordering], checkKey)
+		validateNoDuplicateOrdering(plan.Checks, func(check CheckModel) string {
+			if !check.ScorecardCheckGroupKey.IsNull() {
+				return check.ScorecardCheckGroupKey.ValueString()
 			}
-		}
-
-		// Check for duplicates and report errors
-		for checkGroupKey, orderingMap := range checkGroupOrderingMap {
-			for ordering, checkKeys := range orderingMap {
-				if len(checkKeys) > 1 {
-					// Sort check keys for consistent error messages
-					sort.Strings(checkKeys)
-
-					// Create a comma-separated list of check keys with backticks
-					var formattedCheckKeys []string
-					for _, key := range checkKeys {
-						formattedCheckKeys = append(formattedCheckKeys, fmt.Sprintf("`%s`", key))
-					}
-
-					// Join the check keys with ", "
-					checkKeysStr := ""
-					for i, key := range formattedCheckKeys {
-						if i > 0 {
-							checkKeysStr += ", "
-						}
-						checkKeysStr += key
-					}
-
-					errorMsg := fmt.Sprintf("Check group `%s`: the following checks have a duplicate ordering of %d: %s",
-						checkGroupKey, ordering, checkKeysStr)
-
-					diags.AddError("Duplicate check ordering", errorMsg)
-				}
-			}
-		}
+			return ""
+		}, "Check group", diags)
 	default:
 		diags.AddError("Invalid scorecard type", fmt.Sprintf("Unsupported scorecard type: %s", scorecardType))
+	}
+}
+
+// validates that there are no duplicate ordering values for checks within the same container (level or check group)
+func validateNoDuplicateOrdering(checks map[string]CheckModel, getContainerKey func(CheckModel) string, containerType string, diags *diag.Diagnostics) {
+	containerOrderingMap := make(map[string]map[int32][]string) // containerKey -> ordering -> []checkKey
+
+	for checkKey, check := range checks {
+		if !check.Ordering.IsNull() {
+			containerKey := getContainerKey(check)
+			if containerKey != "" {
+				ordering := check.Ordering.ValueInt32()
+
+				if containerOrderingMap[containerKey] == nil {
+					containerOrderingMap[containerKey] = make(map[int32][]string)
+				}
+
+				containerOrderingMap[containerKey][ordering] = append(containerOrderingMap[containerKey][ordering], checkKey)
+			}
+		}
+	}
+
+	// Check for duplicates and report errors
+	for containerKey, orderingMap := range containerOrderingMap {
+		for ordering, checkKeys := range orderingMap {
+			if len(checkKeys) > 1 {
+				// Sort check keys for consistent error messages
+				sort.Strings(checkKeys)
+
+				// Create a comma-separated list of check keys with backticks
+				var formattedCheckKeys []string
+				for _, key := range checkKeys {
+					formattedCheckKeys = append(formattedCheckKeys, fmt.Sprintf("`%s`", key))
+				}
+
+				// Join the check keys with ", "
+				checkKeysStr := ""
+				for i, key := range formattedCheckKeys {
+					if i > 0 {
+						checkKeysStr += ", "
+					}
+					checkKeysStr += key
+				}
+
+				errorMsg := fmt.Sprintf("%s `%s`: the following checks have a duplicate ordering of %d: %s",
+					containerType, containerKey, ordering, checkKeysStr)
+
+				diags.AddError("Duplicate check ordering", errorMsg)
+			}
+		}
 	}
 }
 
