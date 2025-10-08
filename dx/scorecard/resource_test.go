@@ -4,10 +4,120 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 
+	"terraform-provider-dx/dx/scorecard"
 	"terraform-provider-dx/internal/acctest"
 )
+
+func TestDuplicateOrderingWithinLevel(t *testing.T) {
+	var model = scorecard.ScorecardModel{
+		Name:                        types.StringValue("Terraform Provider Scorecard"),
+		Type:                        types.StringValue("LEVEL"),
+		EntityFilterType:            types.StringValue("entity_types"),
+		EntityFilterTypeIdentifiers: []types.String{types.StringValue("service")},
+		EvaluationFrequency:         types.Int32Value(2),
+		EmptyLevelLabel:             types.StringValue("Incomplete"),
+		EmptyLevelColor:             types.StringValue("#cccccc"),
+		Published:                   types.BoolValue(true),
+		Tags:                        []scorecard.TagModel{{Value: types.StringValue("test")}},
+		Levels: map[string]scorecard.LevelModel{
+			"bronze": {
+				Name:  types.StringValue("Bronze"),
+				Color: types.StringValue("#FB923C"),
+				Rank:  types.Int32Value(1),
+			},
+		},
+		Checks: map[string]scorecard.CheckModel{
+			"check_a": {
+				Name:              types.StringValue("Check A"),
+				ScorecardLevelKey: types.StringValue("bronze"),
+				Ordering:          types.Int32Value(0), // Duplicate ordering!
+			},
+			"check_b": {
+				Name:              types.StringValue("Check B"),
+				ScorecardLevelKey: types.StringValue("bronze"),
+				Ordering:          types.Int32Value(0), // Duplicate ordering!
+			},
+		},
+	}
+
+	diags := diag.Diagnostics{}
+
+	scorecard.ValidateModel(model, &diags)
+
+	if !diags.HasError() {
+		t.Error("Expected validation to fail due to duplicate ordering, but it passed")
+		return
+	}
+
+	if len(diags) != 1 {
+		t.Errorf("Expected 1 validation error, got %d", len(diags))
+		return
+	}
+
+	expectedMsg := "Level `bronze`: the following checks have a duplicate ordering of 0: `check_a`, `check_b`"
+	actualMsg := diags[0].Detail()
+
+	if actualMsg != expectedMsg {
+		t.Errorf("Expected error message:\n%s\n\nGot:\n%s", expectedMsg, actualMsg)
+	}
+}
+
+func TestDuplicateOrderingWithinCheckGroup(t *testing.T) {
+	var model = scorecard.ScorecardModel{
+		Name:                        types.StringValue("Terraform Provider Points Scorecard"),
+		Type:                        types.StringValue("POINTS"),
+		EntityFilterType:            types.StringValue("entity_types"),
+		EntityFilterTypeIdentifiers: []types.String{types.StringValue("service")},
+		EvaluationFrequency:         types.Int32Value(2),
+		Published:                   types.BoolValue(true),
+		Tags:                        []scorecard.TagModel{{Value: types.StringValue("test")}},
+		CheckGroups: map[string]scorecard.CheckGroupModel{
+			"security": {
+				Name:     types.StringValue("Security"),
+				Ordering: types.Int32Value(1),
+			},
+		},
+		Checks: map[string]scorecard.CheckModel{
+			"check_x": {
+				Name:                   types.StringValue("Check X"),
+				ScorecardCheckGroupKey: types.StringValue("security"),
+				Ordering:               types.Int32Value(5), // Duplicate ordering!
+				Points:                 types.Int32Value(10),
+			},
+			"check_y": {
+				Name:                   types.StringValue("Check Y"),
+				ScorecardCheckGroupKey: types.StringValue("security"),
+				Ordering:               types.Int32Value(5), // Duplicate ordering!
+				Points:                 types.Int32Value(15),
+			},
+		},
+	}
+
+	diags := diag.Diagnostics{}
+
+	scorecard.ValidateModel(model, &diags)
+
+	if !diags.HasError() {
+		t.Error("Expected validation to fail due to duplicate ordering, but it passed")
+		return
+	}
+
+	if len(diags) != 1 {
+		t.Errorf("Expected 1 validation error, got %d", len(diags))
+		return
+	}
+
+	expectedMsg := "Check group `security`: the following checks have a duplicate ordering of 5: `check_x`, `check_y`"
+	actualMsg := diags[0].Detail()
+
+	if actualMsg != expectedMsg {
+		t.Errorf("Expected error message:\n%s\n\nGot:\n%s", expectedMsg, actualMsg)
+	}
+}
 
 func TestAccDxScorecardResourceCreateScorecard(t *testing.T) {
 	scorecardName := fmt.Sprintf("Terraform Provider Scorecard %d", acctest.RandInt())
