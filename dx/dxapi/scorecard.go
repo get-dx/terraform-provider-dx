@@ -268,6 +268,7 @@ func (c *Client) DeleteScorecard(ctx context.Context, id string) (bool, error) {
 	tflog.Info(ctx, fmt.Sprintf("Deleting scorecard with ID: %s", id))
 
 	if os.Getenv("TF_ACC") == "1" {
+		// This is a workaround for a possible race condition where a scorecard might be evaluating scorecard checks.
 		tflog.Info(ctx, "Acceptance test environment detected, sleeping for 2 seconds before proceeding with delete...")
 		time.Sleep(2 * time.Second)
 	}
