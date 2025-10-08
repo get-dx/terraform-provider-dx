@@ -8,6 +8,7 @@ import (
 	"terraform-provider-dx/dx"
 	"terraform-provider-dx/dx/dxapi"
 
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -72,89 +73,7 @@ func (r *ScorecardResource) Create(ctx context.Context, req resource.CreateReque
 	}
 
 	tflog.Debug(ctx, "Got plan, validating...")
-
-	// Validate required fields for CREATE endpoint
-	if plan.Name.IsNull() || plan.Name.IsUnknown() {
-		resp.Diagnostics.AddError("Missing required field", "The 'name' field must be specified.")
-		return
-	}
-	if plan.Type.IsNull() || plan.Type.IsUnknown() {
-		resp.Diagnostics.AddError("Missing required field", "The 'type' field must be specified.")
-		return
-	}
-	if plan.EntityFilterType.IsNull() || plan.EntityFilterType.IsUnknown() {
-		resp.Diagnostics.AddError("Missing required field", "The 'entity_filter_type' field must be specified.")
-		return
-	}
-	if plan.EvaluationFrequency.IsNull() || plan.EvaluationFrequency.IsUnknown() {
-		resp.Diagnostics.AddError("Missing required field", "The 'evaluation_frequency_hours' field must be specified.")
-		return
-	}
-
-	// Validate tags
-	if len(plan.Tags) > 0 {
-		for _, tag := range plan.Tags {
-			if tag.Value.IsNull() || tag.Value.IsUnknown() {
-				resp.Diagnostics.AddError("Missing required field", "The 'tags.value' field must be specified.")
-				return
-			}
-		}
-	}
-
-	// Validate required fields based on scorecard type
-	scorecardType := plan.Type.ValueString()
-	switch scorecardType {
-	case "LEVEL":
-		if plan.EmptyLevelLabel.IsNull() || plan.EmptyLevelLabel.IsUnknown() {
-			resp.Diagnostics.AddError("Missing required field", "The 'empty_level_label' field must be specified for LEVEL scorecards.")
-		}
-		if plan.EmptyLevelColor.IsNull() || plan.EmptyLevelColor.IsUnknown() {
-			resp.Diagnostics.AddError("Missing required field", "The 'empty_level_color' field must be specified for LEVEL scorecards.")
-		}
-		if len(plan.Levels) == 0 {
-			resp.Diagnostics.AddError("Missing required field", "At least one 'level' must be specified for LEVEL scorecards.")
-		}
-
-		levelKeys := make(map[string]bool)
-		for levelKey := range plan.Levels {
-			levelKeys[levelKey] = true
-		}
-
-		for _, check := range plan.Checks {
-			if check.ScorecardLevelKey.IsNull() {
-				resp.Diagnostics.AddError("Missing required field", "The 'scorecard_level_key' field must be specified for checks in LEVEL scorecards.")
-			}
-
-			levelKey := check.ScorecardLevelKey.ValueString()
-			if !levelKeys[levelKey] {
-				resp.Diagnostics.AddError("Invalid value", fmt.Sprintf("The 'scorecard_level_key' field value of `%s` does not match any level keys", levelKey))
-			}
-		}
-	case "POINTS":
-		if len(plan.CheckGroups) == 0 {
-			resp.Diagnostics.AddError("Missing required field", "At least one 'check_group' must be specified for POINTS scorecards.")
-		}
-
-		checkGroupKeys := make(map[string]bool)
-		for checkGroupKey := range plan.CheckGroups {
-			checkGroupKeys[checkGroupKey] = true
-		}
-
-		for _, check := range plan.Checks {
-			if check.ScorecardCheckGroupKey.IsNull() {
-				resp.Diagnostics.AddError("Missing required field", "The 'scorecard_check_group_key' field must be specified for checks in POINTS scorecards.")
-			}
-
-			checkGroupKey := check.ScorecardCheckGroupKey.ValueString()
-			if !checkGroupKeys[checkGroupKey] {
-				resp.Diagnostics.AddError("Invalid value", fmt.Sprintf("The 'scorecard_check_group_key' field value of `%s` does not match any check group keys", checkGroupKey))
-			}
-		}
-	default:
-		resp.Diagnostics.AddError("Invalid scorecard type", fmt.Sprintf("Unsupported scorecard type: %s", scorecardType))
-	}
-
-	// If there are any errors above, return immediately.
+	ValidateModel(plan, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -238,6 +157,12 @@ func (r *ScorecardResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 
+	tflog.Debug(ctx, "Got plan, validating...")
+	ValidateModel(plan, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	payload, err := modelToRequestBody(ctx, plan, true)
 	if err != nil {
 		resp.Diagnostics.AddError("Error converting plan to request body", err.Error())
@@ -287,6 +212,156 @@ func (r *ScorecardResource) ImportState(ctx context.Context, req resource.Import
 	tflog.Info(ctx, "Importing scorecard state")
 
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
+func ValidateModel(plan ScorecardModel, diags *diag.Diagnostics) {
+	// Validate required fields for CREATE endpoint
+	if plan.Name.IsNull() || plan.Name.IsUnknown() {
+		diags.AddError("Missing required field", "The 'name' field must be specified.")
+		return
+	}
+	if plan.Type.IsNull() || plan.Type.IsUnknown() {
+		diags.AddError("Missing required field", "The 'type' field must be specified.")
+		return
+	}
+	if plan.EntityFilterType.IsNull() || plan.EntityFilterType.IsUnknown() {
+		diags.AddError("Missing required field", "The 'entity_filter_type' field must be specified.")
+		return
+	}
+	if plan.EvaluationFrequency.IsNull() || plan.EvaluationFrequency.IsUnknown() {
+		diags.AddError("Missing required field", "The 'evaluation_frequency_hours' field must be specified.")
+		return
+	}
+
+	// Validate tags
+	if len(plan.Tags) > 0 {
+		for _, tag := range plan.Tags {
+			if tag.Value.IsNull() || tag.Value.IsUnknown() {
+				diags.AddError("Missing required field", "The 'tags.value' field must be specified.")
+				return
+			}
+		}
+	}
+
+	// Validate required fields based on scorecard type
+	scorecardType := plan.Type.ValueString()
+	switch scorecardType {
+	case "LEVEL":
+		if plan.EmptyLevelLabel.IsNull() || plan.EmptyLevelLabel.IsUnknown() {
+			diags.AddError("Missing required field", "The 'empty_level_label' field must be specified for LEVEL scorecards.")
+		}
+		if plan.EmptyLevelColor.IsNull() || plan.EmptyLevelColor.IsUnknown() {
+			diags.AddError("Missing required field", "The 'empty_level_color' field must be specified for LEVEL scorecards.")
+		}
+		if len(plan.Levels) == 0 {
+			diags.AddError("Missing required field", "At least one 'level' must be specified for LEVEL scorecards.")
+		}
+
+		levelKeys := make(map[string]bool)
+		for levelKey := range plan.Levels {
+			levelKeys[levelKey] = true
+		}
+
+		for _, check := range plan.Checks {
+			if check.ScorecardLevelKey.IsNull() {
+				diags.AddError("Missing required field", "The 'scorecard_level_key' field must be specified for checks in LEVEL scorecards.")
+			}
+
+			levelKey := check.ScorecardLevelKey.ValueString()
+			if !levelKeys[levelKey] {
+				diags.AddError("Invalid value", fmt.Sprintf("The 'scorecard_level_key' field value of `%s` does not match any level keys", levelKey))
+			}
+		}
+
+		// Validate that there are no duplicate ordering values for checks within the same level
+		validateNoDuplicateOrdering(plan.Checks, func(check CheckModel) string {
+			if !check.ScorecardLevelKey.IsNull() {
+				return check.ScorecardLevelKey.ValueString()
+			}
+			return ""
+		}, "Level", diags)
+
+	case "POINTS":
+		if len(plan.CheckGroups) == 0 {
+			diags.AddError("Missing required field", "At least one 'check_group' must be specified for POINTS scorecards.")
+		}
+
+		checkGroupKeys := make(map[string]bool)
+		for checkGroupKey := range plan.CheckGroups {
+			checkGroupKeys[checkGroupKey] = true
+		}
+
+		for _, check := range plan.Checks {
+			if check.ScorecardCheckGroupKey.IsNull() {
+				diags.AddError("Missing required field", "The 'scorecard_check_group_key' field must be specified for checks in POINTS scorecards.")
+			}
+
+			checkGroupKey := check.ScorecardCheckGroupKey.ValueString()
+			if !checkGroupKeys[checkGroupKey] {
+				diags.AddError("Invalid value", fmt.Sprintf("The 'scorecard_check_group_key' field value of `%s` does not match any check group keys", checkGroupKey))
+			}
+		}
+
+		// Validate that there are no duplicate ordering values for checks within the same check group
+		validateNoDuplicateOrdering(plan.Checks, func(check CheckModel) string {
+			if !check.ScorecardCheckGroupKey.IsNull() {
+				return check.ScorecardCheckGroupKey.ValueString()
+			}
+			return ""
+		}, "Check group", diags)
+	default:
+		diags.AddError("Invalid scorecard type", fmt.Sprintf("Unsupported scorecard type: %s", scorecardType))
+	}
+}
+
+// Validates that there are no duplicate ordering values for checks within the same container (level or check group).
+func validateNoDuplicateOrdering(checks map[string]CheckModel, getContainerKey func(CheckModel) string, containerType string, diags *diag.Diagnostics) {
+	containerOrderingMap := make(map[string]map[int32][]string) // containerKey -> ordering -> []checkKey
+
+	for checkKey, check := range checks {
+		if !check.Ordering.IsNull() {
+			containerKey := getContainerKey(check)
+			if containerKey != "" {
+				ordering := check.Ordering.ValueInt32()
+
+				if containerOrderingMap[containerKey] == nil {
+					containerOrderingMap[containerKey] = make(map[int32][]string)
+				}
+
+				containerOrderingMap[containerKey][ordering] = append(containerOrderingMap[containerKey][ordering], checkKey)
+			}
+		}
+	}
+
+	// Check for duplicates and report errors
+	for containerKey, orderingMap := range containerOrderingMap {
+		for ordering, checkKeys := range orderingMap {
+			if len(checkKeys) > 1 {
+				// Sort check keys for consistent error messages
+				sort.Strings(checkKeys)
+
+				// Create a comma-separated list of check keys with backticks
+				var formattedCheckKeys []string
+				for _, key := range checkKeys {
+					formattedCheckKeys = append(formattedCheckKeys, fmt.Sprintf("`%s`", key))
+				}
+
+				// Join the check keys with ", "
+				checkKeysStr := ""
+				for i, key := range formattedCheckKeys {
+					if i > 0 {
+						checkKeysStr += ", "
+					}
+					checkKeysStr += key
+				}
+
+				errorMsg := fmt.Sprintf("%s `%s`: the following checks have a duplicate ordering of %d: %s",
+					containerType, containerKey, ordering, checkKeysStr)
+
+				diags.AddError("Duplicate check ordering", errorMsg)
+			}
+		}
+	}
 }
 
 func modelToRequestBody(ctx context.Context, plan ScorecardModel, setIds bool) (map[string]interface{}, error) {

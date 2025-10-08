@@ -77,6 +77,18 @@ terraform plan
 terraform apply
 ```
 
+Run the unit tests:
+
+```shell
+make test
+```
+
+You can also run the end-to-end acceptance tests against a live account:
+
+```shell
+make testacc
+```
+
 ### Generating documentation
 
 Run the following:
