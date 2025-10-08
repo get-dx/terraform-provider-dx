@@ -308,7 +308,7 @@ func ValidateModel(plan ScorecardModel, diags *diag.Diagnostics) {
 	}
 }
 
-// validates that there are no duplicate ordering values for checks within the same container (level or check group)
+// Validates that there are no duplicate ordering values for checks within the same container (level or check group).
 func validateNoDuplicateOrdering(checks map[string]CheckModel, getContainerKey func(CheckModel) string, containerType string, diags *diag.Diagnostics) {
 	containerOrderingMap := make(map[string]map[int32][]string) // containerKey -> ordering -> []checkKey
 
