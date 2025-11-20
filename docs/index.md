@@ -15,8 +15,7 @@ Interact with the DX Web API and declaratively manage Service Cloud resources.
 terraform {
   required_providers {
     dx = {
-      source  = "registry.terraform.io/get-dx/dx"
-      version = "~> 0.4.0"
+      source = "registry.terraform.io/local/dx"
     }
   }
 }
@@ -29,87 +28,46 @@ provider "dx" {
   # - scorecards:read
   # - scorecards:write
   #
-  api_token = "<your api token>"
+  api_token = "SnrHqiwpprB8FvzJ2V3EXLmvJWfeqNR9wYgP"
 }
 
-resource "dx_scorecard" "my_example_scorecard" {
-  name                           = "My example scorecard"
-  description                    = "This is a test scorecard"
-  type                           = "LEVEL"
-  entity_filter_type             = "entity_types"
-  entity_filter_type_identifiers = ["service"]
-  evaluation_frequency_hours     = 2
-  empty_level_label              = "Incomplete"
-  empty_level_color              = "#cccccc"
-  published                      = true
+resource "dx_entity_type" "db-resource" {
+  identifier  = "db-resource"
+  name        = "DB Resource"
+  description = "A database resource"
+}
 
-  tags = [
-    { value = "terraform" },
-    { value = "test" },
-    { value = "production" },
+# Example: Create an entity type with properties and aliases
+resource "dx_entity_type" "repository" {
+  identifier  = "repository"
+  name        = "Repository"
+  description = "A source code repository"
+
+  properties = [
+    {
+      identifier = "team"
+      name       = "Owning Team"
+      type       = "multi_select"
+      visibility = "visible"
+      options    = ["platform", "data", "product", "infrastructure"]
+    },
+    {
+      identifier = "language"
+      name       = "Primary Language"
+      type       = "text"
+      visibility = "visible"
+    },
+    {
+      identifier = "tier"
+      name       = "Service Tier"
+      type       = "multi_select"
+      visibility = "hidden"
+      options    = ["tier_1", "tier_2", "tier_3"]
+    }
   ]
 
-  levels = {
-    bronze = {
-      name  = "Bronze"
-      color = "#FB923C"
-      rank  = 1
-    },
-    silver = {
-      name  = "Silver"
-      color = "#9CA3AF"
-      rank  = 2
-    },
-    gold = {
-      name  = "Gold"
-      color = "#FBBF24"
-      rank  = 3
-    },
-  }
-
-  checks = {
-    test_check = {
-      name                = "Test Check"
-      scorecard_level_key = "bronze"
-      ordering            = 0
-
-      description        = "This is a test check"
-      sql                = <<-EOT
-        select
-          'PASS' as status,
-          123 as output
-      EOT
-      output_enabled     = true
-      output_type        = "duration_seconds"
-      output_aggregation = "median"
-      external_url       = "http://example.com"
-      published          = true
-      estimated_dev_days = 1.5
-    },
-    another_check = {
-      name                = "Another Check"
-      scorecard_level_key = "silver"
-      ordering            = 0
-
-      description        = "This is a another test check"
-      sql                = <<-EOT
-        with random_number as (
-          select ROUND(RANDOM() * 10) as value
-        )
-        select case
-            when value >= 7 then 'PASS'
-            when value >= 4 then 'WARN'
-            else 'FAIL'
-          end as status,
-          value as output
-        from random_number
-      EOT
-      output_enabled     = true
-      output_type        = "duration_seconds"
-      output_aggregation = "median"
-      external_url       = "http://example.com"
-      published          = false
-    }
+  aliases = {
+    "github_repo" = true
   }
 }
 ```
