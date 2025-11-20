@@ -14,23 +14,23 @@ import (
 // API model structs for unmarshalling API responses
 
 type APIEntityType struct {
-	Identifier  string         `json:"identifier"`
-	Name        string         `json:"name"`
-	Description *string        `json:"description"`
-	CreatedAt   string         `json:"created_at"`
-	UpdatedAt   string         `json:"updated_at"`
-	Ordering    int64          `json:"ordering"`
-	Properties  []*APIProperty `json:"properties"`
+	Identifier  string          `json:"identifier"`
+	Name        string          `json:"name"`
+	Description *string         `json:"description"`
+	CreatedAt   string          `json:"created_at"`
+	UpdatedAt   string          `json:"updated_at"`
+	Ordering    int64           `json:"ordering"`
+	Properties  []*APIProperty  `json:"properties"`
 	Aliases     map[string]bool `json:"aliases"`
 }
 
 type APIProperty struct {
-	Identifier  string                `json:"identifier"`
-	Name        string                `json:"name"`
-	Type        string                `json:"type"`
-	Description *string               `json:"description"`
-	Visibility  *string               `json:"visibility"`
-	Ordering    *int64                `json:"ordering"`
+	Identifier  string                 `json:"identifier"`
+	Name        string                 `json:"name"`
+	Type        string                 `json:"type"`
+	Description *string                `json:"description"`
+	Visibility  *string                `json:"visibility"`
+	Ordering    *int64                 `json:"ordering"`
 	Definition  *APIPropertyDefinition `json:"definition"`
 }
 

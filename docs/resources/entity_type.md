@@ -13,13 +13,6 @@ Manages a DX Entity Type. Entity types are used to define the data model for ent
 ## Example Usage
 
 ```terraform
-# Example: Create a basic entity type
-resource "dx_entity_type" "service" {
-  identifier  = "service"
-  name        = "Service"
-  description = "A deployable service in our infrastructure"
-}
-
 # Example: Create an entity type with properties and aliases
 resource "dx_entity_type" "repository" {
   identifier  = "repository"
@@ -55,15 +48,8 @@ resource "dx_entity_type" "repository" {
   ]
 
   aliases = {
-    "github_repository" = true
-    "gitlab_project"    = true
+    "github_repo" = true
   }
-}
-
-# Example: Minimal entity type with just required fields
-resource "dx_entity_type" "team" {
-  identifier = "team"
-  name       = "Team"
 }
 ```
 

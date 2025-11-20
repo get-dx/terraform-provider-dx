@@ -12,9 +12,9 @@ type EntityTypeModel struct {
 	Name       types.String `tfsdk:"name"`       // Display name
 
 	// Optional fields
-	Description types.String     `tfsdk:"description"` // Entity type description
-	Properties  []PropertyModel  `tfsdk:"properties"`  // Custom properties
-	Aliases     map[string]types.Bool `tfsdk:"aliases"` // Alias type mappings
+	Description types.String          `tfsdk:"description"` // Entity type description
+	Properties  []PropertyModel       `tfsdk:"properties"`  // Custom properties
+	Aliases     map[string]types.Bool `tfsdk:"aliases"`     // Alias type mappings
 
 	// Computed fields (from API)
 	CreatedAt types.String `tfsdk:"created_at"` // Creation timestamp
