@@ -24,12 +24,12 @@ type EntityTypeModel struct {
 
 // PropertyModel describes a custom property on an entity type.
 type PropertyModel struct {
-	Identifier  types.String        `tfsdk:"identifier"`  // Required: unique property identifier
-	Name        types.String        `tfsdk:"name"`        // Required: display name
-	Type        types.String        `tfsdk:"type"`        // Required: property type (e.g., "multi_select", "text")
-	Description types.String        `tfsdk:"description"` // Optional: property description
-	Visibility  types.String        `tfsdk:"visibility"`  // Optional: property visibility
-	Ordering    types.Int64         `tfsdk:"ordering"`    // Optional: sort order for the property
+	Identifier  types.String          `tfsdk:"identifier"`  // Required: unique property identifier
+	Name        types.String          `tfsdk:"name"`        // Required: display name
+	Type        types.String          `tfsdk:"type"`        // Required: property type (e.g., "multi_select", "text")
+	Description types.String          `tfsdk:"description"` // Optional: property description
+	Visibility  types.String          `tfsdk:"visibility"`  // Optional: property visibility
+	Ordering    types.Int64           `tfsdk:"ordering"`    // Optional: sort order for the property
 	Options     []PropertyOptionModel `tfsdk:"options"`     // Optional: for multi_select type
 }
 
