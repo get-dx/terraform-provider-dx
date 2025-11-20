@@ -122,9 +122,15 @@ func TestValidateModel_ValidModel(t *testing.T) {
 				Name:       types.StringValue("Owning Team"),
 				Type:       types.StringValue("multi_select"),
 				Visibility: types.StringValue("visible"),
-				Options: []types.String{
-					types.StringValue("platform"),
-					types.StringValue("data"),
+				Options: []entitytype.PropertyOptionModel{
+					{
+						Value: types.StringValue("platform"),
+						Color: types.StringValue("#3b82f6"),
+					},
+					{
+						Value: types.StringValue("data"),
+						Color: types.StringValue("#ef4444"),
+					},
 				},
 			},
 		},
@@ -156,7 +162,11 @@ resource "dx_entity_type" "test" {
       name       = "Owning Team"
       type       = "multi_select"
       visibility = "visible"
-      options    = ["platform", "data", "product"]
+      options = [
+        { value = "platform", color = "#3b82f6" },
+        { value = "data", color = "#ef4444" },
+        { value = "product", color = "#10b981" }
+      ]
     },
     {
       identifier = "tier"
@@ -214,7 +224,12 @@ resource "dx_entity_type" "test" {
       name       = "Team Owner"
       type       = "multi_select"
       visibility = "visible"
-      options    = ["platform", "data", "product", "infrastructure"]
+      options = [
+        { value = "platform", color = "#3b82f6" },
+        { value = "data", color = "#ef4444" },
+        { value = "product", color = "#10b981" },
+        { value = "infrastructure", color = "#f59e0b" }
+      ]
     },
     {
       identifier = "tier"

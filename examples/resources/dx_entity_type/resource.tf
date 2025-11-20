@@ -12,7 +12,12 @@ resource "dx_entity_type" "repository" {
       type        = "multi_select"
       visibility  = "visible"
       ordering    = 0
-      options     = ["platform", "data", "product", "infrastructure"]
+      options = [
+        { value = "platform", color = "#3b82f6" },
+        { value = "data", color = "#ef4444" },
+        { value = "product", color = "#10b981" },
+        { value = "infrastructure", color = "#f59e0b" }
+      ]
     },
     {
       identifier  = "language"
@@ -28,7 +33,11 @@ resource "dx_entity_type" "repository" {
       type       = "multi_select"
       visibility = "hidden"
       ordering   = 2
-      options    = ["tier_1", "tier_2", "tier_3"]
+      options = [
+        { value = "tier_1", color = "#818cf8" },
+        { value = "tier_2", color = "#a78bfa" },
+        { value = "tier_3", color = "#c084fc" }
+      ]
     }
   ]
 

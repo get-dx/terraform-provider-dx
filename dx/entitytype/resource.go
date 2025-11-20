@@ -298,12 +298,14 @@ func modelToRequestBody(ctx context.Context, plan EntityTypeModel, isUpdate bool
 				if len(planProp.Options) > 0 {
 					options := make([]map[string]interface{}, 0, len(planProp.Options))
 					for _, opt := range planProp.Options {
-						if !opt.IsNull() && !opt.IsUnknown() {
-							options = append(options, map[string]interface{}{
-								"value": opt.ValueString(),
-								"color": "#3b82f6", // Default blue color
-							})
+						color := "#3b82f6" // Default blue color
+						if !opt.Color.IsNull() && !opt.Color.IsUnknown() {
+							color = opt.Color.ValueString()
 						}
+						options = append(options, map[string]interface{}{
+							"value": opt.Value.ValueString(),
+							"color": color,
+						})
 					}
 					definition["options"] = options
 				} else {
@@ -374,9 +376,12 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIEntityTypeRespon
 
 			// Extract options from definition if present
 			if apiProp.Definition != nil && len(apiProp.Definition.Options) > 0 {
-				options := make([]types.String, 0, len(apiProp.Definition.Options))
+				options := make([]PropertyOptionModel, 0, len(apiProp.Definition.Options))
 				for _, opt := range apiProp.Definition.Options {
-					options = append(options, types.StringValue(opt.Value))
+					options = append(options, PropertyOptionModel{
+						Value: types.StringValue(opt.Value),
+						Color: types.StringValue(opt.Color),
+					})
 				}
 				property.Options = options
 			}

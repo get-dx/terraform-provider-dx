@@ -27,7 +27,12 @@ resource "dx_entity_type" "repository" {
       type        = "multi_select"
       visibility  = "visible"
       ordering    = 0
-      options     = ["platform", "data", "product", "infrastructure"]
+      options = [
+        { value = "platform", color = "#3b82f6" },
+        { value = "data", color = "#ef4444" },
+        { value = "product", color = "#10b981" },
+        { value = "infrastructure", color = "#f59e0b" }
+      ]
     },
     {
       identifier  = "language"
@@ -43,7 +48,11 @@ resource "dx_entity_type" "repository" {
       type       = "multi_select"
       visibility = "hidden"
       ordering   = 2
-      options    = ["tier_1", "tier_2", "tier_3"]
+      options = [
+        { value = "tier_1", color = "#818cf8" },
+        { value = "tier_2", color = "#a78bfa" },
+        { value = "tier_3", color = "#c084fc" }
+      ]
     }
   ]
 
@@ -86,6 +95,17 @@ Required:
 Optional:
 
 - `description` (String) Description of the property.
-- `options` (List of String) Available options for multi_select properties. Each option will be assigned a default color.
+- `options` (Attributes List) Available options for multi_select properties. (see [below for nested schema](#nestedatt--properties--options))
 - `ordering` (Number) Sort order for the property. If not specified, properties will be ordered by their position in the list.
 - `visibility` (String) Property visibility setting. Options: 'hidden', 'visible'. Defaults to 'visible' if not specified.
+
+<a id="nestedatt--properties--options"></a>
+### Nested Schema for `properties.options`
+
+Required:
+
+- `value` (String) The option value.
+
+Optional:
+
+- `color` (String) Hex color code for the option (e.g., '#ef4444'). Defaults to '#3b82f6' (blue) if not specified.

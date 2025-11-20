@@ -44,10 +44,22 @@ func PropertySchema() map[string]schema.Attribute {
 			Computed:    true,
 			Description: "Sort order for the property. If not specified, properties will be ordered by their position in the list.",
 		},
-		"options": schema.ListAttribute{
+		"options": schema.ListNestedAttribute{
 			Optional:    true,
-			ElementType: types.StringType,
-			Description: "Available options for multi_select properties. Each option will be assigned a default color.",
+			Description: "Available options for multi_select properties.",
+			NestedObject: schema.NestedAttributeObject{
+				Attributes: map[string]schema.Attribute{
+					"value": schema.StringAttribute{
+						Required:    true,
+						Description: "The option value.",
+					},
+					"color": schema.StringAttribute{
+						Optional:    true,
+						Computed:    true,
+						Description: "Hex color code for the option (e.g., '#ef4444'). Defaults to '#3b82f6' (blue) if not specified.",
+					},
+				},
+			},
 		},
 	}
 }
