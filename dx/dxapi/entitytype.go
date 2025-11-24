@@ -35,7 +35,10 @@ type APIProperty struct {
 }
 
 type APIPropertyDefinition struct {
-	Options []APIPropertyOption `json:"options"`
+	Options          []APIPropertyOption `json:"options"`
+	SQL              *string             `json:"sql,omitempty"`
+	CallToAction     *string             `json:"call_to_action,omitempty"`
+	CallToActionType *string             `json:"call_to_action_type,omitempty"`
 }
 
 type APIPropertyOption struct {

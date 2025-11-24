@@ -19,9 +19,8 @@ resource "dx_entity_type" "repository" {
   name        = "Repository"
   description = "A source code repository"
 
-  properties = [
-    {
-      identifier  = "team"
+  properties = {
+    team = {
       name        = "Owning Team"
       description = "The team that owns this repository"
       type        = "multi_select"
@@ -33,17 +32,15 @@ resource "dx_entity_type" "repository" {
         { value = "product", color = "#10b981" },
         { value = "infrastructure", color = "#f59e0b" }
       ]
-    },
-    {
-      identifier  = "language"
+    }
+    language = {
       name        = "Primary Language"
       description = "The main programming language used"
       type        = "text"
       visibility  = "visible"
       ordering    = 1
-    },
-    {
-      identifier = "tier"
+    }
+    tier = {
       name       = "Service Tier"
       type       = "multi_select"
       visibility = "hidden"
@@ -54,7 +51,24 @@ resource "dx_entity_type" "repository" {
         { value = "tier_3", color = "#c084fc" }
       ]
     }
-  ]
+    active_entities_count = {
+      name        = "Active Entities Count"
+      description = "Number of active entities for this repository"
+      type        = "computed"
+      visibility  = "visible"
+      ordering    = 3
+      sql         = "SELECT COUNT(*) FROM portal_entities WHERE identifier = $entity_identifier"
+    }
+    repository_url = {
+      name                = "Repository URL"
+      description         = "Link to the source code repository"
+      type                = "url"
+      visibility          = "visible"
+      ordering            = 4
+      call_to_action      = "View Repository"
+      call_to_action_type = "text"
+    }
+  }
 
   aliases = {
     "github_repo" = true
@@ -74,7 +88,7 @@ resource "dx_entity_type" "repository" {
 
 - `aliases` (Map of Boolean) Key-value pairs enabling specific aliases for the entity type (e.g., 'github_repository': true).
 - `description` (String) Detailed explanation of the entity type.
-- `properties` (Attributes List) Custom properties to attach to the entity type. Note: When updating, you must include ALL existing properties in your configuration, as the API replaces the entire properties list. (see [below for nested schema](#nestedatt--properties))
+- `properties` (Attributes Map) Custom properties to attach to the entity type, keyed by property identifier. Note: When updating, you must include ALL existing properties in your configuration, as the API replaces the entire properties list. (see [below for nested schema](#nestedatt--properties))
 
 ### Read-Only
 
@@ -88,15 +102,17 @@ resource "dx_entity_type" "repository" {
 
 Required:
 
-- `identifier` (String) Unique identifier for the property.
 - `name` (String) Display name for the property.
-- `type` (String) Property type (e.g., 'multi_select', 'text').
+- `type` (String) Property type (e.g., 'multi_select', 'text', 'computed', 'url').
 
 Optional:
 
+- `call_to_action` (String) Call-to-action text for url properties. Required when type is 'url'.
+- `call_to_action_type` (String) Call-to-action type for url properties. Options: 'text', 'icon'. Required when type is 'url'.
 - `description` (String) Description of the property.
-- `options` (Attributes List) Available options for multi_select properties. (see [below for nested schema](#nestedatt--properties--options))
+- `options` (Attributes List) Available options for select and multi_select properties. (see [below for nested schema](#nestedatt--properties--options))
 - `ordering` (Number) Sort order for the property. If not specified, properties will be ordered by their position in the list.
+- `sql` (String) SQL query for computed properties. Required when type is 'computed'.
 - `visibility` (String) Property visibility setting. Options: 'hidden', 'visible'. Defaults to 'visible' if not specified.
 
 <a id="nestedatt--properties--options"></a>

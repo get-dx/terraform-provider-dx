@@ -15,17 +15,13 @@ import (
 
 func PropertySchema() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
-		"identifier": schema.StringAttribute{
-			Required:    true,
-			Description: "Unique identifier for the property.",
-		},
 		"name": schema.StringAttribute{
 			Required:    true,
 			Description: "Display name for the property.",
 		},
 		"type": schema.StringAttribute{
 			Required:    true,
-			Description: "Property type (e.g., 'multi_select', 'text').",
+			Description: "Property type (e.g., 'multi_select', 'text', 'computed', 'url').",
 		},
 		"description": schema.StringAttribute{
 			Optional:    true,
@@ -46,7 +42,7 @@ func PropertySchema() map[string]schema.Attribute {
 		},
 		"options": schema.ListNestedAttribute{
 			Optional:    true,
-			Description: "Available options for multi_select properties.",
+			Description: "Available options for select and multi_select properties.",
 			NestedObject: schema.NestedAttributeObject{
 				Attributes: map[string]schema.Attribute{
 					"value": schema.StringAttribute{
@@ -59,6 +55,21 @@ func PropertySchema() map[string]schema.Attribute {
 						Description: "Hex color code for the option (e.g., '#ef4444'). Defaults to '#3b82f6' (blue) if not specified.",
 					},
 				},
+			},
+		},
+		"sql": schema.StringAttribute{
+			Optional:    true,
+			Description: "SQL query for computed properties. Required when type is 'computed'.",
+		},
+		"call_to_action": schema.StringAttribute{
+			Optional:    true,
+			Description: "Call-to-action text for url properties. Required when type is 'url'.",
+		},
+		"call_to_action_type": schema.StringAttribute{
+			Optional:    true,
+			Description: "Call-to-action type for url properties. Options: 'text', 'icon'. Required when type is 'url'.",
+			Validators: []validator.String{
+				stringvalidator.OneOf("text", "icon"),
 			},
 		},
 	}
@@ -88,9 +99,9 @@ func EntityTypeSchema() map[string]schema.Attribute {
 			Optional:    true,
 			Description: "Detailed explanation of the entity type.",
 		},
-		"properties": schema.ListNestedAttribute{
+		"properties": schema.MapNestedAttribute{
 			Optional:    true,
-			Description: "Custom properties to attach to the entity type. Note: When updating, you must include ALL existing properties in your configuration, as the API replaces the entire properties list.",
+			Description: "Custom properties to attach to the entity type, keyed by property identifier. Note: When updating, you must include ALL existing properties in your configuration, as the API replaces the entire properties list.",
 			NestedObject: schema.NestedAttributeObject{
 				Attributes: PropertySchema(),
 			},

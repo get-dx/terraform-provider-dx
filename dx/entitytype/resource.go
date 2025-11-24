@@ -75,11 +75,7 @@ func (r *EntityTypeResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	payload, err := modelToRequestBody(ctx, plan, false)
-	if err != nil {
-		resp.Diagnostics.AddError("Error converting plan to request body", err.Error())
-		return
-	}
+	payload := modelToRequestBody(ctx, plan, false)
 
 	// Create EntityType (apiResp is a struct of type APIEntityTypeResponse)
 	apiResp, err := r.client.CreateEntityType(ctx, payload)
@@ -155,11 +151,7 @@ func (r *EntityTypeResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
-	payload, err := modelToRequestBody(ctx, plan, true)
-	if err != nil {
-		resp.Diagnostics.AddError("Error converting plan to request body", err.Error())
-		return
-	}
+	payload := modelToRequestBody(ctx, plan, true)
 
 	apiResp, err := r.client.UpdateEntityType(ctx, payload)
 	if err != nil {
@@ -221,32 +213,19 @@ func ValidateModel(plan EntityTypeModel, diags *diag.Diagnostics) {
 
 	// Validate properties
 	if len(plan.Properties) > 0 {
-		propertyIdentifiers := make(map[string]bool)
-		for i, prop := range plan.Properties {
+		for identifier, prop := range plan.Properties {
 			// Check required property fields
-			if prop.Identifier.IsNull() || prop.Identifier.IsUnknown() {
-				diags.AddError("Missing required field", fmt.Sprintf("Property at index %d is missing required field 'identifier'.", i))
-			}
 			if prop.Name.IsNull() || prop.Name.IsUnknown() {
-				diags.AddError("Missing required field", fmt.Sprintf("Property at index %d is missing required field 'name'.", i))
+				diags.AddError("Missing required field", fmt.Sprintf("Property '%s' is missing required field 'name'.", identifier))
 			}
 			if prop.Type.IsNull() || prop.Type.IsUnknown() {
-				diags.AddError("Missing required field", fmt.Sprintf("Property at index %d is missing required field 'type'.", i))
-			}
-
-			// Check for duplicate property identifiers
-			if !prop.Identifier.IsNull() {
-				propIdentifier := prop.Identifier.ValueString()
-				if propertyIdentifiers[propIdentifier] {
-					diags.AddError("Duplicate property identifier", fmt.Sprintf("Property identifier '%s' is used more than once. Each property must have a unique identifier.", propIdentifier))
-				}
-				propertyIdentifiers[propIdentifier] = true
+				diags.AddError("Missing required field", fmt.Sprintf("Property '%s' is missing required field 'type'.", identifier))
 			}
 		}
 	}
 }
 
-func modelToRequestBody(ctx context.Context, plan EntityTypeModel, isUpdate bool) (map[string]interface{}, error) {
+func modelToRequestBody(ctx context.Context, plan EntityTypeModel, isUpdate bool) map[string]interface{} {
 	tflog.Debug(ctx, "Converting plan to request body")
 
 	// Construct API request payload
@@ -260,12 +239,13 @@ func modelToRequestBody(ctx context.Context, plan EntityTypeModel, isUpdate bool
 		payload["description"] = plan.Description.ValueString()
 	}
 
-	// Add properties array
+	// Add properties array (API expects array, but we use map in Terraform)
 	if len(plan.Properties) > 0 {
 		properties := []map[string]interface{}{}
-		for idx, planProp := range plan.Properties {
+		idx := 0
+		for identifier, planProp := range plan.Properties {
 			property := map[string]interface{}{
-				"identifier": planProp.Identifier.ValueString(),
+				"identifier": identifier,
 				"name":       planProp.Name.ValueString(),
 				"type":       planProp.Type.ValueString(),
 			}
@@ -291,10 +271,11 @@ func modelToRequestBody(ctx context.Context, plan EntityTypeModel, isUpdate bool
 
 			// Build definition object based on property type
 			propType := planProp.Type.ValueString()
-			if propType == "multi_select" {
-				// For multi_select, create definition with options
-				definition := map[string]interface{}{}
+			definition := map[string]interface{}{}
 
+			switch propType {
+			case "multi_select":
+				// For multi_select, create definition with options
 				if len(planProp.Options) > 0 {
 					options := make([]map[string]interface{}, 0, len(planProp.Options))
 					for _, opt := range planProp.Options {
@@ -311,14 +292,27 @@ func modelToRequestBody(ctx context.Context, plan EntityTypeModel, isUpdate bool
 				} else {
 					definition["options"] = []map[string]interface{}{}
 				}
-
-				property["definition"] = definition
-			} else {
+			case "computed":
+				// For computed type, add SQL to definition
+				if !planProp.SQL.IsNull() && !planProp.SQL.IsUnknown() {
+					definition["sql"] = planProp.SQL.ValueString()
+				}
+			case "url":
+				// For url type, add call_to_action and call_to_action_type to definition
+				if !planProp.CallToAction.IsNull() && !planProp.CallToAction.IsUnknown() {
+					definition["call_to_action"] = planProp.CallToAction.ValueString()
+				}
+				if !planProp.CallToActionType.IsNull() && !planProp.CallToActionType.IsUnknown() {
+					definition["call_to_action_type"] = planProp.CallToActionType.ValueString()
+				}
+			default:
 				// For other types (like text), definition is an empty object
-				property["definition"] = map[string]interface{}{}
 			}
 
+			property["definition"] = definition
+
 			properties = append(properties, property)
+			idx++
 		}
 		payload["properties"] = properties
 	} else {
@@ -330,7 +324,7 @@ func modelToRequestBody(ctx context.Context, plan EntityTypeModel, isUpdate bool
 	}
 
 	// Add aliases map
-	if plan.Aliases != nil && len(plan.Aliases) > 0 {
+	if len(plan.Aliases) > 0 {
 		aliases := make(map[string]bool)
 		for key, val := range plan.Aliases {
 			if !val.IsNull() && !val.IsUnknown() {
@@ -340,7 +334,7 @@ func modelToRequestBody(ctx context.Context, plan EntityTypeModel, isUpdate bool
 		payload["aliases"] = aliases
 	}
 
-	return payload, nil
+	return payload
 }
 
 func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIEntityTypeResponse, state *EntityTypeModel, oldPlan *EntityTypeModel) {
@@ -359,14 +353,13 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIEntityTypeRespon
 	state.UpdatedAt = types.StringValue(apiResp.EntityType.UpdatedAt)
 	state.Ordering = types.Int64Value(apiResp.EntityType.Ordering)
 
-	// Properties array
+	// Properties map (keyed by identifier)
 	// Only set properties if they were originally specified (not null) in the plan,
 	// or if the API returned non-empty properties
 	if len(apiResp.EntityType.Properties) > 0 {
-		properties := make([]PropertyModel, 0, len(apiResp.EntityType.Properties))
+		properties := make(map[string]PropertyModel, len(apiResp.EntityType.Properties))
 		for _, apiProp := range apiResp.EntityType.Properties {
 			property := PropertyModel{
-				Identifier:  types.StringValue(apiProp.Identifier),
 				Name:        types.StringValue(apiProp.Name),
 				Type:        types.StringValue(apiProp.Type),
 				Description: dx.StringOrNull(apiProp.Description),
@@ -374,19 +367,34 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIEntityTypeRespon
 				Ordering:    dx.Int64OrNull(apiProp.Ordering),
 			}
 
-			// Extract options from definition if present
-			if apiProp.Definition != nil && len(apiProp.Definition.Options) > 0 {
-				options := make([]PropertyOptionModel, 0, len(apiProp.Definition.Options))
-				for _, opt := range apiProp.Definition.Options {
-					options = append(options, PropertyOptionModel{
-						Value: types.StringValue(opt.Value),
-						Color: types.StringValue(opt.Color),
-					})
+			// Extract definition fields based on property type
+			if apiProp.Definition != nil {
+				propType := apiProp.Type
+				if propType == "multi_select" && len(apiProp.Definition.Options) > 0 {
+					// Extract options for multi_select type
+					options := make([]PropertyOptionModel, 0, len(apiProp.Definition.Options))
+					for _, opt := range apiProp.Definition.Options {
+						options = append(options, PropertyOptionModel{
+							Value: types.StringValue(opt.Value),
+							Color: types.StringValue(opt.Color),
+						})
+					}
+					property.Options = options
+				} else if propType == "computed" && apiProp.Definition.SQL != nil {
+					// Extract SQL for computed type
+					property.SQL = types.StringValue(*apiProp.Definition.SQL)
+				} else if propType == "url" {
+					// Extract call_to_action fields for url type
+					if apiProp.Definition.CallToAction != nil {
+						property.CallToAction = types.StringValue(*apiProp.Definition.CallToAction)
+					}
+					if apiProp.Definition.CallToActionType != nil {
+						property.CallToActionType = types.StringValue(*apiProp.Definition.CallToActionType)
+					}
 				}
-				property.Options = options
 			}
 
-			properties = append(properties, property)
+			properties[apiProp.Identifier] = property
 		}
 		state.Properties = properties
 	} else {
@@ -395,14 +403,14 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIEntityTypeRespon
 		if oldPlan.Properties == nil {
 			state.Properties = nil
 		} else {
-			state.Properties = []PropertyModel{}
+			state.Properties = map[string]PropertyModel{}
 		}
 	}
 
 	// Aliases map
 	// Only set aliases if they were originally specified (not null) in the plan,
 	// or if the API returned non-empty aliases
-	if apiResp.EntityType.Aliases != nil && len(apiResp.EntityType.Aliases) > 0 {
+	if len(apiResp.EntityType.Aliases) > 0 {
 		aliases := make(map[string]types.Bool)
 		for key, val := range apiResp.EntityType.Aliases {
 			aliases[key] = types.BoolValue(val)

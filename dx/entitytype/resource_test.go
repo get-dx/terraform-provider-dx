@@ -49,19 +49,16 @@ func TestValidateModel_MissingName(t *testing.T) {
 }
 
 func TestValidateModel_DuplicatePropertyIdentifiers(t *testing.T) {
+	// With map structure, duplicate keys are not possible in Go maps,
+	// so this test is no longer applicable. The map key itself is the identifier.
+	// This test is kept for reference but will always pass with map structure.
 	var model = entitytype.EntityTypeModel{
 		Identifier: types.StringValue("test_entity"),
 		Name:       types.StringValue("Test Entity Type"),
-		Properties: []entitytype.PropertyModel{
-			{
-				Identifier: types.StringValue("team"),
-				Name:       types.StringValue("Team"),
-				Type:       types.StringValue("text"),
-			},
-			{
-				Identifier: types.StringValue("team"), // Duplicate!
-				Name:       types.StringValue("Owning Team"),
-				Type:       types.StringValue("multi_select"),
+		Properties: map[string]entitytype.PropertyModel{
+			"team": {
+				Name: types.StringValue("Team"),
+				Type: types.StringValue("text"),
 			},
 		},
 	}
@@ -69,20 +66,10 @@ func TestValidateModel_DuplicatePropertyIdentifiers(t *testing.T) {
 	diags := diag.Diagnostics{}
 	entitytype.ValidateModel(model, &diags)
 
-	if !diags.HasError() {
-		t.Error("Expected validation to fail due to duplicate property identifiers, but it passed")
-		return
-	}
-
-	found := false
-	for _, d := range diags {
-		if d.Summary() == "Duplicate property identifier" {
-			found = true
-		}
-	}
-
-	if !found {
-		t.Error("Expected 'Duplicate property identifier' error but didn't find it")
+	// With map structure, duplicate identifiers are impossible (map keys are unique)
+	// So this test should pass
+	if diags.HasError() {
+		t.Errorf("Expected validation to pass with map structure, but got errors: %v", diags)
 	}
 }
 
@@ -90,9 +77,9 @@ func TestValidateModel_MissingPropertyFields(t *testing.T) {
 	var model = entitytype.EntityTypeModel{
 		Identifier: types.StringValue("test_entity"),
 		Name:       types.StringValue("Test Entity Type"),
-		Properties: []entitytype.PropertyModel{
-			{
-				// Missing identifier, name, and type
+		Properties: map[string]entitytype.PropertyModel{
+			"team": {
+				// Missing name and type
 			},
 		},
 	}
@@ -105,9 +92,9 @@ func TestValidateModel_MissingPropertyFields(t *testing.T) {
 		return
 	}
 
-	// Should have at least 3 errors (identifier, name, type)
-	if len(diags) < 3 {
-		t.Errorf("Expected at least 3 validation errors, got %d", len(diags))
+	// Should have at least 2 errors (name, type) - identifier is now the map key
+	if len(diags) < 2 {
+		t.Errorf("Expected at least 2 validation errors, got %d", len(diags))
 	}
 }
 
@@ -116,9 +103,8 @@ func TestValidateModel_ValidModel(t *testing.T) {
 		Identifier:  types.StringValue("service"),
 		Name:        types.StringValue("Service"),
 		Description: types.StringValue("A deployable service"),
-		Properties: []entitytype.PropertyModel{
-			{
-				Identifier: types.StringValue("team"),
+		Properties: map[string]entitytype.PropertyModel{
+			"team": {
 				Name:       types.StringValue("Owning Team"),
 				Type:       types.StringValue("multi_select"),
 				Visibility: types.StringValue("visible"),
@@ -156,9 +142,8 @@ resource "dx_entity_type" "test" {
   name        = "%s"
   description = "This is a test entity type created by Terraform"
 
-  properties = [
-    {
-      identifier = "team"
+  properties = {
+    team = {
       name       = "Owning Team"
       type       = "multi_select"
       visibility = "visible"
@@ -167,14 +152,13 @@ resource "dx_entity_type" "test" {
         { value = "data", color = "#ef4444" },
         { value = "product", color = "#10b981" }
       ]
-    },
-    {
-      identifier = "tier"
+    }
+    tier = {
       name       = "Service Tier"
       type       = "text"
       visibility = "visible"
     }
-  ]
+  }
 
   aliases = {
     "github_repository" = true
@@ -194,10 +178,10 @@ resource "dx_entity_type" "test" {
 					resource.TestCheckResourceAttr("dx_entity_type.test", "identifier", entityTypeIdentifier),
 					resource.TestCheckResourceAttr("dx_entity_type.test", "name", entityTypeName),
 					resource.TestCheckResourceAttr("dx_entity_type.test", "description", "This is a test entity type created by Terraform"),
-					resource.TestCheckResourceAttr("dx_entity_type.test", "properties.#", "2"),
-					resource.TestCheckResourceAttr("dx_entity_type.test", "properties.0.identifier", "team"),
-					resource.TestCheckResourceAttr("dx_entity_type.test", "properties.0.name", "Owning Team"),
-					resource.TestCheckResourceAttr("dx_entity_type.test", "properties.0.type", "multi_select"),
+					resource.TestCheckResourceAttr("dx_entity_type.test", "properties.%", "2"),
+					resource.TestCheckResourceAttr("dx_entity_type.test", "properties.team.name", "Owning Team"),
+					resource.TestCheckResourceAttr("dx_entity_type.test", "properties.team.type", "multi_select"),
+					resource.TestCheckResourceAttr("dx_entity_type.test", "properties.tier.name", "Service Tier"),
 					resource.TestCheckResourceAttr("dx_entity_type.test", "aliases.github_repository", "true"),
 					resource.TestCheckResourceAttr("dx_entity_type.test", "aliases.pagerduty_service", "true"),
 				),
@@ -218,9 +202,8 @@ resource "dx_entity_type" "test" {
   name        = "%s Updated"
   description = "Updated description"
 
-  properties = [
-    {
-      identifier = "team"
+  properties = {
+    team = {
       name       = "Team Owner"
       type       = "multi_select"
       visibility = "visible"
@@ -230,19 +213,17 @@ resource "dx_entity_type" "test" {
         { value = "product", color = "#10b981" },
         { value = "infrastructure", color = "#f59e0b" }
       ]
-    },
-    {
-      identifier = "tier"
+    }
+    tier = {
       name       = "Service Tier"
       type       = "text"
       visibility = "visible"
-    },
-    {
-      identifier = "language"
-      name       = "Programming Language"
-      type       = "text"
     }
-  ]
+    language = {
+      name = "Programming Language"
+      type = "text"
+    }
+  }
 
   aliases = {
     "github_repository" = true
@@ -252,9 +233,9 @@ resource "dx_entity_type" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("dx_entity_type.test", "name", entityTypeName+" Updated"),
 					resource.TestCheckResourceAttr("dx_entity_type.test", "description", "Updated description"),
-					resource.TestCheckResourceAttr("dx_entity_type.test", "properties.#", "3"),
-					resource.TestCheckResourceAttr("dx_entity_type.test", "properties.0.name", "Team Owner"),
-					resource.TestCheckResourceAttr("dx_entity_type.test", "properties.0.options.#", "4"),
+					resource.TestCheckResourceAttr("dx_entity_type.test", "properties.%", "3"),
+					resource.TestCheckResourceAttr("dx_entity_type.test", "properties.team.name", "Team Owner"),
+					resource.TestCheckResourceAttr("dx_entity_type.test", "properties.team.options.#", "4"),
 					resource.TestCheckResourceAttr("dx_entity_type.test", "aliases.github_repository", "true"),
 				),
 			},
