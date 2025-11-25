@@ -100,6 +100,20 @@ resource "dx_entity_type" "tf-integration-test" {
       name = "Programming Language"
       type = "text"
     }
+    active_count = {
+      name        = "Active Count"
+      type        = "computed"
+      visibility  = "visible"
+      sql         = "SELECT COUNT(*) FROM portal_entities WHERE identifier = $entity_identifier"
+      output_type = "number"
+    }
+    repository_url = {
+      name                = "Repository URL"
+      type                = "url"
+      visibility          = "visible"
+      call_to_action      = "View Repository"
+      call_to_action_type = "text"
+    }
   }
 
   aliases = {
@@ -108,12 +122,20 @@ resource "dx_entity_type" "tf-integration-test" {
 }
 `, entityTypeIdentifier, entityTypeName),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("dx_entity_type.test", "name", entityTypeName+" Updated"),
-					resource.TestCheckResourceAttr("dx_entity_type.test", "description", "Updated description"),
-					resource.TestCheckResourceAttr("dx_entity_type.test", "properties.%", "3"),
-					resource.TestCheckResourceAttr("dx_entity_type.test", "properties.team.name", "Team Owner"),
-					resource.TestCheckResourceAttr("dx_entity_type.test", "properties.team.options.#", "4"),
-					resource.TestCheckResourceAttr("dx_entity_type.test", "aliases.github_repository", "true"),
+					resource.TestCheckResourceAttr("dx_entity_type.tf-integration-test", "name", entityTypeName+" Updated"),
+					resource.TestCheckResourceAttr("dx_entity_type.tf-integration-test", "description", "Updated description"),
+					resource.TestCheckResourceAttr("dx_entity_type.tf-integration-test", "properties.%", "5"),
+					resource.TestCheckResourceAttr("dx_entity_type.tf-integration-test", "properties.team.name", "Team Owner"),
+					resource.TestCheckResourceAttr("dx_entity_type.tf-integration-test", "properties.team.options.#", "4"),
+					resource.TestCheckResourceAttr("dx_entity_type.tf-integration-test", "properties.tier.type", "text"),
+					resource.TestCheckResourceAttr("dx_entity_type.tf-integration-test", "properties.language.type", "text"),
+					resource.TestCheckResourceAttr("dx_entity_type.tf-integration-test", "properties.active_count.type", "computed"),
+					resource.TestCheckResourceAttr("dx_entity_type.tf-integration-test", "properties.active_count.sql", "SELECT COUNT(*) FROM portal_entities WHERE identifier = $entity_identifier"),
+					resource.TestCheckResourceAttr("dx_entity_type.tf-integration-test", "properties.active_count.output_type", "number"),
+					resource.TestCheckResourceAttr("dx_entity_type.tf-integration-test", "properties.repository_url.type", "url"),
+					resource.TestCheckResourceAttr("dx_entity_type.tf-integration-test", "properties.repository_url.call_to_action", "View Repository"),
+					resource.TestCheckResourceAttr("dx_entity_type.tf-integration-test", "properties.repository_url.call_to_action_type", "text"),
+					resource.TestCheckResourceAttr("dx_entity_type.tf-integration-test", "aliases.github_repo", "true"),
 				),
 			},
 			// Delete testing automatically occurs at the end
