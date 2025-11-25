@@ -137,7 +137,7 @@ func TestAccDxEntityTypeResourceCreate(t *testing.T) {
 	var testAccDxEntityTypeResourceBasic = fmt.Sprintf(`
 provider "dx" {}
 
-resource "dx_entity_type" "test" {
+resource "dx_entity_type" "tf-integration-test" {
   identifier  = "%s"
   name        = "%s"
   description = "This is a test entity type created by Terraform"
@@ -161,8 +161,7 @@ resource "dx_entity_type" "test" {
   }
 
   aliases = {
-    "github_repository" = true
-    "pagerduty_service" = true
+    "github_repo" = true
   }
 }
 `, entityTypeIdentifier, entityTypeName)
@@ -175,20 +174,19 @@ resource "dx_entity_type" "test" {
 			{
 				Config: testAccDxEntityTypeResourceBasic,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("dx_entity_type.test", "identifier", entityTypeIdentifier),
-					resource.TestCheckResourceAttr("dx_entity_type.test", "name", entityTypeName),
-					resource.TestCheckResourceAttr("dx_entity_type.test", "description", "This is a test entity type created by Terraform"),
-					resource.TestCheckResourceAttr("dx_entity_type.test", "properties.%", "2"),
-					resource.TestCheckResourceAttr("dx_entity_type.test", "properties.team.name", "Owning Team"),
-					resource.TestCheckResourceAttr("dx_entity_type.test", "properties.team.type", "multi_select"),
-					resource.TestCheckResourceAttr("dx_entity_type.test", "properties.tier.name", "Service Tier"),
-					resource.TestCheckResourceAttr("dx_entity_type.test", "aliases.github_repository", "true"),
-					resource.TestCheckResourceAttr("dx_entity_type.test", "aliases.pagerduty_service", "true"),
+					resource.TestCheckResourceAttr("dx_entity_type.tf-integration-test", "identifier", entityTypeIdentifier),
+					resource.TestCheckResourceAttr("dx_entity_type.tf-integration-test", "name", entityTypeName),
+					resource.TestCheckResourceAttr("dx_entity_type.tf-integration-test", "description", "This is a test entity type created by Terraform"),
+					resource.TestCheckResourceAttr("dx_entity_type.tf-integration-test", "properties.%", "2"),
+					resource.TestCheckResourceAttr("dx_entity_type.tf-integration-test", "properties.team.name", "Owning Team"),
+					resource.TestCheckResourceAttr("dx_entity_type.tf-integration-test", "properties.team.type", "multi_select"),
+					resource.TestCheckResourceAttr("dx_entity_type.tf-integration-test", "properties.tier.name", "Service Tier"),
+					resource.TestCheckResourceAttr("dx_entity_type.tf-integration-test", "aliases.github_repo", "true"),
 				),
 			},
 			// ImportState testing
 			{
-				ResourceName:      "dx_entity_type.test",
+				ResourceName:      "dx_entity_type.tf-integration-test",
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
@@ -197,7 +195,7 @@ resource "dx_entity_type" "test" {
 				Config: fmt.Sprintf(`
 provider "dx" {}
 
-resource "dx_entity_type" "test" {
+resource "dx_entity_type" "tf-integration-test" {
   identifier  = "%s"
   name        = "%s Updated"
   description = "Updated description"
@@ -226,7 +224,7 @@ resource "dx_entity_type" "test" {
   }
 
   aliases = {
-    "github_repository" = true
+    "github_repo" = true
   }
 }
 `, entityTypeIdentifier, entityTypeName),
