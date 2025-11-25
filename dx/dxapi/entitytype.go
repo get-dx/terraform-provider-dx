@@ -59,15 +59,6 @@ type APIEntityTypeResponse struct {
 	EntityType APIEntityType `json:"entity_type"`
 }
 
-// APIEntityTypesListResponse is the response from the entityTypes.list endpoint.
-type APIEntityTypesListResponse struct {
-	Ok               bool            `json:"ok"`
-	EntityTypes      []APIEntityType `json:"entity_types"`
-	ResponseMetadata struct {
-		NextCursor string `json:"next_cursor"`
-	} `json:"response_metadata"`
-}
-
 func (c *Client) CreateEntityType(ctx context.Context, payload map[string]interface{}) (*APIEntityTypeResponse, error) {
 	tflog.Info(ctx, "Calling CreateEntityType")
 
@@ -239,43 +230,4 @@ func (c *Client) DeleteEntityType(ctx context.Context, identifier string) (bool,
 	}
 
 	return true, nil
-}
-
-func (c *Client) ListEntityTypes(ctx context.Context) (*APIEntityTypesListResponse, error) {
-	tflog.Info(ctx, "Calling ListEntityTypes")
-
-	url := fmt.Sprintf("%s/entityTypes.list", c.baseURL)
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return nil, fmt.Errorf("creating request: %w", err)
-	}
-
-	setRequestHeaders(req, c)
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("making HTTP request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("unexpected status code: %d, response body: %s", resp.StatusCode, string(body))
-	}
-
-	var apiResp APIEntityTypesListResponse
-	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
-		return nil, fmt.Errorf("decoding API response: %w", err)
-	}
-
-	// Log the API response for debugging
-	if respJson, err := json.MarshalIndent(apiResp, "", "  "); err == nil {
-		tflog.Info(ctx, fmt.Sprintf("API Response from ListEntityTypes:\n%s", string(respJson)))
-	} else {
-		tflog.Debug(ctx, "Could not marshal API response", map[string]interface{}{
-			"error": err,
-		})
-	}
-
-	return &apiResp, nil
 }
