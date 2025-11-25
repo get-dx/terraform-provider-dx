@@ -313,13 +313,7 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIEntityTypeRespon
 	state.Name = types.StringValue(apiResp.EntityType.Name)
 
 	// Optional fields
-	// Preserve null from plan if it was null, even if API returns a value
-	if oldPlan.Description.IsNull() && apiResp.EntityType.Description != nil {
-		// If plan had null but API returned a value, preserve null to maintain consistency
-		state.Description = types.StringNull()
-	} else {
-		state.Description = dx.StringOrNull(apiResp.EntityType.Description)
-	}
+	state.Description = dx.StringOrNull(apiResp.EntityType.Description)
 
 	// Computed fields
 	state.CreatedAt = types.StringValue(apiResp.EntityType.CreatedAt)
