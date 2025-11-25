@@ -7,12 +7,13 @@ import (
 	"terraform-provider-dx/dx"
 	"terraform-provider-dx/dx/dxapi"
 
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
+
+const DEFAULT_OPTION_COLOR = "#3b82f6" // Default blue color
 
 // Ensure provider defined types fully satisfy framework interfaces.
 var (
@@ -66,12 +67,6 @@ func (r *EntityTypeResource) Create(ctx context.Context, req resource.CreateRequ
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		tflog.Debug(ctx, "Plan has errors, returning early")
-		return
-	}
-
-	tflog.Debug(ctx, "Got plan, validating...")
-	ValidateModel(plan, &resp.Diagnostics)
-	if resp.Diagnostics.HasError() {
 		return
 	}
 
@@ -145,12 +140,6 @@ func (r *EntityTypeResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
-	tflog.Debug(ctx, "Got plan, validating...")
-	ValidateModel(plan, &resp.Diagnostics)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	payload := modelToRequestBody(ctx, plan, true)
 
 	apiResp, err := r.client.UpdateEntityType(ctx, payload)
@@ -198,31 +187,6 @@ func (r *EntityTypeResource) ImportState(ctx context.Context, req resource.Impor
 
 	// Use the identifier as the import ID
 	resource.ImportStatePassthroughID(ctx, path.Root("identifier"), req, resp)
-}
-
-func ValidateModel(plan EntityTypeModel, diags *diag.Diagnostics) {
-	// Validate required fields
-	if plan.Identifier.IsNull() || plan.Identifier.IsUnknown() {
-		diags.AddError("Missing required field", "The 'identifier' field must be specified.")
-		return
-	}
-	if plan.Name.IsNull() || plan.Name.IsUnknown() {
-		diags.AddError("Missing required field", "The 'name' field must be specified.")
-		return
-	}
-
-	// Validate properties
-	if len(plan.Properties) > 0 {
-		for identifier, prop := range plan.Properties {
-			// Check required property fields
-			if prop.Name.IsNull() || prop.Name.IsUnknown() {
-				diags.AddError("Missing required field", fmt.Sprintf("Property '%s' is missing required field 'name'.", identifier))
-			}
-			if prop.Type.IsNull() || prop.Type.IsUnknown() {
-				diags.AddError("Missing required field", fmt.Sprintf("Property '%s' is missing required field 'type'.", identifier))
-			}
-		}
-	}
 }
 
 func modelToRequestBody(ctx context.Context, plan EntityTypeModel, isUpdate bool) map[string]interface{} {
@@ -279,7 +243,7 @@ func modelToRequestBody(ctx context.Context, plan EntityTypeModel, isUpdate bool
 				if len(planProp.Options) > 0 {
 					options := make([]map[string]interface{}, 0, len(planProp.Options))
 					for _, opt := range planProp.Options {
-						color := "#3b82f6" // Default blue color
+						color := DEFAULT_OPTION_COLOR
 						if !opt.Color.IsNull() && !opt.Color.IsUnknown() {
 							color = opt.Color.ValueString()
 						}
@@ -349,7 +313,13 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIEntityTypeRespon
 	state.Name = types.StringValue(apiResp.EntityType.Name)
 
 	// Optional fields
-	state.Description = dx.StringOrNull(apiResp.EntityType.Description)
+	// Preserve null from plan if it was null, even if API returns a value
+	if oldPlan.Description.IsNull() && apiResp.EntityType.Description != nil {
+		// If plan had null but API returned a value, preserve null to maintain consistency
+		state.Description = types.StringNull()
+	} else {
+		state.Description = dx.StringOrNull(apiResp.EntityType.Description)
+	}
 
 	// Computed fields
 	state.CreatedAt = types.StringValue(apiResp.EntityType.CreatedAt)
