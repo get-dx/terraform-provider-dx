@@ -32,6 +32,7 @@ type PropertyModel struct {
 	Ordering         types.Int64           `tfsdk:"ordering"`            // Optional: sort order for the property
 	Options          []PropertyOptionModel `tfsdk:"options"`             // Optional: for multi_select type
 	SQL              types.String          `tfsdk:"sql"`                 // Optional: SQL query for computed type
+	OutputType       types.String          `tfsdk:"output_type"`         // Optional: output type for computed type
 	CallToAction     types.String          `tfsdk:"call_to_action"`      // Optional: call-to-action text for url type
 	CallToActionType types.String          `tfsdk:"call_to_action_type"` // Optional: call-to-action type for url type
 }

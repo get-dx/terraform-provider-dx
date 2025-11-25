@@ -61,6 +61,13 @@ func PropertySchema() map[string]schema.Attribute {
 			Optional:    true,
 			Description: "SQL query for computed properties. Required when type is 'computed'.",
 		},
+		"output_type": schema.StringAttribute{
+			Optional:    true,
+			Description: "Output type for computed properties. Options: 'string', 'json', 'list', 'number', 'percent', 'currency_usd', 'duration_milliseconds', 'duration_seconds', 'duration_minutes', 'duration_hours', 'duration_days', 'custom'.",
+			Validators: []validator.String{
+				stringvalidator.OneOf("string", "json", "list", "number", "percent", "currency_usd", "duration_milliseconds", "duration_seconds", "duration_minutes", "duration_hours", "duration_days", "custom"),
+			},
+		},
 		"call_to_action": schema.StringAttribute{
 			Optional:    true,
 			Description: "Call-to-action text for url properties. Required when type is 'url'.",

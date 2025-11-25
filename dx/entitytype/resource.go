@@ -293,9 +293,12 @@ func modelToRequestBody(ctx context.Context, plan EntityTypeModel, isUpdate bool
 					definition["options"] = []map[string]interface{}{}
 				}
 			case "computed":
-				// For computed type, add SQL to definition
+				// For computed type, add SQL and output_type to definition
 				if !planProp.SQL.IsNull() && !planProp.SQL.IsUnknown() {
 					definition["sql"] = planProp.SQL.ValueString()
+				}
+				if !planProp.OutputType.IsNull() && !planProp.OutputType.IsUnknown() {
+					definition["output_type"] = planProp.OutputType.ValueString()
 				}
 			case "url":
 				// For url type, add call_to_action and call_to_action_type to definition
@@ -380,9 +383,14 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIEntityTypeRespon
 						})
 					}
 					property.Options = options
-				} else if propType == "computed" && apiProp.Definition.SQL != nil {
-					// Extract SQL for computed type
-					property.SQL = types.StringValue(*apiProp.Definition.SQL)
+				} else if propType == "computed" {
+					// Extract SQL and output_type for computed type
+					if apiProp.Definition.SQL != nil {
+						property.SQL = types.StringValue(*apiProp.Definition.SQL)
+					}
+					if apiProp.Definition.OutputType != nil {
+						property.OutputType = types.StringValue(*apiProp.Definition.OutputType)
+					}
 				} else if propType == "url" {
 					// Extract call_to_action fields for url type
 					if apiProp.Definition.CallToAction != nil {

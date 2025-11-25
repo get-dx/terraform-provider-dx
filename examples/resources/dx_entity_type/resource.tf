@@ -43,6 +43,7 @@ resource "dx_entity_type" "repository" {
       visibility  = "visible"
       ordering    = 3
       sql         = "SELECT COUNT(*) FROM portal_entities WHERE identifier = $entity_identifier"
+      output_type = "number"
     }
     repository_url = {
       name                = "Repository URL"

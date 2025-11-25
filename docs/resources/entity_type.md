@@ -58,6 +58,7 @@ resource "dx_entity_type" "repository" {
       visibility  = "visible"
       ordering    = 3
       sql         = "SELECT COUNT(*) FROM portal_entities WHERE identifier = $entity_identifier"
+      output_type = "number"
     }
     repository_url = {
       name                = "Repository URL"
@@ -112,6 +113,7 @@ Optional:
 - `description` (String) Description of the property.
 - `options` (Attributes List) Available options for select and multi_select properties. (see [below for nested schema](#nestedatt--properties--options))
 - `ordering` (Number) Sort order for the property. If not specified, properties will be ordered by their position in the list.
+- `output_type` (String) Output type for computed properties. Options: 'string', 'json', 'list', 'number', 'percent', 'currency_usd', 'duration_milliseconds', 'duration_seconds', 'duration_minutes', 'duration_hours', 'duration_days', 'custom'.
 - `sql` (String) SQL query for computed properties. Required when type is 'computed'.
 - `visibility` (String) Property visibility setting. Options: 'hidden', 'visible'. Defaults to 'visible' if not specified.
 
