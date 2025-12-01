@@ -22,6 +22,22 @@ func PropertySchema() map[string]schema.Attribute {
 		"type": schema.StringAttribute{
 			Required:    true,
 			Description: "Property type (e.g., 'multi_select', 'text', 'computed', 'url').",
+			Validators: []validator.String{
+				stringvalidator.OneOf(
+					"text",
+					"user",
+					"url",
+					"select",
+					"multi_select",
+					"boolean",
+					"number",
+					"computed",
+					"date",
+					"json",
+					"list",
+					"openapi",
+				),
+			},
 		},
 		"description": schema.StringAttribute{
 			Optional:    true,
