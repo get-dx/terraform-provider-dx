@@ -52,3 +52,11 @@ func Int32OrNull(i *int32) types.Int32 {
 	}
 	return types.Int32Null()
 }
+
+// Converts a `*int64` into a TF int value, or `Int64Null` if the pointer is nil.
+func Int64OrNull(i *int64) types.Int64 {
+	if i != nil {
+		return types.Int64Value(*i)
+	}
+	return types.Int64Null()
+}
