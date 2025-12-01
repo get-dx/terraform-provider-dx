@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.5.0] - 2025-12-01
+
+### Added
+
+- Added support for managing entity types in DX with the `dx_entity_type` resource.
+
 ## [0.4.0] - 2025-10-09
 
 ### Changed
