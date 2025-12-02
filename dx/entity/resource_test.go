@@ -196,7 +196,7 @@ resource "dx_entity" "optional" {
   }
 
   relations = {
-    "service-consumes-api" = ["some-api"]
+    "service-consumes-api" = ["users.search"]
   }
 }
 `, entityIdentifier, entityName),
