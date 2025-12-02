@@ -24,8 +24,8 @@ resource "dx_entity" "tf-integration-test" {
 
   properties = {
     tier            = "Tier-1"
-    "slack-channel" = "https://slack.com/channels/test-channel"
-    languages       = ["Go", "TypeScript"]
+    "slack-team" = "https://slack.com/channels/test-channel"
+    language       = ["Go", "TypeScript"]
   }
 
   aliases = {
@@ -37,7 +37,7 @@ resource "dx_entity" "tf-integration-test" {
   }
 
   relations = {
-    "service-consumes-api" = ["users.search"]
+    "service-consumes-api" = ["defaultapi"]
   }
 }
 `, entityIdentifier, entityName)
@@ -77,8 +77,8 @@ resource "dx_entity" "tf-integration-test" {
 
   properties = {
     tier            = "Tier-2"
-    "slack-channel" = "https://slack.com/channels/updated-channel"
-    languages       = ["Go", "TypeScript", "Python"]
+    "slack-team" = "https://slack.com/channels/updated-channel"
+    language       = ["Go", "TypeScript", "Python"]
     active          = true
   }
 
@@ -94,7 +94,7 @@ resource "dx_entity" "tf-integration-test" {
   }
 
   relations = {
-    "service-consumes-api" = ["users.search", "users.list"]
+    "service-consumes-api" = ["defaultapi", "users.list"]
   }
 }
 `, entityIdentifier, entityName),
@@ -196,7 +196,7 @@ resource "dx_entity" "optional" {
   }
 
   relations = {
-    "service-consumes-api" = ["users.search"]
+    "service-consumes-api" = ["defaultapi"]
   }
 }
 `, entityIdentifier, entityName),
