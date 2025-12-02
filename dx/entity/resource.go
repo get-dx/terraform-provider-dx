@@ -299,6 +299,9 @@ func modelToRequestBody(ctx context.Context, plan EntityModel, isUpdate bool) ma
 		if len(teamIds) > 0 {
 			payload["owner_team_ids"] = teamIds
 		}
+	} else if isUpdate {
+		// For updates, send empty array to clear owner_team_ids if they were previously set
+		payload["owner_team_ids"] = []string{}
 	}
 
 	// Add owner_user_ids array
@@ -312,6 +315,9 @@ func modelToRequestBody(ctx context.Context, plan EntityModel, isUpdate bool) ma
 		if len(userIds) > 0 {
 			payload["owner_user_ids"] = userIds
 		}
+	} else if isUpdate {
+		// For updates, send empty array to clear owner_user_ids if they were previously set
+		payload["owner_user_ids"] = []string{}
 	}
 
 	// Add domain
