@@ -31,7 +31,7 @@ resource "dx_entity" "tf-integration-test" {
   aliases = {
     github_repo = [
       {
-        identifier = "123456789"
+        identifier = "520637360"
       }
     ]
   }
@@ -85,10 +85,10 @@ resource "dx_entity" "tf-integration-test" {
   aliases = {
     github_repo = [
       {
-        identifier = "123456789"
+        identifier = "520637360"
       },
       {
-        identifier = "987654321"
+        identifier = "962275774"
       }
     ]
   }
@@ -190,7 +190,7 @@ resource "dx_entity" "optional" {
   aliases = {
     github_repo = [
       {
-        identifier = "555555555"
+        identifier = "962275774"
       }
     ]
   }
