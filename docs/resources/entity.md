@@ -25,10 +25,10 @@ resource "dx_entity" "payment_service" {
 
   properties = {
     service_tier      = "Tier-1"
-    language          = "[\"Go\", \"Python\"]"
+    language          = ["Go", "Python"]
     slack_channel_url = "https://slack.com/channels/payment-service"
     architecture      = "microservices"
-    deployment_env    = "[\"production\", \"staging\"]"
+    deployment_env    = ["production", "staging"]
   }
 
   relations = {
@@ -40,15 +40,11 @@ resource "dx_entity" "payment_service" {
     github_repo = [
       {
         identifier = "1234567890"
-        name       = "company/payment-service"
-        url        = "https://github.com/company/payment-service"
       }
     ]
     pagerduty_service = [
       {
         identifier = "PD12345"
-        name       = "Payment Service"
-        url        = "https://company.pagerduty.com/services/PD12345"
       }
     ]
   }
@@ -76,11 +72,9 @@ resource "dx_entity" "user_api" {
   }
 
   aliases = {
-    openapi_spec = [
+    github_repo = [
       {
-        identifier = "user-api-v2"
-        name       = "User API OpenAPI Spec"
-        url        = "https://api.company.com/openapi/user-api.yaml"
+        identifier = "962275774"
       }
     ]
   }
