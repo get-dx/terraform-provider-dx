@@ -76,7 +76,7 @@ func (r *EntityResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	payload := modelToRequestBody(ctx, plan, false)
+	payload := modelToRequestBody(ctx, plan)
 
 	// Create Entity (apiResp is a struct of type APIEntityResponse)
 	apiResp, err := r.client.CreateEntity(ctx, payload)
@@ -158,7 +158,7 @@ func (r *EntityResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	payload := modelToRequestBody(ctx, plan, true)
+	payload := modelToRequestBody(ctx, plan)
 
 	apiResp, err := r.client.UpdateEntity(ctx, payload)
 	if err != nil {
@@ -265,7 +265,7 @@ func restoreNullStates(model *EntityModel, states nullFieldStates) {
 	}
 }
 
-func modelToRequestBody(ctx context.Context, plan EntityModel, isUpdate bool) map[string]interface{} {
+func modelToRequestBody(ctx context.Context, plan EntityModel) map[string]interface{} {
 	tflog.Info(ctx, "Converting plan to request body")
 
 	// Ensure identifier is set (should be set by plan modifier, but check just in case)
@@ -277,11 +277,19 @@ func modelToRequestBody(ctx context.Context, plan EntityModel, isUpdate bool) ma
 
 	// Construct API request payload
 	payload := map[string]interface{}{
-		"identifier": identifier,
-		"type":       plan.Type.ValueString(),
+		"identifier":     identifier,
+		"type":           plan.Type.ValueString(),
+		"name":           nil,
+		"description":    nil,
+		"owner_team_ids": []string{},
+		"owner_user_ids": []string{},
+		"domain":         nil,
+		"properties":     map[string]interface{}{},
+		"aliases":        map[string][]dxapi.APIAlias{},
+		"relations":      map[string][]string{},
 	}
 
-	// Add optional fields if they're present
+	// Add optional fields
 	if !plan.Name.IsNull() && !plan.Name.IsUnknown() {
 		payload["name"] = plan.Name.ValueString()
 	}
@@ -301,9 +309,6 @@ func modelToRequestBody(ctx context.Context, plan EntityModel, isUpdate bool) ma
 		if len(teamIds) > 0 {
 			payload["owner_team_ids"] = teamIds
 		}
-	} else if isUpdate {
-		// For updates, send empty array to clear owner_team_ids if they were previously set
-		payload["owner_team_ids"] = []string{}
 	}
 
 	// Add owner_user_ids array
@@ -317,9 +322,6 @@ func modelToRequestBody(ctx context.Context, plan EntityModel, isUpdate bool) ma
 		if len(userIds) > 0 {
 			payload["owner_user_ids"] = userIds
 		}
-	} else if isUpdate {
-		// For updates, send empty array to clear owner_user_ids if they were previously set
-		payload["owner_user_ids"] = []string{}
 	}
 
 	// Add domain
@@ -340,9 +342,6 @@ func modelToRequestBody(ctx context.Context, plan EntityModel, isUpdate bool) ma
 				tflog.Warn(ctx, fmt.Sprintf("Failed to convert properties to Go value: %v", err))
 			}
 		}
-	} else if isUpdate {
-		// For updates, send empty map to clear properties if they were previously set
-		payload["properties"] = map[string]interface{}{}
 	}
 
 	// Add aliases map
@@ -367,9 +366,6 @@ func modelToRequestBody(ctx context.Context, plan EntityModel, isUpdate bool) ma
 		if len(aliases) > 0 {
 			payload["aliases"] = aliases
 		}
-	} else if isUpdate {
-		// For updates, send empty map to clear aliases if they were previously set
-		payload["aliases"] = map[string][]dxapi.APIAlias{}
 	}
 
 	// Add relations map
@@ -389,9 +385,6 @@ func modelToRequestBody(ctx context.Context, plan EntityModel, isUpdate bool) ma
 		if len(relations) > 0 {
 			payload["relations"] = relations
 		}
-	} else if isUpdate {
-		// For updates, send empty map to clear relations if they were previously set
-		payload["relations"] = map[string][]string{}
 	}
 
 	return payload
