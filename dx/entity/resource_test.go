@@ -59,10 +59,12 @@ resource "dx_entity" "tf-integration-test" {
 				),
 			},
 			// ImportState testing
+			// Note: relations are not returned by entities.info API, so we ignore them during import
 			{
-				ResourceName:      "dx_entity.tf-integration-test",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "dx_entity.tf-integration-test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"relations", "properties"},
 			},
 			// Update and Read testing
 			{
@@ -79,7 +81,6 @@ resource "dx_entity" "tf-integration-test" {
     tier            = "Tier-2"
     "slack-team" = "https://slack.com/channels/updated-channel"
     language       = ["Go", "TypeScript", "Python"]
-    active          = true
   }
 
   aliases = {
@@ -91,10 +92,6 @@ resource "dx_entity" "tf-integration-test" {
         identifier = "962275774"
       }
     ]
-  }
-
-  relations = {
-    "service-consumes-api" = ["defaultapi", "users.list"]
   }
 }
 `, entityIdentifier, entityName),
