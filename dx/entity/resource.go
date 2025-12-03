@@ -247,18 +247,20 @@ func checkNullStates(ctx context.Context, plan planGetter) nullFieldStates {
 	return states
 }
 
-// restoreNullStates sets fields back to nil if they were null in the original plan.
+// restoreNullStates sets fields back to nil if they were null in the original plan/state
+// AND the API returned empty data. If the API returned actual data, we keep it
+// (this is important for import where prior state is empty but API has data).
 func restoreNullStates(model *EntityModel, states nullFieldStates) {
-	if states.AliasesNull {
+	if states.AliasesNull && len(model.Aliases) == 0 {
 		model.Aliases = nil
 	}
-	if states.RelationsNull {
+	if states.RelationsNull && len(model.Relations) == 0 {
 		model.Relations = nil
 	}
-	if states.OwnerTeamIdsNull {
+	if states.OwnerTeamIdsNull && len(model.OwnerTeamIds) == 0 {
 		model.OwnerTeamIds = nil
 	}
-	if states.OwnerUserIdsNull {
+	if states.OwnerUserIdsNull && len(model.OwnerUserIds) == 0 {
 		model.OwnerUserIds = nil
 	}
 }
