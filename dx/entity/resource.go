@@ -158,7 +158,17 @@ func (r *EntityResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
+	// Get prior state to detect removed relations/aliases
+	var priorState EntityModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &priorState)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	payload := modelToRequestBody(ctx, plan)
+
+	// Add empty arrays for removed relation types so the API removes them
+	addRemovedMapKeys(ctx, payload, priorState, plan)
 
 	apiResp, err := r.client.UpdateEntity(ctx, payload)
 	if err != nil {
@@ -262,6 +272,92 @@ func restoreNullStates(model *EntityModel, states nullFieldStates) {
 	}
 	if states.OwnerUserIdsNull && len(model.OwnerUserIds) == 0 {
 		model.OwnerUserIds = nil
+	}
+}
+
+// addRemovedMapKeys adds empty arrays for relation/alias types that existed in
+// the prior state but are not in the new plan. This tells the API to remove them.
+// It also adds null values for removed property keys.
+func addRemovedMapKeys(_ context.Context, payload map[string]interface{}, priorState EntityModel, plan EntityModel) {
+	// Handle removed relation types
+	if len(priorState.Relations) > 0 {
+		// Get or create the relations map in payload
+		relations, ok := payload["relations"].(map[string][]string)
+		if !ok {
+			relations = make(map[string][]string)
+		}
+
+		// Check each relation type from prior state
+		for relType := range priorState.Relations {
+			// If this relation type is not in the new plan, add an empty array
+			if _, existsInPlan := plan.Relations[relType]; !existsInPlan {
+				relations[relType] = []string{}
+			}
+		}
+
+		payload["relations"] = relations
+	}
+
+	// Handle removed alias types
+	if len(priorState.Aliases) > 0 {
+		// Get or create the aliases map in payload
+		aliases, ok := payload["aliases"].(map[string][]dxapi.APIAlias)
+		if !ok {
+			aliases = make(map[string][]dxapi.APIAlias)
+		}
+
+		// Check each alias type from prior state
+		for aliasType := range priorState.Aliases {
+			// If this alias type is not in the new plan, add an empty array
+			if _, existsInPlan := plan.Aliases[aliasType]; !existsInPlan {
+				aliases[aliasType] = []dxapi.APIAlias{}
+			}
+		}
+
+		payload["aliases"] = aliases
+	}
+
+	// Handle removed property keys
+	// Convert prior state and plan properties to Go maps to compare keys
+	var priorProps map[string]interface{}
+	var planProps map[string]interface{}
+
+	if !priorState.Properties.IsNull() && !priorState.Properties.IsUnknown() {
+		if underlyingValue := priorState.Properties.UnderlyingValue(); underlyingValue != nil {
+			if goValue, err := attrValueToGoValue(underlyingValue); err == nil {
+				if m, ok := goValue.(map[string]interface{}); ok {
+					priorProps = m
+				}
+			}
+		}
+	}
+
+	if !plan.Properties.IsNull() && !plan.Properties.IsUnknown() {
+		if underlyingValue := plan.Properties.UnderlyingValue(); underlyingValue != nil {
+			if goValue, err := attrValueToGoValue(underlyingValue); err == nil {
+				if m, ok := goValue.(map[string]interface{}); ok {
+					planProps = m
+				}
+			}
+		}
+	}
+
+	if len(priorProps) > 0 {
+		// Get or create the properties map in payload
+		properties, ok := payload["properties"].(map[string]interface{})
+		if !ok {
+			properties = make(map[string]interface{})
+		}
+
+		// Check each property key from prior state
+		for propKey := range priorProps {
+			// If this property key is not in the new plan, add null to remove it
+			if _, existsInPlan := planProps[propKey]; !existsInPlan {
+				properties[propKey] = nil
+			}
+		}
+
+		payload["properties"] = properties
 	}
 }
 
