@@ -35,13 +35,11 @@ type APIOwnerTeam struct {
 }
 
 type APIOwnerUser struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
+	Id string `json:"id"`
 }
 
 type APIDomain struct {
 	Identifier string `json:"identifier"`
-	Name       string `json:"name"`
 }
 
 type APIAlias struct {
@@ -110,9 +108,6 @@ func (c *Client) CreateEntity(ctx context.Context, payload map[string]interface{
 }
 
 func (c *Client) GetEntity(ctx context.Context, identifier string) (*APIEntityResponse, error) {
-	// Note: The API documentation doesn't show an entities.info endpoint,
-	// but we'll try entities.info similar to entityTypes.info
-	// If it doesn't exist, we may need to use a different approach
 	urlStr := fmt.Sprintf("%s/entities.info?identifier=%s", c.baseURL, url.QueryEscape(identifier))
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, urlStr, nil)
 	if err != nil {
