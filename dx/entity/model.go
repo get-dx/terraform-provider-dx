@@ -12,14 +12,13 @@ type EntityModel struct {
 	Type       types.String `tfsdk:"type"`       // Entity type identifier
 
 	// Optional fields
-	Name         types.String              `tfsdk:"name"`           // Display name
-	Description  types.String              `tfsdk:"description"`    // Entity description
-	OwnerTeamIds []types.String            `tfsdk:"owner_team_ids"` // Array of owner team IDs
-	OwnerUserIds []types.String            `tfsdk:"owner_user_ids"` // Array of owner user IDs
-	Domain       types.String              `tfsdk:"domain"`         // Domain entity identifier
-	Properties   types.Dynamic             `tfsdk:"properties"`     // Entity properties (key-value pairs, values can be strings, numbers, null, objects, or lists)
-	Aliases      map[string][]AliasModel   `tfsdk:"aliases"`        // Aliases map (map of alias type to array of alias objects)
-	Relations    map[string][]types.String `tfsdk:"relations"`      // Relations map
+	Name         types.String            `tfsdk:"name"`           // Display name
+	Description  types.String            `tfsdk:"description"`    // Entity description
+	OwnerTeamIds []types.String          `tfsdk:"owner_team_ids"` // Array of owner team IDs
+	OwnerUserIds []types.String          `tfsdk:"owner_user_ids"` // Array of owner user IDs
+	Domain       types.String            `tfsdk:"domain"`         // Domain entity identifier
+	Properties   types.Dynamic           `tfsdk:"properties"`     // Entity properties (key-value pairs, values can be strings, numbers, null, objects, or lists)
+	Aliases      map[string][]AliasModel `tfsdk:"aliases"`        // Aliases map (map of alias type to array of alias objects)
 
 	// Computed fields (from API)
 	CreatedAt types.String `tfsdk:"created_at"` // Creation timestamp

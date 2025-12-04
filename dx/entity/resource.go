@@ -158,7 +158,7 @@ func (r *EntityResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	// Get prior state to detect removed relations/aliases
+	// Get prior state to detect removed aliases
 	var priorState EntityModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &priorState)...)
 	if resp.Diagnostics.HasError() {
@@ -224,7 +224,6 @@ func (r *EntityResource) ImportState(ctx context.Context, req resource.ImportSta
 // This is needed because Go maps/slices lose the null vs empty distinction when decoded.
 type nullFieldStates struct {
 	AliasesNull      bool
-	RelationsNull    bool
 	OwnerTeamIdsNull bool
 	OwnerUserIdsNull bool
 }
@@ -241,10 +240,6 @@ func checkNullStates(ctx context.Context, plan planGetter) nullFieldStates {
 	var aliasesAttr types.Map
 	plan.GetAttribute(ctx, path.Root("aliases"), &aliasesAttr)
 	states.AliasesNull = aliasesAttr.IsNull()
-
-	var relationsAttr types.Map
-	plan.GetAttribute(ctx, path.Root("relations"), &relationsAttr)
-	states.RelationsNull = relationsAttr.IsNull()
 
 	var ownerTeamIdsAttr types.List
 	plan.GetAttribute(ctx, path.Root("owner_team_ids"), &ownerTeamIdsAttr)
@@ -264,9 +259,6 @@ func restoreNullStates(model *EntityModel, states nullFieldStates) {
 	if states.AliasesNull && len(model.Aliases) == 0 {
 		model.Aliases = nil
 	}
-	if states.RelationsNull && len(model.Relations) == 0 {
-		model.Relations = nil
-	}
 	if states.OwnerTeamIdsNull && len(model.OwnerTeamIds) == 0 {
 		model.OwnerTeamIds = nil
 	}
@@ -275,29 +267,10 @@ func restoreNullStates(model *EntityModel, states nullFieldStates) {
 	}
 }
 
-// addRemovedMapKeys adds empty arrays for relation/alias types that existed in
+// addRemovedMapKeys adds empty arrays for alias types that existed in
 // the prior state but are not in the new plan. This tells the API to remove them.
 // It also adds null values for removed property keys.
 func addRemovedMapKeys(_ context.Context, payload map[string]interface{}, priorState EntityModel, plan EntityModel) {
-	// Handle removed relation types
-	if len(priorState.Relations) > 0 {
-		// Get or create the relations map in payload
-		relations, ok := payload["relations"].(map[string][]string)
-		if !ok {
-			relations = make(map[string][]string)
-		}
-
-		// Check each relation type from prior state
-		for relType := range priorState.Relations {
-			// If this relation type is not in the new plan, add an empty array
-			if _, existsInPlan := plan.Relations[relType]; !existsInPlan {
-				relations[relType] = []string{}
-			}
-		}
-
-		payload["relations"] = relations
-	}
-
 	// Handle removed alias types
 	if len(priorState.Aliases) > 0 {
 		// Get or create the aliases map in payload
@@ -382,7 +355,6 @@ func modelToRequestBody(ctx context.Context, plan EntityModel) map[string]interf
 		"domain":         nil,
 		"properties":     map[string]interface{}{},
 		"aliases":        map[string][]dxapi.APIAlias{},
-		"relations":      map[string][]string{},
 	}
 
 	// Add optional fields
@@ -461,25 +433,6 @@ func modelToRequestBody(ctx context.Context, plan EntityModel) map[string]interf
 		}
 		if len(aliases) > 0 {
 			payload["aliases"] = aliases
-		}
-	}
-
-	// Add relations map
-	if len(plan.Relations) > 0 {
-		relations := make(map[string][]string)
-		for relType, entityIds := range plan.Relations {
-			ids := make([]string, 0, len(entityIds))
-			for _, entityId := range entityIds {
-				if !entityId.IsNull() && !entityId.IsUnknown() {
-					ids = append(ids, entityId.ValueString())
-				}
-			}
-			if len(ids) > 0 {
-				relations[relType] = ids
-			}
-		}
-		if len(relations) > 0 {
-			payload["relations"] = relations
 		}
 	}
 
@@ -588,24 +541,6 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIEntityResponse, 
 		// API returned no aliases - preserve exactly what was in the plan
 		// This maintains the null vs empty map distinction
 		state.Aliases = oldPlan.Aliases
-	}
-
-	// Relations map
-	// Preserve plan values if API doesn't return relations (API might not return them in create response)
-	if len(apiResp.Entity.Relations) > 0 {
-		relations := make(map[string][]types.String)
-		for relType, entityIds := range apiResp.Entity.Relations {
-			ids := make([]types.String, 0, len(entityIds))
-			for _, entityId := range entityIds {
-				ids = append(ids, types.StringValue(entityId))
-			}
-			relations[relType] = ids
-		}
-		state.Relations = relations
-	} else {
-		// API returned no relations - preserve exactly what was in the plan
-		// This maintains the null vs empty map distinction
-		state.Relations = oldPlan.Relations
 	}
 
 	// Computed fields

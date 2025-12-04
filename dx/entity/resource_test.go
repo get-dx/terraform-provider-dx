@@ -35,10 +35,6 @@ resource "dx_entity" "tf-integration-test" {
       }
     ]
   }
-
-  relations = {
-    "service-consumes-api" = ["defaultapi"]
-  }
 }
 `, entityIdentifier, entityName)
 
@@ -59,12 +55,11 @@ resource "dx_entity" "tf-integration-test" {
 				),
 			},
 			// ImportState testing
-			// Note: relations are not returned by entities.info API, so we ignore them during import
 			{
 				ResourceName:            "dx_entity.tf-integration-test",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"relations", "properties"},
+				ImportStateVerifyIgnore: []string{"properties"},
 			},
 			// Update and Read testing
 			{
@@ -138,7 +133,7 @@ func TestAccDxEntityResourceWithOptionalFields(t *testing.T) {
 	entityIdentifier := fmt.Sprintf("tf_optional_entity_%d", acctest.RandInt())
 	entityName := fmt.Sprintf("Optional Fields Entity %d", acctest.RandInt())
 
-	// Test with some optional fields but not all (no aliases, no relations)
+	// Test with some optional fields but not all (no aliases)
 	var testAccDxEntityResourceOptional = fmt.Sprintf(`
 provider "dx" {}
 
@@ -169,7 +164,7 @@ resource "dx_entity" "optional" {
 					resource.TestCheckResourceAttrSet("dx_entity.optional", "updated_at"),
 				),
 			},
-			// Update to add aliases and relations
+			// Update to add aliases
 			{
 				Config: fmt.Sprintf(`
 provider "dx" {}
@@ -191,10 +186,6 @@ resource "dx_entity" "optional" {
       }
     ]
   }
-
-  relations = {
-    "service-consumes-api" = ["defaultapi"]
-  }
 }
 `, entityIdentifier, entityName),
 				Check: resource.ComposeTestCheckFunc(
@@ -202,7 +193,7 @@ resource "dx_entity" "optional" {
 					resource.TestCheckResourceAttr("dx_entity.optional", "type", "service"),
 				),
 			},
-			// Update to remove aliases and relations (back to null)
+			// Update to remove aliases (back to null)
 			{
 				Config: fmt.Sprintf(`
 provider "dx" {}

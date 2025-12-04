@@ -1,4 +1,4 @@
-# Example 1: Create a service entity with properties, relations, and aliases
+# Example 1: Create a service entity with properties and aliases
 resource "dx_entity" "payment_service" {
   identifier     = "payment-service"
   type           = "service"
@@ -14,11 +14,6 @@ resource "dx_entity" "payment_service" {
     slack_channel_url = "https://slack.com/channels/payment-service"
     architecture      = "microservices"
     deployment_env    = ["production", "staging"]
-  }
-
-  relations = {
-    consumesAPI = ["auth-service", "notification-service"]
-    dependsOn   = ["payment-db", "redis-cache"]
   }
 
   aliases = {
@@ -49,11 +44,6 @@ resource "dx_entity" "user_api" {
     protocol      = "REST"
     documentation = "https://api.company.com/docs/user-api"
     rate_limit    = "1000/hour"
-  }
-
-  relations = {
-    providesAPI = ["user-service"]
-    usesData    = ["user-database"]
   }
 
   aliases = {

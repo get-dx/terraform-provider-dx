@@ -27,7 +27,6 @@ type APIEntity struct {
 	Domain      *APIDomain             `json:"domain,omitempty"`
 	Properties  map[string]interface{} `json:"properties,omitempty"`
 	Aliases     map[string][]APIAlias  `json:"aliases,omitempty"`
-	Relations   map[string][]string    `json:"relations,omitempty"`
 }
 
 type APIOwnerTeam struct {

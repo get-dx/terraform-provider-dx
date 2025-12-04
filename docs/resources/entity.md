@@ -13,7 +13,7 @@ Manages a DX Entity. Entities represent items in your software catalog (e.g., se
 ## Example Usage
 
 ```terraform
-# Example 1: Create a service entity with properties, relations, and aliases
+# Example 1: Create a service entity with properties and aliases
 resource "dx_entity" "payment_service" {
   identifier     = "payment-service"
   type           = "service"
@@ -29,11 +29,6 @@ resource "dx_entity" "payment_service" {
     slack_channel_url = "https://slack.com/channels/payment-service"
     architecture      = "microservices"
     deployment_env    = ["production", "staging"]
-  }
-
-  relations = {
-    consumesAPI = ["auth-service", "notification-service"]
-    dependsOn   = ["payment-db", "redis-cache"]
   }
 
   aliases = {
@@ -66,11 +61,6 @@ resource "dx_entity" "user_api" {
     rate_limit    = "1000/hour"
   }
 
-  relations = {
-    providesAPI = ["user-service"]
-    usesData    = ["user-database"]
-  }
-
   aliases = {
     github_repo = [
       {
@@ -98,7 +88,6 @@ resource "dx_entity" "user_api" {
 - `owner_team_ids` (List of String) Array of owner team IDs assigned to the entity.
 - `owner_user_ids` (List of String) Array of owner user IDs assigned to the entity.
 - `properties` (Dynamic) Key-value pairs of entity properties and their values. Values can be strings, numbers, null, objects, or lists of any of those types.
-- `relations` (Map of List of String) Key-value pairs of relations and their associated entity identifiers. Keys are relation types (e.g., 'service-consumes-api'), values are arrays of entity identifiers.
 
 ### Read-Only
 

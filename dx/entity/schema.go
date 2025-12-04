@@ -85,11 +85,6 @@ func EntitySchema() map[string]schema.Attribute {
 			Optional:    true,
 			Description: "Key-value pairs of aliases assigned to the entity. Keys are alias types (e.g., 'github_repo'), values are arrays of alias objects with 'identifier' (required) field.",
 		},
-		"relations": schema.MapAttribute{
-			ElementType: types.ListType{ElemType: types.StringType},
-			Optional:    true,
-			Description: "Key-value pairs of relations and their associated entity identifiers. Keys are relation types (e.g., 'service-consumes-api'), values are arrays of entity identifiers.",
-		},
 		"created_at": schema.StringAttribute{
 			Computed:    true,
 			Description: "Timestamp when the entity was created.",
