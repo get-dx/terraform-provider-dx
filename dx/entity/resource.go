@@ -338,7 +338,7 @@ func modelToRequestBody(ctx context.Context, plan EntityModel) map[string]interf
 		// This shouldn't happen, but if it does, we'll let the API return an error
 	}
 
-	// Construct API request payload
+	// Construct API request payload with defaults
 	payload := map[string]interface{}{
 		"identifier":     identifier,
 		"type":           plan.Type.ValueString(),
@@ -352,15 +352,33 @@ func modelToRequestBody(ctx context.Context, plan EntityModel) map[string]interf
 	}
 
 	// Add optional fields
+	addNameToPayload(payload, plan)
+	addDescriptionToPayload(payload, plan)
+	addOwnerTeamIdsToPayload(payload, plan)
+	addOwnerUserIdsToPayload(payload, plan)
+	addDomainToPayload(payload, plan)
+	addPropertiesToPayload(ctx, payload, plan)
+	addAliasesToPayload(payload, plan)
+
+	return payload
+}
+
+// addNameToPayload adds the name field to the payload if set.
+func addNameToPayload(payload map[string]interface{}, plan EntityModel) {
 	if !plan.Name.IsNull() && !plan.Name.IsUnknown() {
 		payload["name"] = plan.Name.ValueString()
 	}
+}
 
+// addDescriptionToPayload adds the description field to the payload if set.
+func addDescriptionToPayload(payload map[string]interface{}, plan EntityModel) {
 	if !plan.Description.IsNull() && !plan.Description.IsUnknown() {
 		payload["description"] = plan.Description.ValueString()
 	}
+}
 
-	// Add owner_team_ids array
+// addOwnerTeamIdsToPayload adds the owner_team_ids array to the payload if set.
+func addOwnerTeamIdsToPayload(payload map[string]interface{}, plan EntityModel) {
 	if len(plan.OwnerTeamIds) > 0 {
 		teamIds := make([]string, 0, len(plan.OwnerTeamIds))
 		for _, teamId := range plan.OwnerTeamIds {
@@ -372,8 +390,10 @@ func modelToRequestBody(ctx context.Context, plan EntityModel) map[string]interf
 			payload["owner_team_ids"] = teamIds
 		}
 	}
+}
 
-	// Add owner_user_ids array
+// addOwnerUserIdsToPayload adds the owner_user_ids array to the payload if set.
+func addOwnerUserIdsToPayload(payload map[string]interface{}, plan EntityModel) {
 	if len(plan.OwnerUserIds) > 0 {
 		userIds := make([]string, 0, len(plan.OwnerUserIds))
 		for _, userId := range plan.OwnerUserIds {
@@ -385,18 +405,20 @@ func modelToRequestBody(ctx context.Context, plan EntityModel) map[string]interf
 			payload["owner_user_ids"] = userIds
 		}
 	}
+}
 
-	// Add domain
+// addDomainToPayload adds the domain field to the payload if set.
+func addDomainToPayload(payload map[string]interface{}, plan EntityModel) {
 	if !plan.Domain.IsNull() && !plan.Domain.IsUnknown() {
 		payload["domain"] = plan.Domain.ValueString()
 	}
+}
 
-	// Add properties - convert from types.Dynamic to interface{} and send as-is
+// addPropertiesToPayload converts and adds properties from types.Dynamic to the payload.
+func addPropertiesToPayload(ctx context.Context, payload map[string]interface{}, plan EntityModel) {
 	if !plan.Properties.IsNull() && !plan.Properties.IsUnknown() {
-		// Get the underlying attr.Value from the Dynamic type
 		underlyingValue := plan.Properties.UnderlyingValue()
 		if underlyingValue != nil {
-			// Convert attr.Value to Go value
 			goValue, err := attrValueToGoValue(underlyingValue)
 			if err == nil && goValue != nil {
 				payload["properties"] = goValue
@@ -405,13 +427,13 @@ func modelToRequestBody(ctx context.Context, plan EntityModel) map[string]interf
 			}
 		}
 	}
+}
 
-	// Add aliases map
-	// Convert from map[string][]AliasModel to map[string][]APIAlias
+// addAliasesToPayload converts and adds aliases from map[string][]AliasModel to the payload.
+func addAliasesToPayload(payload map[string]interface{}, plan EntityModel) {
 	if len(plan.Aliases) > 0 {
 		aliases := make(map[string][]dxapi.APIAlias)
 		for aliasType, aliasArray := range plan.Aliases {
-			// Convert array of AliasModel to array of APIAlias
 			apiAliasArray := make([]dxapi.APIAlias, 0, len(aliasArray))
 			for _, aliasModel := range aliasArray {
 				if !aliasModel.Identifier.IsNull() && !aliasModel.Identifier.IsUnknown() {
@@ -429,8 +451,6 @@ func modelToRequestBody(ctx context.Context, plan EntityModel) map[string]interf
 			payload["aliases"] = aliases
 		}
 	}
-
-	return payload
 }
 
 func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIEntityResponse, state *EntityModel, oldPlan *EntityModel) {
