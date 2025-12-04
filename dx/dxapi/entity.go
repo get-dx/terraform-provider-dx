@@ -84,8 +84,8 @@ func (c *Client) CreateEntity(ctx context.Context, payload map[string]interface{
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("unexpected status code: %d, response body: %s", resp.StatusCode, string(body))
+		body, err := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("unexpected status code: %d, response body: %s, error: %w", resp.StatusCode, string(body), err)
 	}
 
 	// Decode the response into the APIEntityResponse struct
@@ -123,8 +123,8 @@ func (c *Client) GetEntity(ctx context.Context, identifier string) (*APIEntityRe
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("unexpected status code: %d, response body: %s", resp.StatusCode, string(body))
+		body, err := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("unexpected status code: %d, response body: %s, error: %w", resp.StatusCode, string(body), err)
 	}
 
 	var apiResp APIEntityResponse
@@ -169,17 +169,8 @@ func (c *Client) UpdateEntity(ctx context.Context, payload map[string]interface{
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-		body, _ := io.ReadAll(resp.Body)
-
-		// format the JSON nicely
-		var prettyJSON bytes.Buffer
-		if err := json.Indent(&prettyJSON, body, "", "  "); err == nil {
-			tflog.Debug(ctx, fmt.Sprintf("Error response body:\n%s", prettyJSON.String()))
-		} else {
-			tflog.Debug(ctx, fmt.Sprintf("Error response body (raw):\n%s", string(body)))
-		}
-
-		return nil, fmt.Errorf("unexpected status code: %d, response body: %s", resp.StatusCode, string(body))
+		body, err := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("unexpected status code: %d, response body: %s, error: %w", resp.StatusCode, string(body), err)
 	}
 
 	var apiResp APIEntityResponse
@@ -218,8 +209,8 @@ func (c *Client) DeleteEntity(ctx context.Context, identifier string) (bool, err
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
-		body, _ := io.ReadAll(resp.Body)
-		return false, fmt.Errorf("unexpected status code: %d, response body: %s", resp.StatusCode, string(body))
+		body, err := io.ReadAll(resp.Body)
+		return false, fmt.Errorf("unexpected status code: %d, response body: %s, error: %w", resp.StatusCode, string(body), err)
 	}
 
 	return true, nil
