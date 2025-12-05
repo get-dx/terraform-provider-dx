@@ -13,6 +13,17 @@ Manages a DX Entity. Entities represent items in your software catalog (e.g., se
 ## Example Usage
 
 ```terraform
+terraform {
+  required_providers {
+    dx = {
+      source  = "registry.terraform.io/get-dx/dx"
+      version = "~> 0.6.0"
+    }
+  }
+}
+
+provider "dx" {}
+
 # Example 1: Create a service entity with properties and aliases
 resource "dx_entity" "payment_service" {
   identifier     = "payment-service"
@@ -87,7 +98,7 @@ resource "dx_entity" "user_api" {
 - `name` (String) Display name for the entity.
 - `owner_team_ids` (List of String) Array of owner team IDs assigned to the entity.
 - `owner_user_ids` (List of String) Array of owner user IDs assigned to the entity.
-- `properties` (Dynamic) Key-value pairs of entity properties and their values. Values can be strings, numbers, null, objects, or lists of any of those types.
+- `properties` (Dynamic) Key-value pairs of entity properties and their values. Values can be strings, numbers, null, objects, or lists of any of those types. See [EntityProperties](https://docs.getdx.com/webapi/types/properties/) types for valid configuration.
 
 ### Read-Only
 

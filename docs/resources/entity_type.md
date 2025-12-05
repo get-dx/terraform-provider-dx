@@ -13,6 +13,17 @@ Manages a DX Entity Type. Entity types are used to define the data model for ent
 ## Example Usage
 
 ```terraform
+terraform {
+  required_providers {
+    dx = {
+      source  = "registry.terraform.io/get-dx/dx"
+      version = "~> 0.6.0"
+    }
+  }
+}
+
+provider "dx" {}
+
 # Example: Create an entity type with properties and aliases
 resource "dx_entity_type" "repository" {
   identifier  = "repository"

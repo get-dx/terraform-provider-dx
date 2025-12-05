@@ -420,11 +420,12 @@ func addPropertiesToPayload(ctx context.Context, payload map[string]interface{},
 		underlyingValue := plan.Properties.UnderlyingValue()
 		if underlyingValue != nil {
 			goValue, err := attrValueToGoValue(underlyingValue)
-			if err == nil && goValue != nil {
-				payload["properties"] = goValue
-			} else {
-				tflog.Warn(ctx, fmt.Sprintf("Failed to convert properties to Go value: %v", err))
+
+			if err != nil {
+				tflog.Error(ctx, fmt.Sprintf("Failed to convert properties to Go value: %v", err))
 			}
+
+			payload["properties"] = goValue
 		}
 	}
 }

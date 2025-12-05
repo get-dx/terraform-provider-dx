@@ -1,3 +1,14 @@
+terraform {
+  required_providers {
+    dx = {
+      source  = "registry.terraform.io/get-dx/dx"
+      version = "~> 0.6.0"
+    }
+  }
+}
+
+provider "dx" {}
+
 # Example 1: Create a service entity with properties and aliases
 resource "dx_entity" "payment_service" {
   identifier     = "payment-service"

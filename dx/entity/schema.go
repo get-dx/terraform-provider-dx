@@ -72,7 +72,7 @@ func EntitySchema() map[string]schema.Attribute {
 		},
 		"properties": schema.DynamicAttribute{
 			Optional:    true,
-			Description: "Key-value pairs of entity properties and their values. Values can be strings, numbers, null, objects, or lists of any of those types.",
+			Description: "Key-value pairs of entity properties and their values. Values can be strings, numbers, null, objects, or lists of any of those types. See [EntityProperties](https://docs.getdx.com/webapi/types/properties/) types for valid configuration.",
 		},
 		"aliases": schema.MapAttribute{
 			ElementType: types.ListType{
