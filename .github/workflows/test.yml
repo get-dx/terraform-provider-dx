@@ -5,11 +5,15 @@ name: Tests
 # Optionally, you can turn it on using a schedule for regular testing.
 on:
   pull_request:
+    branches: [main]
     paths-ignore:
       - "README.md"
+      - "CHANGELOG.md"
   push:
+    branches: [main]
     paths-ignore:
       - "README.md"
+      - "CHANGELOG.md"
 
 # Testing only needs permissions to read the repository contents.
 permissions:
@@ -67,8 +71,7 @@ jobs:
       matrix:
         # list whatever Terraform versions here you would like to support
         terraform:
-          - "1.12.*"
-          - "1.13.*"
+          - "1.14.*"
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0

@@ -123,11 +123,6 @@ func (r *ScorecardResource) Read(ctx context.Context, req resource.ReadRequest, 
 	// Call the API to get the latest scorecard data
 	apiResp, err := r.client.GetScorecard(ctx, id)
 	if err != nil {
-		// TODO - implement resource not found error handling
-		// 	// Resource no longer exists remotely — remove from state
-		// 	resp.State.RemoveResource(ctx)
-		// 	return
-		// }
 		resp.Diagnostics.AddError(
 			"Error reading scorecard",
 			fmt.Sprintf("Could not read scorecard ID %s: %s", id, err.Error()),
@@ -139,12 +134,6 @@ func (r *ScorecardResource) Read(ctx context.Context, req resource.ReadRequest, 
 	// Shallow copy of plan to preserve values
 	oldState := state
 	responseBodyToModel(ctx, apiResp, &state, &oldState)
-	// state.Id = types.StringValue(apiResp.Scorecard.Id)
-	// state.Name = types.StringValue(apiResp.Scorecard.Name)
-	// // state.Description = types.StringValue(apiResp.Scorecard.Description)
-	// state.Type = types.StringValue(apiResp.Scorecard.Type)
-	// Map other fields as needed
-	// ...
 
 	diags = resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)

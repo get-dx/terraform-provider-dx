@@ -111,12 +111,6 @@ func (r *EntityTypeResource) Read(ctx context.Context, req resource.ReadRequest,
 	// Call the API to get the latest entity type data
 	apiResp, err := r.client.GetEntityType(ctx, identifier)
 	if err != nil {
-		// TODO - implement resource not found error handling
-		// if isNotFoundError(err) {
-		// 	// Resource no longer exists remotely — remove from state
-		// 	resp.State.RemoveResource(ctx)
-		// 	return
-		// }
 		resp.Diagnostics.AddError(
 			"Error reading entity type",
 			fmt.Sprintf("Could not read entity type with identifier %s: %s", identifier, err.Error()),

@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"terraform-provider-dx/dx/dxapi"
+	"terraform-provider-dx/dx/entity"
 	"terraform-provider-dx/dx/entitytype"
 	"terraform-provider-dx/dx/scorecard"
 
@@ -103,6 +104,7 @@ func (p *DxProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		scorecard.NewScorecardResource,
 		entitytype.NewEntityTypeResource,
+		entity.NewEntityResource,
 	}
 }
 
