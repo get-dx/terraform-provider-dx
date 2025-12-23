@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- A new `dx_entity` data source so you can easily syncronize data from DX into other applications.
+- A new `dx_entity` data source so you can easily synchronize data from DX into other applications.
 
 ---
 
