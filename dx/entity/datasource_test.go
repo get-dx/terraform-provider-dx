@@ -100,7 +100,7 @@ resource "dx_entity" "test_props" {
   
   properties = {
     tier        = "Tier-1"
-    language    = ["Go", "Typescript"]
+    language    = ["Go", "TypeScript"]
     environment = "production"
   }
   
