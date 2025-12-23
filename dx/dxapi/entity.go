@@ -35,7 +35,8 @@ type APIOwnerTeam struct {
 }
 
 type APIOwnerUser struct {
-	Id string `json:"id"`
+	Id    string `json:"id"`
+	Email string `json:"email"`
 }
 
 type APIDomain struct {

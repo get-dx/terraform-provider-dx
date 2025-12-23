@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.7.0] - 2025-12-23
+
+### Added
+
+- A new `dx_entity` data source so you can easily synchronize data from DX into other applications.
+
+---
+
+## [0.6.0] - 2025-12-05
+
+### Added
+
+- A new `dx_entity` resource so you can define entities in terraform and synced to DX.
+
 ## [0.5.1] - 2025-12-01
 
 ### Docs

@@ -4,8 +4,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// EntityModel describes the resource data model.
-type EntityModel struct {
+// EntityResourceModel describes the resource data model.
+type EntityResourceModel struct {
 	// Required fields
 	Id         types.String `tfsdk:"id"`         // Same as identifier for Terraform conventions
 	Identifier types.String `tfsdk:"identifier"` // User-defined unique identifier

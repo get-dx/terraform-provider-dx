@@ -68,7 +68,7 @@ func (r *EntityResource) Create(ctx context.Context, req resource.CreateRequest,
 	nullStates := checkNullStates(ctx, req.Plan)
 
 	// Retrieve values from plan
-	var plan EntityModel
+	var plan EntityResourceModel
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -102,7 +102,7 @@ func (r *EntityResource) Read(ctx context.Context, req resource.ReadRequest, res
 	// Check null states before decoding (Go maps/slices lose null vs empty distinction)
 	nullStates := checkNullStates(ctx, req.State)
 
-	var state EntityModel
+	var state EntityResourceModel
 
 	// Load existing state
 	diags := req.State.Get(ctx, &state)
@@ -146,14 +146,14 @@ func (r *EntityResource) Update(ctx context.Context, req resource.UpdateRequest,
 	// Check null states before decoding (Go maps/slices lose null vs empty distinction)
 	nullStates := checkNullStates(ctx, req.Plan)
 
-	var plan EntityModel
+	var plan EntityResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...) // Get the desired state
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Get prior state to detect removed aliases
-	var priorState EntityModel
+	var priorState EntityResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &priorState)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -183,7 +183,7 @@ func (r *EntityResource) Update(ctx context.Context, req resource.UpdateRequest,
 }
 
 func (r *EntityResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state EntityModel
+	var state EntityResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...) // Get the current state
 	if resp.Diagnostics.HasError() {
 		return
@@ -249,7 +249,7 @@ func checkNullStates(ctx context.Context, plan planGetter) nullFieldStates {
 // restoreNullStates sets fields back to nil if they were null in the original plan/state
 // AND the API returned empty data. If the API returned actual data, we keep it
 // (this is important for import where prior state is empty but API has data).
-func restoreNullStates(model *EntityModel, states nullFieldStates) {
+func restoreNullStates(model *EntityResourceModel, states nullFieldStates) {
 	if states.AliasesNull && len(model.Aliases) == 0 {
 		model.Aliases = nil
 	}
@@ -264,7 +264,7 @@ func restoreNullStates(model *EntityModel, states nullFieldStates) {
 // addRemovedMapKeys adds empty arrays for alias types that existed in
 // the prior state but are not in the new plan. This tells the API to remove them.
 // It also adds null values for removed property keys.
-func addRemovedMapKeys(_ context.Context, payload map[string]interface{}, priorState EntityModel, plan EntityModel) {
+func addRemovedMapKeys(_ context.Context, payload map[string]interface{}, priorState EntityResourceModel, plan EntityResourceModel) {
 	// Handle removed alias types
 	if len(priorState.Aliases) > 0 {
 		// Get or create the aliases map in payload
@@ -328,7 +328,7 @@ func addRemovedMapKeys(_ context.Context, payload map[string]interface{}, priorS
 	}
 }
 
-func modelToRequestBody(ctx context.Context, plan EntityModel) map[string]interface{} {
+func modelToRequestBody(ctx context.Context, plan EntityResourceModel) map[string]interface{} {
 	tflog.Info(ctx, "Converting plan to request body")
 
 	// Ensure identifier is set (should be set by plan modifier, but check just in case)
@@ -364,21 +364,21 @@ func modelToRequestBody(ctx context.Context, plan EntityModel) map[string]interf
 }
 
 // addNameToPayload adds the name field to the payload if set.
-func addNameToPayload(payload map[string]interface{}, plan EntityModel) {
+func addNameToPayload(payload map[string]interface{}, plan EntityResourceModel) {
 	if !plan.Name.IsNull() && !plan.Name.IsUnknown() {
 		payload["name"] = plan.Name.ValueString()
 	}
 }
 
 // addDescriptionToPayload adds the description field to the payload if set.
-func addDescriptionToPayload(payload map[string]interface{}, plan EntityModel) {
+func addDescriptionToPayload(payload map[string]interface{}, plan EntityResourceModel) {
 	if !plan.Description.IsNull() && !plan.Description.IsUnknown() {
 		payload["description"] = plan.Description.ValueString()
 	}
 }
 
 // addOwnerTeamIdsToPayload adds the owner_team_ids array to the payload if set.
-func addOwnerTeamIdsToPayload(payload map[string]interface{}, plan EntityModel) {
+func addOwnerTeamIdsToPayload(payload map[string]interface{}, plan EntityResourceModel) {
 	if len(plan.OwnerTeamIds) > 0 {
 		teamIds := make([]string, 0, len(plan.OwnerTeamIds))
 		for _, teamId := range plan.OwnerTeamIds {
@@ -393,7 +393,7 @@ func addOwnerTeamIdsToPayload(payload map[string]interface{}, plan EntityModel) 
 }
 
 // addOwnerUserIdsToPayload adds the owner_user_ids array to the payload if set.
-func addOwnerUserIdsToPayload(payload map[string]interface{}, plan EntityModel) {
+func addOwnerUserIdsToPayload(payload map[string]interface{}, plan EntityResourceModel) {
 	if len(plan.OwnerUserIds) > 0 {
 		userIds := make([]string, 0, len(plan.OwnerUserIds))
 		for _, userId := range plan.OwnerUserIds {
@@ -408,14 +408,14 @@ func addOwnerUserIdsToPayload(payload map[string]interface{}, plan EntityModel) 
 }
 
 // addDomainToPayload adds the domain field to the payload if set.
-func addDomainToPayload(payload map[string]interface{}, plan EntityModel) {
+func addDomainToPayload(payload map[string]interface{}, plan EntityResourceModel) {
 	if !plan.Domain.IsNull() && !plan.Domain.IsUnknown() {
 		payload["domain"] = plan.Domain.ValueString()
 	}
 }
 
 // addPropertiesToPayload converts and adds properties from types.Dynamic to the payload.
-func addPropertiesToPayload(ctx context.Context, payload map[string]interface{}, plan EntityModel) {
+func addPropertiesToPayload(ctx context.Context, payload map[string]interface{}, plan EntityResourceModel) {
 	if !plan.Properties.IsNull() && !plan.Properties.IsUnknown() {
 		underlyingValue := plan.Properties.UnderlyingValue()
 		if underlyingValue != nil {
@@ -431,7 +431,7 @@ func addPropertiesToPayload(ctx context.Context, payload map[string]interface{},
 }
 
 // addAliasesToPayload converts and adds aliases from map[string][]AliasModel to the payload.
-func addAliasesToPayload(payload map[string]interface{}, plan EntityModel) {
+func addAliasesToPayload(payload map[string]interface{}, plan EntityResourceModel) {
 	if len(plan.Aliases) > 0 {
 		aliases := make(map[string][]dxapi.APIAlias)
 		for aliasType, aliasArray := range plan.Aliases {
@@ -454,7 +454,7 @@ func addAliasesToPayload(payload map[string]interface{}, plan EntityModel) {
 	}
 }
 
-func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIEntityResponse, state *EntityModel, oldPlan *EntityModel) {
+func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIEntityResponse, state *EntityResourceModel, oldPlan *EntityResourceModel) {
 	tflog.Debug(ctx, "Mapping API response to Terraform model")
 
 	// Required fields
