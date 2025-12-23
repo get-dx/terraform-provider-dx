@@ -96,8 +96,7 @@ func (p *DxProvider) Configure(ctx context.Context, req provider.ConfigureReques
 	// p.client = client
 
 	resp.ResourceData = client
-	// Set if we create a data source
-	// resp.DataSourceData = client
+	resp.DataSourceData = client
 }
 
 func (p *DxProvider) Resources(ctx context.Context) []func() resource.Resource {
@@ -109,5 +108,7 @@ func (p *DxProvider) Resources(ctx context.Context) []func() resource.Resource {
 }
 
 func (p *DxProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
-	return nil
+	return []func() datasource.DataSource{
+		entity.NewEntityDataSource,
+	}
 }
