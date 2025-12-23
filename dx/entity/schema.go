@@ -28,7 +28,7 @@ func AliasSchema() map[string]schema.Attribute {
 	}
 }
 
-func EntitySchema() map[string]schema.Attribute {
+func EntityResourceSchema() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"id": schema.StringAttribute{
 			Computed:    true,
@@ -102,6 +102,6 @@ func EntitySchema() map[string]schema.Attribute {
 func (r *EntityResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "Manages a DX Entity. Entities represent items in your software catalog (e.g., services, APIs, domains).",
-		Attributes:  EntitySchema(),
+		Attributes:  EntityResourceSchema(),
 	}
 }
