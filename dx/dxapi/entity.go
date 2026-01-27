@@ -59,6 +59,62 @@ type APIEntityResponse struct {
 	Entity APIEntity `json:"entity"`
 }
 
+// APIEntitiesListResponse is the top-level response from the DX API for the entities.list endpoint.
+type APIEntitiesListResponse struct {
+	Ok               bool        `json:"ok"`
+	Entities         []APIEntity `json:"entities"`
+	ResponseMetadata struct {
+		NextCursor string `json:"next_cursor"`
+	} `json:"response_metadata"`
+}
+
+func (c *Client) ListEntities(ctx context.Context, entityType string) ([]APIEntity, error) {
+	tflog.Info(ctx, fmt.Sprintf("Calling ListEntities for type: %s", entityType))
+
+	var allEntities []APIEntity
+	cursor := ""
+
+	for {
+		urlStr := fmt.Sprintf("%s/entities.list?type=%s&limit=50", c.baseURL, url.QueryEscape(entityType))
+		if cursor != "" {
+			urlStr += "&cursor=" + url.QueryEscape(cursor)
+		}
+
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, urlStr, nil)
+		if err != nil {
+			return nil, fmt.Errorf("creating request: %w", err)
+		}
+
+		setRequestHeaders(req, c)
+
+		resp, err := c.httpClient.Do(req)
+		if err != nil {
+			return nil, fmt.Errorf("making HTTP request: %w", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			body, err := io.ReadAll(resp.Body)
+			return nil, fmt.Errorf("unexpected status code: %d, response body: %s, error: %w", resp.StatusCode, string(body), err)
+		}
+
+		var apiResp APIEntitiesListResponse
+		if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
+			return nil, fmt.Errorf("decoding API response: %w", err)
+		}
+
+		allEntities = append(allEntities, apiResp.Entities...)
+
+		if apiResp.ResponseMetadata.NextCursor == "" {
+			break
+		}
+		cursor = apiResp.ResponseMetadata.NextCursor
+	}
+
+	tflog.Info(ctx, fmt.Sprintf("ListEntities returned %d entities", len(allEntities)))
+	return allEntities, nil
+}
+
 func (c *Client) CreateEntity(ctx context.Context, payload map[string]interface{}) (*APIEntityResponse, error) {
 	tflog.Info(ctx, "Calling CreateEntity")
 

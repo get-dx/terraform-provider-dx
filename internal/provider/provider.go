@@ -110,5 +110,6 @@ func (p *DxProvider) Resources(ctx context.Context) []func() resource.Resource {
 func (p *DxProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		entity.NewEntityDataSource,
+		entity.NewEntitiesDataSource,
 	}
 }
