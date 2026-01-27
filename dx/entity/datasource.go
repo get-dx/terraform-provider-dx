@@ -198,35 +198,30 @@ type OwnerUserModel struct {
 
 // mapAPIResponseToDataSourceModel converts API response to data source model.
 func mapAPIResponseToDataSourceModel(ctx context.Context, apiResp *dxapi.APIEntityResponse, state *EntityDataSourceModel) {
-	mapAPIEntityToDataSourceModel(ctx, &apiResp.Entity, state)
-}
-
-// mapAPIEntityToDataSourceModel converts an APIEntity to the data source model.
-func mapAPIEntityToDataSourceModel(ctx context.Context, entity *dxapi.APIEntity, state *EntityDataSourceModel) {
-	tflog.Debug(ctx, "Mapping API entity to data source model")
+	tflog.Debug(ctx, "Mapping API response to data source model")
 
 	// Required fields
-	state.Id = types.StringValue(entity.Identifier)
-	state.Identifier = types.StringValue(entity.Identifier)
-	state.Type = types.StringValue(entity.Type)
+	state.Id = types.StringValue(apiResp.Entity.Identifier)
+	state.Identifier = types.StringValue(apiResp.Entity.Identifier)
+	state.Type = types.StringValue(apiResp.Entity.Type)
 
-	// Optional fields
-	if entity.Name != nil {
-		state.Name = types.StringValue(*entity.Name)
+	// Optional fields - use StringPointerValue for proper null handling
+	if apiResp.Entity.Name != nil {
+		state.Name = types.StringValue(*apiResp.Entity.Name)
 	} else {
 		state.Name = types.StringNull()
 	}
 
-	if entity.Description != nil {
-		state.Description = types.StringValue(*entity.Description)
+	if apiResp.Entity.Description != nil {
+		state.Description = types.StringValue(*apiResp.Entity.Description)
 	} else {
 		state.Description = types.StringNull()
 	}
 
 	// Owner teams
-	if len(entity.OwnerTeams) > 0 {
-		teams := make([]OwnerTeamModel, 0, len(entity.OwnerTeams))
-		for _, team := range entity.OwnerTeams {
+	if len(apiResp.Entity.OwnerTeams) > 0 {
+		teams := make([]OwnerTeamModel, 0, len(apiResp.Entity.OwnerTeams))
+		for _, team := range apiResp.Entity.OwnerTeams {
 			teams = append(teams, OwnerTeamModel{
 				Id:   types.StringValue(team.Id),
 				Name: types.StringValue(team.Name),
@@ -238,9 +233,9 @@ func mapAPIEntityToDataSourceModel(ctx context.Context, entity *dxapi.APIEntity,
 	}
 
 	// Owner users
-	if len(entity.OwnerUsers) > 0 {
-		users := make([]OwnerUserModel, 0, len(entity.OwnerUsers))
-		for _, user := range entity.OwnerUsers {
+	if len(apiResp.Entity.OwnerUsers) > 0 {
+		users := make([]OwnerUserModel, 0, len(apiResp.Entity.OwnerUsers))
+		for _, user := range apiResp.Entity.OwnerUsers {
 			users = append(users, OwnerUserModel{
 				Id:    types.StringValue(user.Id),
 				Email: types.StringValue(user.Email),
@@ -252,15 +247,15 @@ func mapAPIEntityToDataSourceModel(ctx context.Context, entity *dxapi.APIEntity,
 	}
 
 	// Domain
-	if entity.Domain != nil {
-		state.Domain = types.StringValue(entity.Domain.Identifier)
+	if apiResp.Entity.Domain != nil {
+		state.Domain = types.StringValue(apiResp.Entity.Domain.Identifier)
 	} else {
 		state.Domain = types.StringNull()
 	}
 
 	// Properties - convert from API response to types.Dynamic
-	if len(entity.Properties) > 0 {
-		dynamicVal, err := interfaceToDynamic(ctx, entity.Properties)
+	if len(apiResp.Entity.Properties) > 0 {
+		dynamicVal, err := interfaceToDynamic(ctx, apiResp.Entity.Properties)
 		if err != nil {
 			tflog.Error(ctx, fmt.Sprintf("Failed to convert properties to Dynamic: %v", err))
 			state.Properties = types.DynamicNull()
@@ -272,9 +267,9 @@ func mapAPIEntityToDataSourceModel(ctx context.Context, entity *dxapi.APIEntity,
 	}
 
 	// Aliases - convert from API response to map[string][]AliasModel
-	if len(entity.Aliases) > 0 {
+	if len(apiResp.Entity.Aliases) > 0 {
 		aliases := make(map[string][]AliasModel)
-		for aliasType, aliasArray := range entity.Aliases {
+		for aliasType, aliasArray := range apiResp.Entity.Aliases {
 			aliasModels := make([]AliasModel, 0, len(aliasArray))
 			for _, alias := range aliasArray {
 				aliasModel := AliasModel{
@@ -292,6 +287,6 @@ func mapAPIEntityToDataSourceModel(ctx context.Context, entity *dxapi.APIEntity,
 	}
 
 	// Computed fields
-	state.CreatedAt = types.StringValue(entity.CreatedAt)
-	state.UpdatedAt = types.StringValue(entity.UpdatedAt)
+	state.CreatedAt = types.StringValue(apiResp.Entity.CreatedAt)
+	state.UpdatedAt = types.StringValue(apiResp.Entity.UpdatedAt)
 }
