@@ -39,14 +39,14 @@ output "service_identifiers" {
   value       = [for e in data.dx_entities.all_services.entities : e.identifier]
 }
 
-# Example 2: Filter entities using for expressions
-data "dx_entities" "all_apis" {
-  type = "api"
-}
-
-output "api_names" {
-  description = "Names of all APIs"
-  value       = [for e in data.dx_entities.all_apis.entities : e.name]
+# Example 2: Access entity properties
+# The properties field is JSON-encoded, use jsondecode() to access values
+output "service_tiers" {
+  description = "Tier property for each service"
+  value = [
+    for e in data.dx_entities.all_services.entities :
+    e.properties != null ? jsondecode(e.properties)["tier"] : null
+  ]
 }
 ```
 
@@ -75,7 +75,7 @@ Read-Only:
 - `name` (String) Display name for the entity.
 - `owner_teams` (List of Object) Array of owner teams assigned to the entity. (see [below for nested schema](#nestedatt--entities--owner_teams))
 - `owner_users` (List of Object) Array of owner users assigned to the entity. (see [below for nested schema](#nestedatt--entities--owner_users))
-- `properties` (String) JSON-encoded key-value pairs of entity properties and their values.
+- `properties` (String) JSON-encoded key-value pairs of entity properties. Use jsondecode() to access values.
 - `type` (String) The identifier of the entity type.
 - `updated_at` (String) Timestamp when the entity was last updated.
 

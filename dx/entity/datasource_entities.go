@@ -32,9 +32,6 @@ type EntitiesDataSourceModel struct {
 	Entities []EntitiesEntityModel `tfsdk:"entities"`
 }
 
-// EntitiesEntityModel is a list-safe version of EntityDataSourceModel that uses
-// a JSON string for properties instead of types.Dynamic (which cannot be nested
-// inside a collection attribute in terraform-plugin-framework).
 type EntitiesEntityModel struct {
 	Id          types.String            `tfsdk:"id"`
 	Identifier  types.String            `tfsdk:"identifier"`
@@ -113,7 +110,7 @@ func (d *EntitiesDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 						},
 						"properties": schema.StringAttribute{
 							Computed:    true,
-							Description: "JSON-encoded key-value pairs of entity properties and their values.",
+							Description: "JSON-encoded key-value pairs of entity properties. Use jsondecode() to access values.",
 						},
 						"aliases": schema.MapAttribute{
 							ElementType: types.ListType{

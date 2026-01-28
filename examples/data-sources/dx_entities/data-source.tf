@@ -24,12 +24,12 @@ output "service_identifiers" {
   value       = [for e in data.dx_entities.all_services.entities : e.identifier]
 }
 
-# Example 2: Filter entities using for expressions
-data "dx_entities" "all_apis" {
-  type = "api"
-}
-
-output "api_names" {
-  description = "Names of all APIs"
-  value       = [for e in data.dx_entities.all_apis.entities : e.name]
+# Example 2: Access entity properties
+# The properties field is JSON-encoded, use jsondecode() to access values
+output "service_tiers" {
+  description = "Tier property for each service"
+  value = [
+    for e in data.dx_entities.all_services.entities :
+    e.properties != null ? jsondecode(e.properties)["tier"] : null
+  ]
 }
