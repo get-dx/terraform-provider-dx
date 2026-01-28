@@ -24,7 +24,18 @@ output "service_identifiers" {
   value       = [for e in data.dx_entities.all_services.entities : e.identifier]
 }
 
-# Example 2: Access entity properties
+# Example 2: Search for entities by name
+data "dx_entities" "payment_services" {
+  type        = "service"
+  search_term = "payment"
+}
+
+output "payment_service_names" {
+  description = "Names of services matching 'payment'"
+  value       = [for e in data.dx_entities.payment_services.entities : e.name]
+}
+
+# Example 3: Access entity properties
 # The properties field is JSON-encoded, use jsondecode() to access values
 output "service_tiers" {
   description = "Tier property for each service"

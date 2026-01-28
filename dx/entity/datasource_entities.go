@@ -28,8 +28,9 @@ type EntitiesDataSource struct {
 }
 
 type EntitiesDataSourceModel struct {
-	Type     types.String          `tfsdk:"type"`
-	Entities []EntitiesEntityModel `tfsdk:"entities"`
+	Type       types.String          `tfsdk:"type"`
+	SearchTerm types.String          `tfsdk:"search_term"`
+	Entities   []EntitiesEntityModel `tfsdk:"entities"`
 }
 
 type EntitiesEntityModel struct {
@@ -58,6 +59,10 @@ func (d *EntitiesDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 			"type": schema.StringAttribute{
 				Required:    true,
 				Description: "The entity type identifier to filter by (e.g., 'service', 'api', 'domain').",
+			},
+			"search_term": schema.StringAttribute{
+				Optional:    true,
+				Description: "Filter entities by search term.",
 			},
 			"entities": schema.ListNestedAttribute{
 				Computed:    true,
@@ -175,7 +180,16 @@ func (d *EntitiesDataSource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
-	apiEntities, err := d.client.ListEntities(ctx, entityType)
+	// Build options from config
+	var opts *dxapi.ListEntitiesOptions
+	if !config.SearchTerm.IsNull() {
+		searchTerm := config.SearchTerm.ValueString()
+		opts = &dxapi.ListEntitiesOptions{
+			SearchTerm: &searchTerm,
+		}
+	}
+
+	apiEntities, err := d.client.ListEntities(ctx, entityType, opts)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error listing entities",
@@ -185,8 +199,9 @@ func (d *EntitiesDataSource) Read(ctx context.Context, req datasource.ReadReques
 	}
 
 	state := EntitiesDataSourceModel{
-		Type:     config.Type,
-		Entities: make([]EntitiesEntityModel, 0, len(apiEntities)),
+		Type:       config.Type,
+		SearchTerm: config.SearchTerm,
+		Entities:   make([]EntitiesEntityModel, 0, len(apiEntities)),
 	}
 
 	for i := range apiEntities {

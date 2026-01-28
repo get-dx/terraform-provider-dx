@@ -68,7 +68,12 @@ type APIEntitiesListResponse struct {
 	} `json:"response_metadata"`
 }
 
-func (c *Client) ListEntities(ctx context.Context, entityType string) ([]APIEntity, error) {
+// ListEntitiesOptions contains optional parameters for ListEntities.
+type ListEntitiesOptions struct {
+	SearchTerm *string // Filter entities by search term.
+}
+
+func (c *Client) ListEntities(ctx context.Context, entityType string, opts *ListEntitiesOptions) ([]APIEntity, error) {
 	tflog.Info(ctx, fmt.Sprintf("Calling ListEntities for type: %s", entityType))
 
 	var allEntities []APIEntity
@@ -78,6 +83,9 @@ func (c *Client) ListEntities(ctx context.Context, entityType string) ([]APIEnti
 		urlStr := fmt.Sprintf("%s/entities.list?type=%s&limit=50", c.baseURL, url.QueryEscape(entityType))
 		if cursor != "" {
 			urlStr += "&cursor=" + url.QueryEscape(cursor)
+		}
+		if opts != nil && opts.SearchTerm != nil && *opts.SearchTerm != "" {
+			urlStr += "&search_term=" + url.QueryEscape(*opts.SearchTerm)
 		}
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, urlStr, nil)
