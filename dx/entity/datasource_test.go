@@ -75,6 +75,53 @@ func TestAccDxEntityDataSourceWithProperties(t *testing.T) {
 	})
 }
 
+func TestAccDxEntitiesDataSource(t *testing.T) {
+	entityIdentifier1 := fmt.Sprintf("tf_test_ds_entities_1_%d", acctest.RandInt())
+	entityName1 := fmt.Sprintf("Terraform Test Entities 1 %d", acctest.RandInt())
+	entityIdentifier2 := fmt.Sprintf("tf_test_ds_entities_2_%d", acctest.RandInt())
+	entityName2 := fmt.Sprintf("Terraform Test Entities 2 %d", acctest.RandInt())
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccEntitiesDataSourceConfig(entityIdentifier1, entityName1, entityIdentifier2, entityName2),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("data.dx_entities.test", "type", "service"),
+					resource.TestCheckResourceAttrSet("data.dx_entities.test", "entities.#"),
+				),
+			},
+		},
+	})
+}
+
+func testAccEntitiesDataSourceConfig(identifier1, name1, identifier2, name2 string) string {
+	return fmt.Sprintf(`
+provider "dx" {}
+
+resource "dx_entity" "test1" {
+  identifier  = "%s"
+  type        = "service"
+  name        = "%s"
+  description = "Test entity 1 for entities data source"
+}
+
+resource "dx_entity" "test2" {
+  identifier  = "%s"
+  type        = "service"
+  name        = "%s"
+  description = "Test entity 2 for entities data source"
+}
+
+data "dx_entities" "test" {
+  type = "service"
+
+  depends_on = [dx_entity.test1, dx_entity.test2]
+}
+`, identifier1, name1, identifier2, name2)
+}
+
 func testAccEntityDataSourceConfig(identifier, name string) string {
 	return fmt.Sprintf(`
 provider "dx" {}
