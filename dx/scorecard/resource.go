@@ -526,13 +526,21 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 	// If there are levels in the API response, update the plan.Levels
 	if len(apiResp.Scorecard.Levels) > 0 {
 		state.Levels = make(map[string]LevelModel)
-		orderedLevelKeys := getOrderedLevelKeys(*oldPlan)
-		for idxResp, lvl := range apiResp.Scorecard.Levels {
+
+		// Build ID-to-key lookup from old plan for stable matching
+		levelIdToKey := make(map[string]string)
+		for key, level := range oldPlan.Levels {
+			if !level.Id.IsNull() {
+				levelIdToKey[level.Id.ValueString()] = key
+			}
+		}
+
+		for _, lvl := range apiResp.Scorecard.Levels {
 			levelName := *lvl.Name
 			levelKey := nameToKey(ctx, levelName)
 
-			if idxResp < len(orderedLevelKeys) {
-				levelKey = orderedLevelKeys[idxResp]
+			if key, ok := levelIdToKey[*lvl.Id]; ok {
+				levelKey = key
 			}
 
 			state.Levels[levelKey] = LevelModel{
@@ -551,13 +559,21 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 	// If there are check groups in the API response, update the state.CheckGroups
 	if len(apiResp.Scorecard.CheckGroups) > 0 {
 		state.CheckGroups = make(map[string]CheckGroupModel)
-		orderedCheckGroupKeys := getOrderedCheckGroupKeys(*oldPlan)
-		for idxResp, grp := range apiResp.Scorecard.CheckGroups {
+
+		// Build ID-to-key lookup from old plan for stable matching
+		checkGroupIdToKey := make(map[string]string)
+		for key, group := range oldPlan.CheckGroups {
+			if !group.Id.IsNull() {
+				checkGroupIdToKey[group.Id.ValueString()] = key
+			}
+		}
+
+		for _, grp := range apiResp.Scorecard.CheckGroups {
 			groupName := *grp.Name
 			groupKey := nameToKey(ctx, groupName)
 
-			if idxResp < len(orderedCheckGroupKeys) {
-				groupKey = orderedCheckGroupKeys[idxResp]
+			if key, ok := checkGroupIdToKey[*grp.Id]; ok {
+				groupKey = key
 			}
 
 			state.CheckGroups[groupKey] = CheckGroupModel{
@@ -587,21 +603,32 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 	}
 
 	// Update the state.Checks
-	orderedCheckKeys := getOrderedCheckKeys(*oldPlan)
+	// Build ID-to-key lookup from old plan for stable matching
+	checkIdToKey := make(map[string]string)
+	for key, check := range oldPlan.Checks {
+		if !check.Id.IsNull() {
+			checkIdToKey[check.Id.ValueString()] = key
+		}
+	}
+
 	state.Checks = make(map[string]CheckModel)
-	for idxResp, chk := range apiResp.Scorecard.Checks {
+	for _, chk := range apiResp.Scorecard.Checks {
 		var levelKey *string = nil
 		var checkGroupKey *string = nil
 
-		// Find the previous check, based on mapping the response index back to the check's key
+		// Find the previous check by matching on ID
 		var prevCheck *CheckModel
 		checkKey := nameToKey(ctx, *chk.Name)
-		if idxResp < len(orderedCheckKeys) {
-			// Grouping keys are not returned by the API, but we have found previous values to fallback to
-			checkKey = orderedCheckKeys[idxResp]
-			foundPrevCheck := oldPlan.Checks[checkKey]
-			prevCheck = &foundPrevCheck
+		if chk.Id != nil {
+			if key, ok := checkIdToKey[*chk.Id]; ok {
+				checkKey = key
+				foundPrevCheck := oldPlan.Checks[checkKey]
+				prevCheck = &foundPrevCheck
+			}
+		}
 
+		if prevCheck != nil {
+			// Grouping keys are not returned by the API, but we have found previous values to fallback to
 			var prevLevelKey *string = nil
 			if !prevCheck.ScorecardLevelKey.IsNull() {
 				prevLevelKeyVal := prevCheck.ScorecardLevelKey.ValueString()
@@ -619,8 +646,8 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 			tflog.Info(
 				ctx,
 				fmt.Sprintf(
-					"Response check with index %d has key `%s`, found previous check with name `%s`",
-					idxResp,
+					"Response check with ID `%s` matched to key `%s` (name `%s`)",
+					*chk.Id,
 					checkKey,
 					prevCheck.Name.ValueString(),
 				),
