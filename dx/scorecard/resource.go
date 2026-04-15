@@ -626,6 +626,11 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 				prevCheck = &foundPrevCheck
 			}
 		}
+		if prevCheck == nil {
+			if foundPrevCheck, ok := oldPlan.Checks[checkKey]; ok {
+				prevCheck = &foundPrevCheck
+			}
+		}
 
 		if prevCheck != nil {
 			// Grouping keys are not returned by the API, but we have found previous values to fallback to
