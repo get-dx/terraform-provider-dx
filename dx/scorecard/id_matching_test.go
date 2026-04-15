@@ -105,3 +105,93 @@ func TestResponseBodyToModelMatchesByID(t *testing.T) {
 		}
 	}
 }
+
+// TestResponseBodyToModelPreservesGroupingKeysOnCreate verifies that on Create,
+// when oldPlan checks have no IDs yet, scorecard_level_key and
+// scorecard_check_group_key are still preserved from the plan.
+func TestResponseBodyToModelPreservesGroupingKeysOnCreate(t *testing.T) {
+	ctx := context.Background()
+
+	strPtr := func(s string) *string { return &s }
+	int32Ptr := func(i int32) *int32 { return &i }
+
+	// On Create, oldPlan is a copy of plan — checks have NO IDs yet
+	oldPlan := &ScorecardModel{
+		Type:             types.StringValue("LEVEL"),
+		EntityFilterType: types.StringValue("entity_types"),
+		Levels: map[string]LevelModel{
+			"bronze": {
+				Name:  types.StringValue("Bronze"),
+				Color: types.StringValue("#FB923C"),
+				Rank:  types.Int32Value(1),
+			},
+			"silver": {
+				Name:  types.StringValue("Silver"),
+				Color: types.StringValue("#C0C0C0"),
+				Rank:  types.Int32Value(2),
+			},
+		},
+		Checks: map[string]CheckModel{
+			"test_check": {
+				Name:              types.StringValue("Test Check"),
+				ScorecardLevelKey: types.StringValue("bronze"),
+				Ordering:          types.Int32Value(0),
+			},
+			"another_check": {
+				Name:              types.StringValue("Another Check"),
+				ScorecardLevelKey: types.StringValue("bronze"),
+				Ordering:          types.Int32Value(1),
+			},
+			"neat_silver_check": {
+				Name:              types.StringValue("Neat Silver Check"),
+				ScorecardLevelKey: types.StringValue("silver"),
+				Ordering:          types.Int32Value(0),
+			},
+		},
+	}
+
+	// API response after Create — checks now have IDs assigned
+	apiResp := &dxapi.APIResponse{
+		Scorecard: dxapi.APIScorecard{
+			Id:                  "scorecard-1",
+			Name:                "Test Scorecard",
+			Type:                "LEVEL",
+			EntityFilterType:    "entity_types",
+			EvaluationFrequency: 2,
+			Levels: []*dxapi.APILevel{
+				{Id: strPtr("level-1"), Name: strPtr("Bronze"), Color: strPtr("#FB923C"), Rank: int32Ptr(1)},
+				{Id: strPtr("level-2"), Name: strPtr("Silver"), Color: strPtr("#C0C0C0"), Rank: int32Ptr(2)},
+			},
+			Checks: []*dxapi.APICheck{
+				{Id: strPtr("id-111"), Name: strPtr("Test Check"), Ordering: 0, OutputType: strPtr("string"), Sql: strPtr("SELECT 1")},
+				{Id: strPtr("id-222"), Name: strPtr("Another Check"), Ordering: 1, OutputType: strPtr("string"), Sql: strPtr("SELECT 2")},
+				{Id: strPtr("id-333"), Name: strPtr("Neat Silver Check"), Ordering: 0, OutputType: strPtr("string"), Sql: strPtr("SELECT 3")},
+			},
+		},
+	}
+
+	state := &ScorecardModel{}
+	responseBodyToModel(ctx, apiResp, state, oldPlan)
+
+	// Verify scorecard_level_key is preserved from the plan
+	expectedLevelKeys := map[string]string{
+		"test_check":        "bronze",
+		"another_check":     "bronze",
+		"neat_silver_check": "silver",
+	}
+
+	for key, expectedLevelKey := range expectedLevelKeys {
+		check, ok := state.Checks[key]
+		if !ok {
+			t.Errorf("expected key %q in state.Checks, not found", key)
+			continue
+		}
+		if check.ScorecardLevelKey.IsNull() {
+			t.Errorf("key %q: scorecard_level_key is null, expected %q", key, expectedLevelKey)
+			continue
+		}
+		if check.ScorecardLevelKey.ValueString() != expectedLevelKey {
+			t.Errorf("key %q: scorecard_level_key = %q, expected %q", key, check.ScorecardLevelKey.ValueString(), expectedLevelKey)
+		}
+	}
+}
