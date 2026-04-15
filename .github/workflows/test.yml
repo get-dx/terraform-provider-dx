@@ -80,7 +80,11 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    environment: acceptance-tests
+    # Only gate on the acceptance-tests environment (which requires maintainer
+    # approval) when the PR comes from a fork. Same-repo PRs from coworkers
+    # have secrets available via pull_request_target without an approval gate.
+    # push events evaluate to '' (no environment), which is also fine.
+    environment: ${{ (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.full_name != github.repository) && 'acceptance-tests' || '' }}
     env:
       DX_WEB_API_URL: ${{ secrets.DX_WEB_API_URL }}
       DX_WEB_API_TOKEN: ${{ secrets.DX_WEB_API_TOKEN }}
