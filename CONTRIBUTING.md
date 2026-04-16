@@ -74,7 +74,7 @@ Then in your TF module, with the `source` override from before, run Terraform:
 
 ```shell
 terraform plan
-terraform apply
+terraform apply -auto-approve
 ```
 
 Run the unit tests:

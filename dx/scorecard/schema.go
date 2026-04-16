@@ -71,10 +71,10 @@ func CheckSchema() map[string]schema.Attribute {
 		"published":          schema.BoolAttribute{Required: true},
 
 		// Fields for level-based scorecards
-		"scorecard_level_key": schema.StringAttribute{Optional: true},
+		"scorecard_level_key": schema.StringAttribute{Optional: true, Description: "The key of the level that this check belongs to (levels scorecards only). This must match the snake cased name of the level, e.g. \"fully_compliant\" for a level named \"Fully Compliant\"."},
 
 		// Fields for points-based scorecards
-		"scorecard_check_group_key": schema.StringAttribute{Optional: true},
+		"scorecard_check_group_key": schema.StringAttribute{Optional: true, Description: "The key of the check group that this check belongs to (points scorecards only). This must match the snake cased name of the check group, e.g. \"ai_readiness\" for a check group named \"AI Readiness\"."},
 		"points":                    schema.Int32Attribute{Optional: true},
 	}
 }

@@ -130,11 +130,11 @@ resource "dx_scorecard" "points_based_example" {
   published                      = true
 
   check_groups = {
-    group_1 = {
+    first_group = {
       name     = "First group"
       ordering = 0
     },
-    group_2 = {
+    second_group = {
       name     = "Second group"
       ordering = 1
     },
@@ -143,7 +143,7 @@ resource "dx_scorecard" "points_based_example" {
   checks = {
     check_1 = {
       name                      = "Check 1"
-      scorecard_check_group_key = "group_1"
+      scorecard_check_group_key = "first_group"
       ordering                  = 0
 
       description        = "This is a check in the first group"
@@ -159,7 +159,7 @@ resource "dx_scorecard" "points_based_example" {
 
     check_2 = {
       name                      = "Check 2"
-      scorecard_check_group_key = "group_2"
+      scorecard_check_group_key = "second_group"
       ordering                  = 0
 
       sql                = <<-EOT
@@ -239,8 +239,8 @@ Optional:
 - `output_custom_options` (Attributes) (see [below for nested schema](#nestedatt--checks--output_custom_options))
 - `output_type` (String)
 - `points` (Number)
-- `scorecard_check_group_key` (String)
-- `scorecard_level_key` (String)
+- `scorecard_check_group_key` (String) The key of the check group that this check belongs to (points scorecards only). This must match the snake cased name of the check group, e.g. "ai_readiness" for a check group named "AI Readiness".
+- `scorecard_level_key` (String) The key of the level that this check belongs to (levels scorecards only). This must match the snake cased name of the level, e.g. "fully_compliant" for a level named "Fully Compliant".
 
 Read-Only:
 

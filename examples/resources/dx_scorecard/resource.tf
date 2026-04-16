@@ -115,11 +115,11 @@ resource "dx_scorecard" "points_based_example" {
   published                      = true
 
   check_groups = {
-    group_1 = {
+    first_group = {
       name     = "First group"
       ordering = 0
     },
-    group_2 = {
+    second_group = {
       name     = "Second group"
       ordering = 1
     },
@@ -128,7 +128,7 @@ resource "dx_scorecard" "points_based_example" {
   checks = {
     check_1 = {
       name                      = "Check 1"
-      scorecard_check_group_key = "group_1"
+      scorecard_check_group_key = "first_group"
       ordering                  = 0
 
       description        = "This is a check in the first group"
@@ -144,7 +144,7 @@ resource "dx_scorecard" "points_based_example" {
 
     check_2 = {
       name                      = "Check 2"
-      scorecard_check_group_key = "group_2"
+      scorecard_check_group_key = "second_group"
       ordering                  = 0
 
       sql                = <<-EOT

@@ -5,7 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.8.0]
+## [0.9.0] - 2026-04-16
+
+### Changed
+
+- POTENTIALLY BREAKING: Fixed non-determinism in internal ordering logic for `dx_scorecard` resource state. (https://github.com/get-dx/terraform-provider-dx/pull/48 - thank you to @mavenraven!)
+  - Now relies on matching based on level, check group, and check IDs rather than array positions
+  - Existing users upgrading from the position-based ordering to ID-based matching may see one-time drift on their first plan if the old provider had already mismatched check-to-key mappings due to non-deterministic API ordering. After one apply cycle, state will be correct and stable going forward.
+  - On scorecard _creation_, level and check group IDs are not yet available, so names are converted to snake case for comparison. Make sure each check has a `scorecard_level_key` or `scorecard_check_group_key` that matches the snake cased name of its level or check group, or inconsistent state warnings will display.
+
+## [0.8.0] - 2026-01-29
 
 ### Added
 
@@ -132,6 +141,12 @@ Initial published release.
 - Provider
 - `dx_scorecard` resource
 
+[0.9.0]: https://github.com/get-dx/terraform-provider-dx/compare/v0.8.0...v0.9.0
+[0.8.0]: https://github.com/get-dx/terraform-provider-dx/compare/v0.7.0...v0.8.0
+[0.7.0]: https://github.com/get-dx/terraform-provider-dx/compare/v0.6.0...v0.7.0
+[0.6.0]: https://github.com/get-dx/terraform-provider-dx/compare/v0.5.1...v0.6.0
+[0.5.1]: https://github.com/get-dx/terraform-provider-dx/compare/v0.5.0...v0.5.1
+[0.5.0]: https://github.com/get-dx/terraform-provider-dx/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/get-dx/terraform-provider-dx/compare/v0.3.2...v0.4.0
 [0.3.2]: https://github.com/get-dx/terraform-provider-dx/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/get-dx/terraform-provider-dx/compare/v0.3.0...v0.3.1
