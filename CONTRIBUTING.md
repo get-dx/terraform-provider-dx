@@ -139,5 +139,6 @@ Then commit the changes to `go.mod` and `go.sum`.
   ```
 
 - The [Release action](https://github.com/get-dx/terraform-provider-dx/actions/workflows/release.yml) will run based off of the tag trigger. The action will build the provider for several architectures, then create a [release](https://github.com/get-dx/terraform-provider-dx/releases) and attach the assets to it.
+  - Make sure the `goreleaser` job runs. It waits for acceptance tests to run and complete, which may require a manual approval.
 
 - Once the release has been published, within a minute or two, the release will automatically propagate to the Terraform registry and will be listed as the `latest` version on the [provider overview page](https://registry.terraform.io/providers/get-dx/dx/latest).
