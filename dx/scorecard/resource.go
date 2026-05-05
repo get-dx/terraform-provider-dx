@@ -588,7 +588,11 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 
 	// ************** Optional fields **************
 	state.Description = dx.StringOrNull(apiResp.Scorecard.Description)
-	state.EntityFilterSql = dx.StringOrNullConvertEmpty(apiResp.Scorecard.EntityFilterSql)
+	if oldPlan.EntityFilterSql.IsNull() {
+		state.EntityFilterSql = types.StringNull()
+	} else {
+		state.EntityFilterSql = dx.StringOrNullConvertEmpty(apiResp.Scorecard.EntityFilterSql)
+	}
 	state.Published = dx.BoolApiToTF(apiResp.Scorecard.Published, state.Published)
 
 	// If there are entity filter type identifiers, update the state.EntityFilterTypeIdentifiers
