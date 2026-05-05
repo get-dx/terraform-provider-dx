@@ -106,6 +106,75 @@ func TestResponseBodyToModelMatchesByID(t *testing.T) {
 	}
 }
 
+// TestResponseBodyToModelEntityFilterSqlNulledByPlan verifies that when the plan
+// sets entity_filter_sql to null (e.g. switching from sql to entity_types filter),
+// responseBodyToModel does not overwrite it with the stale value from the API
+// response. Terraform requires the state to match the plan for fields the user
+// explicitly removed; returning the old value triggers "Provider produced
+// inconsistent result after apply".
+func TestResponseBodyToModelEntityFilterSqlNulledByPlan(t *testing.T) {
+	ctx := context.Background()
+
+	strPtr := func(s string) *string { return &s }
+	int32Ptr := func(i int32) *int32 { return &i }
+
+	oldEntityFilterSql := "SELECT id::text AS identifier FROM dx_teams WHERE parent = true AND deleted_at IS NULL\n"
+
+	// Plan: user switched from sql filter to entity_types, so entity_filter_sql is null
+	oldPlan := &ScorecardModel{
+		Type:             types.StringValue("LEVEL"),
+		EntityFilterType: types.StringValue("entity_types"),
+		EntityFilterSql:  types.StringNull(),
+		EntityFilterTypeIdentifiers: []types.String{
+			types.StringValue("team"),
+		},
+		Levels: map[string]LevelModel{
+			"bronze": {
+				Id:    types.StringValue("level-1"),
+				Name:  types.StringValue("Bronze"),
+				Color: types.StringValue("#FB923C"),
+				Rank:  types.Int32Value(1),
+			},
+		},
+		Checks: map[string]CheckModel{
+			"team_exists": {
+				Id:                types.StringValue("chk-1"),
+				Name:              types.StringValue("Team Exists"),
+				ScorecardLevelKey: types.StringValue("bronze"),
+				Ordering:          types.Int32Value(0),
+			},
+		},
+	}
+
+	// API response still includes the old entity_filter_sql value
+	apiResp := &dxapi.APIResponse{
+		Scorecard: dxapi.APIScorecard{
+			Id:                          "w0m63zm8l0e3",
+			Name:                        "Test DX Teams",
+			Type:                        "LEVEL",
+			EntityFilterType:            "entity_types",
+			EntityFilterSql:             &oldEntityFilterSql,
+			EntityFilterTypeIdentifiers: []*string{strPtr("team")},
+			EvaluationFrequency:         2,
+			Levels: []*dxapi.APILevel{
+				{Id: strPtr("level-1"), Name: strPtr("Bronze"), Color: strPtr("#FB923C"), Rank: int32Ptr(1)},
+			},
+			Checks: []*dxapi.APICheck{
+				{Id: strPtr("chk-1"), Name: strPtr("Team Exists"), Ordering: 0, OutputType: strPtr("string"), Sql: strPtr("SELECT 'PASS' AS status")},
+			},
+		},
+	}
+
+	state := &ScorecardModel{}
+	responseBodyToModel(ctx, apiResp, state, oldPlan)
+
+	if !state.EntityFilterSql.IsNull() {
+		t.Errorf("entity_filter_sql: expected null (matching plan), got %q — "+
+			"this causes 'Provider produced inconsistent result after apply'",
+			state.EntityFilterSql.ValueString())
+	}
+}
+
 // TestResponseBodyToModelPreservesGroupingKeysOnCreate verifies that on Create,
 // when oldPlan checks have no IDs yet, scorecard_level_key and
 // scorecard_check_group_key are still preserved from the plan.
