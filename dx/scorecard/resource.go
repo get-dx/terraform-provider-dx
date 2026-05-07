@@ -433,7 +433,7 @@ func modelToRequestBody(ctx context.Context, plan ScorecardModel, setIds bool) (
 		}
 		payload["entity_filter_type_identifiers"] = identifiers
 	}
-	if !plan.EntityFilterSql.IsNull() && !plan.EntityFilterSql.IsUnknown() {
+	if !plan.EntityFilterSql.IsUnknown() {
 		payload["entity_filter_sql"] = plan.EntityFilterSql.ValueString()
 	}
 
