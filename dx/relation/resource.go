@@ -167,11 +167,11 @@ func (r *RelationResource) ImportState(ctx context.Context, req resource.ImportS
 
 func modelToCreatePayload(plan RelationModel) map[string]interface{} {
 	payload := map[string]interface{}{
-		"identifier":                     plan.Identifier.ValueString(),
-		"type":                           plan.Type.ValueString(),
-		"cardinality":                    plan.Cardinality.ValueString(),
-		"source_entity_type_identifier":  plan.SourceEntityTypeIdentifier.ValueString(),
-		"target_entity_type_identifier":  plan.TargetEntityTypeIdentifier.ValueString(),
+		"identifier":                    plan.Identifier.ValueString(),
+		"type":                          plan.Type.ValueString(),
+		"cardinality":                   plan.Cardinality.ValueString(),
+		"source_entity_type_identifier": plan.SourceEntityTypeIdentifier.ValueString(),
+		"target_entity_type_identifier": plan.TargetEntityTypeIdentifier.ValueString(),
 	}
 
 	if !plan.Description.IsNull() && !plan.Description.IsUnknown() {
