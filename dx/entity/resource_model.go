@@ -28,4 +28,5 @@ type EntityResourceModel struct {
 // AliasModel describes an alias entry for an entity.
 type AliasModel struct {
 	Identifier types.String `tfsdk:"identifier"` // Required: the alias identifier
+	InstanceIdentifier types.String `tfsdk:"instance_identifier"` // Optional: the instance identifier
 }

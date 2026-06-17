@@ -44,7 +44,8 @@ type APIDomain struct {
 }
 
 type APIAlias struct {
-	Identifier string `json:"identifier"`
+	Identifier         string  `json:"identifier"`
+	InstanceIdentifier *string `json:"instance_identifier,omitempty"`
 }
 
 // APIEntityResponse is the top-level response from the DX API for entity endpoints.
