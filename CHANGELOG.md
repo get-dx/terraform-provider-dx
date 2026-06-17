@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- BREAKING: Each alias entry in the `dx_entity` and `dx_entities` data sources now requires an `instance_identifier` field (e.g. a specific GitHub Enterprise Server deployment). If you have two or more connections to the same type of system, you will need this field to disambiguate the instance each alias comes from.
+
+  To migrate, add `instance_identifier` to each alias entry:
+
+  ```diff
+  resource "dx_entity" "payment_service" {
+    identifier     = "payment-service"
+
+    # ...
+
+    aliases = {
+      github_repo = [
+        {
+          identifier          = "1234567890"
+  +       instance_identifier = null
+        }
+      ]
+      pagerduty_service = [
+        {
+          identifier          = "PD12345"
+  +       instance_identifier = null
+        }
+      ]
+    }
+  }
+  ```
+
 ## [0.10.0] - 2026-05-29
 
 ### Added
