@@ -92,7 +92,7 @@ output "production_status" {
 
 ### Read-Only
 
-- `aliases` (Map of List of Object) Key-value pairs of aliases assigned to the entity. Keys are alias types (e.g., 'github_repo'), values are arrays of alias objects with 'identifier' field.
+- `aliases` (Map of List of Object) Key-value pairs of aliases assigned to the entity. Keys are alias types (e.g., 'github_repo'), values are arrays of alias objects with 'identifier' and optional 'instance_identifier' fields.
 - `created_at` (String) Timestamp when the entity was created.
 - `description` (String) Description of the entity.
 - `domain` (String) The identifier of the domain entity parent assigned to the entity.
