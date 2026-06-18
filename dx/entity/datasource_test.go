@@ -131,7 +131,7 @@ resource "dx_entity" "test" {
   type        = "service"
   name        = "%s"
   description = "Test entity for data source"
-  
+
   properties = {
     tier = "Tier-1"
   }
@@ -152,17 +152,18 @@ resource "dx_entity" "test_props" {
   type        = "service"
   name        = "%s"
   description = "Entity with properties and aliases"
-  
+
   properties = {
     tier        = "Tier-1"
     language    = ["Go", "TypeScript"]
     environment = "production"
   }
-  
+
   aliases = {
     github_repo = [
       {
-        identifier = "520637360"
+        identifier          = "520637360"
+        instance_identifier = null
       }
     ]
   }
