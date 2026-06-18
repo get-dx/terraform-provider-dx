@@ -88,12 +88,13 @@ func (d *EntityDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 				ElementType: types.ListType{
 					ElemType: types.ObjectType{
 						AttrTypes: map[string]attr.Type{
-							"identifier": types.StringType,
+							"identifier":          types.StringType,
+							"instance_identifier": types.StringType,
 						},
 					},
 				},
 				Computed:    true,
-				Description: "Key-value pairs of aliases assigned to the entity. Keys are alias types (e.g., 'github_repo'), values are arrays of alias objects with 'identifier' field.",
+				Description: "Key-value pairs of aliases assigned to the entity. Keys are alias types (e.g., 'github_repo'), values are arrays of alias objects with 'identifier' and optional 'instance_identifier' fields.",
 			},
 			"created_at": schema.StringAttribute{
 				Computed:    true,
@@ -272,8 +273,15 @@ func mapAPIResponseToDataSourceModel(ctx context.Context, apiResp *dxapi.APIEnti
 		for aliasType, aliasArray := range apiResp.Entity.Aliases {
 			aliasModels := make([]AliasModel, 0, len(aliasArray))
 			for _, alias := range aliasArray {
+				var instanceID types.String
+				if alias.InstanceIdentifier != nil {
+					instanceID = types.StringValue(*alias.InstanceIdentifier)
+				} else {
+					instanceID = types.StringNull()
+				}
 				aliasModel := AliasModel{
-					Identifier: types.StringValue(alias.Identifier),
+					Identifier:         types.StringValue(alias.Identifier),
+					InstanceIdentifier: instanceID,
 				}
 				aliasModels = append(aliasModels, aliasModel)
 			}
