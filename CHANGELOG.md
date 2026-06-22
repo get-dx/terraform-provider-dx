@@ -7,9 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.11.0] - 2026-06-22
+
 ### Changed
 
-- BREAKING: Each alias entry in the `dx_entity` and `dx_entities` data sources now requires an `instance_identifier` field (e.g. a specific GitHub Enterprise Server deployment). If you have two or more connections to the same type of system, you will need this field to disambiguate the instance each alias comes from.
+- BREAKING: Each alias entry in the `dx_entity` resource now requires an `instance_identifier` field (e.g. a specific GitHub Enterprise Server deployment). If you have two or more connections to the same type of system, you will need this field to disambiguate the instance each alias comes from.
 
   To migrate, add `instance_identifier` to each alias entry:
 
@@ -185,6 +187,7 @@ Initial published release.
 - Provider
 - `dx_scorecard` resource
 
+[0.11.0]: https://github.com/get-dx/terraform-provider-dx/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/get-dx/terraform-provider-dx/compare/v0.9.1...v0.10.0
 [0.9.1]: https://github.com/get-dx/terraform-provider-dx/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/get-dx/terraform-provider-dx/compare/v0.8.0...v0.9.0

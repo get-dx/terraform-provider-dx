@@ -17,7 +17,7 @@ terraform {
   required_providers {
     dx = {
       source  = "registry.terraform.io/get-dx/dx"
-      version = "~> 0.10.0"
+      version = "~> 0.11.0"
     }
   }
 }
