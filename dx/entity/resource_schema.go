@@ -17,6 +17,10 @@ func AliasSchema() map[string]schema.Attribute {
 			Required:    true,
 			Description: "The unique identifier for the alias (e.g., GitHub repository ID).",
 		},
+		"instance_identifier": schema.StringAttribute{
+			Optional:    true,
+			Description: "An optional instance identifier for the alias (e.g. GitHub Enterprise Server instance ID).",
+		},
 		"name": schema.StringAttribute{
 			Computed:    true,
 			Description: "The name of the alias (computed from the Data Cloud database).",
@@ -78,12 +82,13 @@ func EntityResourceSchema() map[string]schema.Attribute {
 			ElementType: types.ListType{
 				ElemType: types.ObjectType{
 					AttrTypes: map[string]attr.Type{
-						"identifier": types.StringType,
+						"identifier":          types.StringType,
+						"instance_identifier": types.StringType,
 					},
 				},
 			},
 			Optional:    true,
-			Description: "Key-value pairs of aliases assigned to the entity. Keys are alias types (e.g., 'github_repo'), values are arrays of alias objects with 'identifier' (required) field.",
+			Description: "Key-value pairs of aliases assigned to the entity. Keys are alias types (e.g., 'github_repo'), values are arrays of alias objects with 'identifier' (required) and 'instance_identifier' (optional) fields.",
 		},
 		"created_at": schema.StringAttribute{
 			Computed:    true,

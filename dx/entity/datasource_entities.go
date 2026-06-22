@@ -121,7 +121,8 @@ func (d *EntitiesDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 							ElementType: types.ListType{
 								ElemType: types.ObjectType{
 									AttrTypes: map[string]attr.Type{
-										"identifier": types.StringType,
+										"identifier":          types.StringType,
+										"instance_identifier": types.StringType,
 									},
 								},
 							},
@@ -283,8 +284,15 @@ func mapAPIEntityToEntitiesModel(ctx context.Context, entity *dxapi.APIEntity, s
 		for aliasType, aliasArray := range entity.Aliases {
 			aliasModels := make([]AliasModel, 0, len(aliasArray))
 			for _, alias := range aliasArray {
+				var instanceID types.String
+				if alias.InstanceIdentifier != nil {
+					instanceID = types.StringValue(*alias.InstanceIdentifier)
+				} else {
+					instanceID = types.StringNull()
+				}
 				aliasModels = append(aliasModels, AliasModel{
-					Identifier: types.StringValue(alias.Identifier),
+					Identifier:         types.StringValue(alias.Identifier),
+					InstanceIdentifier: instanceID,
 				})
 			}
 			if len(aliasModels) > 0 {

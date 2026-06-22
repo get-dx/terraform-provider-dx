@@ -45,12 +45,14 @@ resource "dx_entity" "payment_service" {
   aliases = {
     github_repo = [
       {
-        identifier = "1234567890"
+        identifier          = "1234567890"
+        instance_identifier = null
       }
     ]
     pagerduty_service = [
       {
-        identifier = "PD12345"
+        identifier          = "PD12345"
+        instance_identifier = null
       }
     ]
   }
@@ -75,7 +77,8 @@ resource "dx_entity" "user_api" {
   aliases = {
     github_repo = [
       {
-        identifier = "962275774"
+        identifier          = "962275774"
+        instance_identifier = null
       }
     ]
   }
@@ -92,7 +95,7 @@ resource "dx_entity" "user_api" {
 
 ### Optional
 
-- `aliases` (Map of List of Object) Key-value pairs of aliases assigned to the entity. Keys are alias types (e.g., 'github_repo'), values are arrays of alias objects with 'identifier' (required) field.
+- `aliases` (Map of List of Object) Key-value pairs of aliases assigned to the entity. Keys are alias types (e.g., 'github_repo'), values are arrays of alias objects with 'identifier' (required) and 'instance_identifier' (optional) fields.
 - `description` (String) Description of the entity.
 - `domain` (String) The identifier of the domain entity parent assigned to the entity.
 - `name` (String) Display name for the entity.

@@ -441,6 +441,10 @@ func addAliasesToPayload(payload map[string]interface{}, plan EntityResourceMode
 					alias := dxapi.APIAlias{
 						Identifier: aliasModel.Identifier.ValueString(),
 					}
+					if !aliasModel.InstanceIdentifier.IsNull() && !aliasModel.InstanceIdentifier.IsUnknown() {
+						v := aliasModel.InstanceIdentifier.ValueString()
+						alias.InstanceIdentifier = &v
+					}
 					apiAliasArray = append(apiAliasArray, alias)
 				}
 			}
@@ -543,7 +547,8 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIEntityResponse, 
 			aliasModels := make([]AliasModel, 0, len(aliasArray))
 			for _, alias := range aliasArray {
 				aliasModel := AliasModel{
-					Identifier: types.StringValue(alias.Identifier),
+					Identifier:         types.StringValue(alias.Identifier),
+					InstanceIdentifier: dx.StringOrNull(alias.InstanceIdentifier),
 				}
 				aliasModels = append(aliasModels, aliasModel)
 			}
