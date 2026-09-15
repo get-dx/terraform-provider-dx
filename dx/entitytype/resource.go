@@ -14,13 +14,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
-const DEFAULT_OPTION_COLOR = "#3b82f6" // Default blue color
+const (
+	DEFAULT_OPTION_COLOR = "#3b82f6" // Default blue color
+)
 
 // Ensure provider defined types fully satisfy framework interfaces.
 var (
-	_                       resource.Resource                = &EntityTypeResource{}
-	_                       resource.ResourceWithImportState = &EntityTypeResource{}
-	optionablePropertyTypes                                  = []string{"multi_select", "select"}
+	_ resource.Resource                = &EntityTypeResource{}
+	_ resource.ResourceWithImportState = &EntityTypeResource{}
 )
 
 func NewEntityTypeResource() resource.Resource {
@@ -234,7 +235,7 @@ func modelToRequestBody(ctx context.Context, plan EntityTypeModel, isUpdate bool
 			definition := map[string]interface{}{}
 
 			switch propType {
-			case "multi_select", "select":
+			case propertyTypeMultiSelect, propertyTypeSelect:
 				// For multi_select and select, create definition with options
 				if len(planProp.Options) > 0 {
 					options := make([]map[string]interface{}, 0, len(planProp.Options))
@@ -252,7 +253,7 @@ func modelToRequestBody(ctx context.Context, plan EntityTypeModel, isUpdate bool
 				} else {
 					definition["options"] = []map[string]interface{}{}
 				}
-			case "computed":
+			case propertyTypeComputed:
 				// For computed type, add SQL and output_type to definition
 				if !planProp.SQL.IsNull() && !planProp.SQL.IsUnknown() {
 					definition["sql"] = planProp.SQL.ValueString()
@@ -260,7 +261,18 @@ func modelToRequestBody(ctx context.Context, plan EntityTypeModel, isUpdate bool
 				if !planProp.OutputType.IsNull() && !planProp.OutputType.IsUnknown() {
 					definition["output_type"] = planProp.OutputType.ValueString()
 				}
-			case "url":
+			case propertyTypeFileMatchingRule:
+				// For file_matching_rule type, add rule type, file path, and match expression to definition
+				if !planProp.RuleType.IsNull() && !planProp.RuleType.IsUnknown() {
+					definition["rule_type"] = planProp.RuleType.ValueString()
+				}
+				if !planProp.FilePath.IsNull() && !planProp.FilePath.IsUnknown() {
+					definition["file_path"] = planProp.FilePath.ValueString()
+				}
+				if !planProp.MatchExpression.IsNull() && !planProp.MatchExpression.IsUnknown() {
+					definition["match_expression"] = planProp.MatchExpression.ValueString()
+				}
+			case propertyTypeURL:
 				// For url type, add call_to_action and call_to_action_type to definition
 				if !planProp.CallToAction.IsNull() && !planProp.CallToAction.IsUnknown() {
 					definition["call_to_action"] = planProp.CallToAction.ValueString()
@@ -343,7 +355,7 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIEntityTypeRespon
 						})
 					}
 					property.Options = options
-				} else if propType == "computed" {
+				} else if propType == propertyTypeComputed {
 					// Extract SQL and output_type for computed type
 					if apiProp.Definition.SQL != nil {
 						property.SQL = types.StringValue(*apiProp.Definition.SQL)
@@ -351,7 +363,17 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIEntityTypeRespon
 					if apiProp.Definition.OutputType != nil {
 						property.OutputType = types.StringValue(*apiProp.Definition.OutputType)
 					}
-				} else if propType == "url" {
+				} else if propType == propertyTypeFileMatchingRule {
+					if apiProp.Definition.RuleType != nil {
+						property.RuleType = types.StringValue(*apiProp.Definition.RuleType)
+					}
+					if apiProp.Definition.FilePath != nil {
+						property.FilePath = types.StringValue(*apiProp.Definition.FilePath)
+					}
+					if apiProp.Definition.MatchExpression != nil {
+						property.MatchExpression = types.StringValue(*apiProp.Definition.MatchExpression)
+					}
+				} else if propType == propertyTypeURL {
 					// Extract call_to_action fields for url type
 					if apiProp.Definition.CallToAction != nil {
 						property.CallToAction = types.StringValue(*apiProp.Definition.CallToAction)

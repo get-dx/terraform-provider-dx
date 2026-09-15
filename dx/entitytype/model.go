@@ -35,6 +35,9 @@ type PropertyModel struct {
 	OutputType       types.String          `tfsdk:"output_type"`         // Optional: output type for computed type
 	CallToAction     types.String          `tfsdk:"call_to_action"`      // Optional: call-to-action text for url type
 	CallToActionType types.String          `tfsdk:"call_to_action_type"` // Optional: call-to-action type for url type
+	RuleType         types.String          `tfsdk:"rule_type"`           // Optional: rule type for file_matching_rule type
+	FilePath         types.String          `tfsdk:"file_path"`           // Optional: absolute file path for file_matching_rule type
+	MatchExpression  types.String          `tfsdk:"match_expression"`    // Optional: Expression or substring for file_matching_rule type
 }
 
 // PropertyOptionModel describes an option for a multi_select and select property.

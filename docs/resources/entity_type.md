@@ -122,9 +122,12 @@ Optional:
 - `call_to_action` (String) Call-to-action text for url properties. Required when type is 'url'.
 - `call_to_action_type` (String) Call-to-action type for url properties. Options: 'text', 'icon'. Required when type is 'url'.
 - `description` (String) Description of the property.
+- `file_path` (String) For file_matching_rule type properties. The static path to the file within the repository.
+- `match_expression` (String) For file_matching_rule type properties. The substring or regular expression to match against. Required when type is 'regex' or 'substring'.
 - `options` (Attributes List) Available options for select and multi_select properties. (see [below for nested schema](#nestedatt--properties--options))
 - `ordering` (Number) Sort order for the property. If not specified, properties will be ordered by their position in the list.
 - `output_type` (String) Output type for computed properties. Options: 'string', 'json', 'list', 'number', 'percent', 'currency_usd', 'duration_milliseconds', 'duration_seconds', 'duration_minutes', 'duration_hours', 'duration_days', 'custom'.
+- `rule_type` (String) For file_matching_rule type properties. The matching strategy: file_exists, substring, or regex.
 - `sql` (String) SQL query for computed properties. Required when type is 'computed'.
 - `visibility` (String) Property visibility setting. Options: 'hidden', 'visible'. Defaults to 'visible' if not specified.
 
