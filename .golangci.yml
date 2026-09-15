@@ -1,4 +1,8 @@
 version: "2"
+run:
+  concurrency: 4
+  allow-parallel-runners: true
+  timeout: 2m
 linters:
   default: none
   enable:

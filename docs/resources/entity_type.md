@@ -115,7 +115,7 @@ resource "dx_entity_type" "repository" {
 Required:
 
 - `name` (String) Display name for the property.
-- `type` (String) Property type (e.g., 'multi_select', 'text', 'computed', 'url').
+- `type` (String) Property type (e.g., 'multi_select', 'select', 'text', 'computed', 'url', etc).
 
 Optional:
 
