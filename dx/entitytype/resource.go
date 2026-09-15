@@ -3,6 +3,7 @@ package entitytype
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"terraform-provider-dx/dx"
 	"terraform-provider-dx/dx/dxapi"
@@ -17,8 +18,9 @@ const DEFAULT_OPTION_COLOR = "#3b82f6" // Default blue color
 
 // Ensure provider defined types fully satisfy framework interfaces.
 var (
-	_ resource.Resource                = &EntityTypeResource{}
-	_ resource.ResourceWithImportState = &EntityTypeResource{}
+	_                       resource.Resource                = &EntityTypeResource{}
+	_                       resource.ResourceWithImportState = &EntityTypeResource{}
+	optionablePropertyTypes                                  = []string{"multi_select", "select"}
 )
 
 func NewEntityTypeResource() resource.Resource {
@@ -232,8 +234,8 @@ func modelToRequestBody(ctx context.Context, plan EntityTypeModel, isUpdate bool
 			definition := map[string]interface{}{}
 
 			switch propType {
-			case "multi_select":
-				// For multi_select, create definition with options
+			case "multi_select", "select":
+				// For multi_select and select, create definition with options
 				if len(planProp.Options) > 0 {
 					options := make([]map[string]interface{}, 0, len(planProp.Options))
 					for _, opt := range planProp.Options {
@@ -331,8 +333,8 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIEntityTypeRespon
 			// Extract definition fields based on property type
 			if apiProp.Definition != nil {
 				propType := apiProp.Type
-				if propType == "multi_select" && len(apiProp.Definition.Options) > 0 {
-					// Extract options for multi_select type
+				if slices.Contains(optionablePropertyTypes, propType) && len(apiProp.Definition.Options) > 0 {
+					// Extract options for multi_select and select type
 					options := make([]PropertyOptionModel, 0, len(apiProp.Definition.Options))
 					for _, opt := range apiProp.Definition.Options {
 						options = append(options, PropertyOptionModel{
