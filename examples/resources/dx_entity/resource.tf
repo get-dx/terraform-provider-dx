@@ -17,7 +17,6 @@ resource "dx_entity" "payment_service" {
   description    = "Core payment processing service handling all payment transactions"
   owner_team_ids = ["MzI1NTk"]
   owner_user_ids = ["MQ"]
-  domain         = "payments"
 
   properties = {
     service_tier      = "Tier-1"
@@ -50,7 +49,6 @@ resource "dx_entity" "user_api" {
   name           = "User Management API"
   description    = "RESTful API for user management operations"
   owner_team_ids = ["MzI1NTk"]
-  domain         = "platform"
 
   properties = {
     api_version   = "v2"

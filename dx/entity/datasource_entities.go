@@ -58,7 +58,7 @@ func (d *EntitiesDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 		Attributes: map[string]schema.Attribute{
 			"type": schema.StringAttribute{
 				Required:    true,
-				Description: "The entity type identifier to filter by (e.g., 'service', 'api', 'domain').",
+				Description: "The entity type identifier to filter by (e.g., 'service', 'api').",
 			},
 			"search_term": schema.StringAttribute{
 				Optional:    true,

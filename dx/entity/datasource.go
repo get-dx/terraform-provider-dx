@@ -46,7 +46,7 @@ func (d *EntityDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 			},
 			"type": schema.StringAttribute{
 				Computed:    true,
-				Description: "The identifier of the entity type (e.g., 'service', 'api', 'domain').",
+				Description: "The identifier of the entity type (e.g., 'service', 'api').",
 			},
 			"name": schema.StringAttribute{
 				Computed:    true,

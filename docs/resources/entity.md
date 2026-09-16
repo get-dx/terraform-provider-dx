@@ -3,12 +3,12 @@
 page_title: "dx_entity Resource - dx"
 subcategory: ""
 description: |-
-  Manages a DX Entity. Entities represent items in your software catalog (e.g., services, APIs, domains).
+  Manages a DX Entity. Entities represent items in your software catalog (e.g., services, APIs).
 ---
 
 # dx_entity (Resource)
 
-Manages a DX Entity. Entities represent items in your software catalog (e.g., services, APIs, domains).
+Manages a DX Entity. Entities represent items in your software catalog (e.g., services, APIs).
 
 ## Example Usage
 
@@ -32,7 +32,6 @@ resource "dx_entity" "payment_service" {
   description    = "Core payment processing service handling all payment transactions"
   owner_team_ids = ["MzI1NTk"]
   owner_user_ids = ["MQ"]
-  domain         = "payments"
 
   properties = {
     service_tier      = "Tier-1"
@@ -65,7 +64,6 @@ resource "dx_entity" "user_api" {
   name           = "User Management API"
   description    = "RESTful API for user management operations"
   owner_team_ids = ["MzI1NTk"]
-  domain         = "platform"
 
   properties = {
     api_version   = "v2"
@@ -91,7 +89,7 @@ resource "dx_entity" "user_api" {
 ### Required
 
 - `identifier` (String) User-defined unique identifier for the entity. This cannot be changed after creation.
-- `type` (String) The identifier of the entity type (e.g., 'service', 'api', 'domain').
+- `type` (String) The identifier of the entity type (e.g., 'service', 'api').
 
 ### Optional
 

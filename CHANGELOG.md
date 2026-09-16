@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- Removed Domain from entity examples and schema descriptions so it is no longer presented as a first-class catalog concept.
+
 ## [0.11.1] - 2026-09-15
 
 ### Changed
