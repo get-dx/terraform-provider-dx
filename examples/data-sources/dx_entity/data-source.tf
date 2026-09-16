@@ -30,11 +30,6 @@ output "service_type" {
   value       = data.dx_entity.core_service.type
 }
 
-output "service_domain" {
-  description = "The domain of the core service"
-  value       = data.dx_entity.core_service.domain
-}
-
 output "service_owner_teams" {
   description = "The owner teams with id and name"
   value       = data.dx_entity.core_service.owner_teams

@@ -50,7 +50,7 @@ func EntityResourceSchema() map[string]schema.Attribute {
 		},
 		"type": schema.StringAttribute{
 			Required:    true,
-			Description: "The identifier of the entity type (e.g., 'service', 'api', 'domain').",
+			Description: "The identifier of the entity type (e.g., 'service', 'api').",
 		},
 		"name": schema.StringAttribute{
 			Optional:    true,
@@ -106,7 +106,7 @@ func EntityResourceSchema() map[string]schema.Attribute {
 
 func (r *EntityResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Manages a DX Entity. Entities represent items in your software catalog (e.g., services, APIs, domains).",
+		Description: "Manages a DX Entity. Entities represent items in your software catalog (e.g., services, APIs).",
 		Attributes:  EntityResourceSchema(),
 	}
 }

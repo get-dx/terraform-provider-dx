@@ -66,7 +66,7 @@ output "service_tiers" {
 
 ### Required
 
-- `type` (String) The entity type identifier to filter by (e.g., 'service', 'api', 'domain').
+- `type` (String) The entity type identifier to filter by (e.g., 'service', 'api').
 
 ### Optional
 

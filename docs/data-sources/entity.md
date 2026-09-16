@@ -45,11 +45,6 @@ output "service_type" {
   value       = data.dx_entity.core_service.type
 }
 
-output "service_domain" {
-  description = "The domain of the core service"
-  value       = data.dx_entity.core_service.domain
-}
-
 output "service_owner_teams" {
   description = "The owner teams with id and name"
   value       = data.dx_entity.core_service.owner_teams
@@ -101,7 +96,7 @@ output "production_status" {
 - `owner_teams` (List of Object) Array of owner teams assigned to the entity. Each team has 'id' and 'name' fields. (see [below for nested schema](#nestedatt--owner_teams))
 - `owner_users` (List of Object) Array of owner users assigned to the entity. Each user has 'id' and 'email' fields. (see [below for nested schema](#nestedatt--owner_users))
 - `properties` (Dynamic) Key-value pairs of entity properties and their values. Values can be strings, numbers, null, objects, or lists of any of those types.
-- `type` (String) The identifier of the entity type (e.g., 'service', 'api', 'domain').
+- `type` (String) The identifier of the entity type (e.g., 'service', 'api').
 - `updated_at` (String) Timestamp when the entity was last updated.
 
 <a id="nestedatt--owner_teams"></a>
