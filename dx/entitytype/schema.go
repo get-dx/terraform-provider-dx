@@ -23,20 +23,7 @@ func PropertySchema() map[string]schema.Attribute {
 			Required:    true,
 			Description: "Property type (e.g., 'multi_select', 'select', 'text', 'computed', 'url', etc).",
 			Validators: []validator.String{
-				stringvalidator.OneOf(
-					"text",
-					"user",
-					"url",
-					"select",
-					"multi_select",
-					"boolean",
-					"number",
-					"computed",
-					"date",
-					"json",
-					"list",
-					"openapi",
-				),
+				stringvalidator.OneOf(propertyTypes...),
 			},
 		},
 		"description": schema.StringAttribute{
@@ -94,6 +81,21 @@ func PropertySchema() map[string]schema.Attribute {
 			Validators: []validator.String{
 				stringvalidator.OneOf("text", "icon"),
 			},
+		},
+		"rule_type": schema.StringAttribute{
+			Optional:    true,
+			Description: "For file_matching_rule type properties. The matching strategy: file_exists, substring, or regex.",
+			Validators: []validator.String{
+				stringvalidator.OneOf("file_exists", "substring", "regex"),
+			},
+		},
+		"file_path": schema.StringAttribute{
+			Optional:    true,
+			Description: "For file_matching_rule type properties. The static path to the file within the repository.",
+		},
+		"match_expression": schema.StringAttribute{
+			Optional:    true,
+			Description: "For file_matching_rule type properties. The substring or regular expression to match against. Required when type is 'regex' or 'substring'.",
 		},
 	}
 }
