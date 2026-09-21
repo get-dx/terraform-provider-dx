@@ -35,14 +35,15 @@ type APIProperty struct {
 }
 
 type APIPropertyDefinition struct {
-	Options          []APIPropertyOption `json:"options"`
-	SQL              *string             `json:"sql,omitempty"`
-	OutputType       *string             `json:"output_type,omitempty"`
-	CallToAction     *string             `json:"call_to_action,omitempty"`
-	CallToActionType *string             `json:"call_to_action_type,omitempty"`
-	RuleType         *string             `json:"rule_type,omitempty"`
-	FilePath         *string             `json:"file_path,omitempty"`
-	MatchExpression  *string             `json:"match_expression,omitempty"`
+	Options             []APIPropertyOption `json:"options"`
+	SQL                 *string             `json:"sql,omitempty"`
+	OutputType          *string             `json:"output_type,omitempty"`
+	CallToAction        *string             `json:"call_to_action,omitempty"`
+	CallToActionType    *string             `json:"call_to_action_type,omitempty"`
+	RuleType            *string             `json:"rule_type,omitempty"`
+	FilePath            *string             `json:"file_path,omitempty"`
+	MatchExpression     *string             `json:"match_expression,omitempty"`
+	EnableInteractivity *bool               `json:"enable_interactivity,omitempty"`
 }
 
 type APIPropertyOption struct {

@@ -97,6 +97,10 @@ func PropertySchema() map[string]schema.Attribute {
 			Optional:    true,
 			Description: "For file_matching_rule type properties. The substring or regular expression to match against. Required when type is 'regex' or 'substring'.",
 		},
+		"enable_interactivity": schema.BoolAttribute{
+			Optional:    true,
+			Description: "For openapi type properties. Whether to render an interactive API explorer. Required when type is 'openapi'.",
+		},
 	}
 }
 

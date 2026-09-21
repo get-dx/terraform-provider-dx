@@ -14,6 +14,9 @@ const (
 	propertyTypeComputed         = "computed"
 	propertyTypeFileMatchingRule = "file_matching_rule"
 	propertyTypeURL              = "url"
+	propertyTypeSlackChannel     = "slack_channel"
+	propertyTypeMSTeamsChannel   = "msteams_channel"
+	propertyTypeEmail            = "email"
 )
 
 var (
@@ -30,6 +33,9 @@ var (
 		propertyTypeJSON,
 		propertyTypeList,
 		propertyTypeOpenAPI,
+		propertyTypeSlackChannel,
+		propertyTypeMSTeamsChannel,
+		propertyTypeEmail,
 		propertyTypeFileMatchingRule,
 	}
 	optionablePropertyTypes = []string{

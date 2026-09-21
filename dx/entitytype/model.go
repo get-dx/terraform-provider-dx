@@ -25,19 +25,20 @@ type EntityTypeModel struct {
 // PropertyModel describes a custom property on an entity type.
 // Note: The identifier is the map key, not a field in this struct.
 type PropertyModel struct {
-	Name             types.String          `tfsdk:"name"`                // Required: display name
-	Type             types.String          `tfsdk:"type"`                // Required: property type (e.g., "multi_select", "text", "computed", "url")
-	Description      types.String          `tfsdk:"description"`         // Optional: property description
-	Visibility       types.String          `tfsdk:"visibility"`          // Optional: property visibility
-	Ordering         types.Int64           `tfsdk:"ordering"`            // Optional: sort order for the property
-	Options          []PropertyOptionModel `tfsdk:"options"`             // Optional: for multi_select and select type
-	SQL              types.String          `tfsdk:"sql"`                 // Optional: SQL query for computed type
-	OutputType       types.String          `tfsdk:"output_type"`         // Optional: output type for computed type
-	CallToAction     types.String          `tfsdk:"call_to_action"`      // Optional: call-to-action text for url type
-	CallToActionType types.String          `tfsdk:"call_to_action_type"` // Optional: call-to-action type for url type
-	RuleType         types.String          `tfsdk:"rule_type"`           // Optional: rule type for file_matching_rule type
-	FilePath         types.String          `tfsdk:"file_path"`           // Optional: absolute file path for file_matching_rule type
-	MatchExpression  types.String          `tfsdk:"match_expression"`    // Optional: Expression or substring for file_matching_rule type
+	Name                types.String          `tfsdk:"name"`                 // Required: display name
+	Type                types.String          `tfsdk:"type"`                 // Required: property type (e.g., "multi_select", "text", "computed", "url")
+	Description         types.String          `tfsdk:"description"`          // Optional: property description
+	Visibility          types.String          `tfsdk:"visibility"`           // Optional: property visibility
+	Ordering            types.Int64           `tfsdk:"ordering"`             // Optional: sort order for the property
+	Options             []PropertyOptionModel `tfsdk:"options"`              // Optional: for multi_select and select type
+	SQL                 types.String          `tfsdk:"sql"`                  // Optional: SQL query for computed type
+	OutputType          types.String          `tfsdk:"output_type"`          // Optional: output type for computed type
+	CallToAction        types.String          `tfsdk:"call_to_action"`       // Optional: call-to-action text for url type
+	CallToActionType    types.String          `tfsdk:"call_to_action_type"`  // Optional: call-to-action type for url type
+	RuleType            types.String          `tfsdk:"rule_type"`            // Optional: rule type for file_matching_rule type
+	FilePath            types.String          `tfsdk:"file_path"`            // Optional: absolute file path for file_matching_rule type
+	MatchExpression     types.String          `tfsdk:"match_expression"`     // Optional: Expression or substring for file_matching_rule type
+	EnableInteractivity types.Bool            `tfsdk:"enable_interactivity"` // Optional: interactive API explorer for openapi type
 }
 
 // PropertyOptionModel describes an option for a multi_select and select property.
