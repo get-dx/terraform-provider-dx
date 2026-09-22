@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.11.2] - 2026-09-22
+
 - Added support for File Matching Rule properties (Thank you to @shaun-mccormick-zocdoc!)
 - Added support for `email`, `slack_channel`, and `msteams_channel` property types
 - Fixed `openapi` properties by adding the required `enable_interactivity` field
@@ -197,6 +199,7 @@ Initial published release.
 - Provider
 - `dx_scorecard` resource
 
+[0.11.2]: https://github.com/get-dx/terraform-provider-dx/compare/v0.11.1...v0.11.2
 [0.11.1]: https://github.com/get-dx/terraform-provider-dx/compare/v0.11.0...v0.11.1
 [0.11.0]: https://github.com/get-dx/terraform-provider-dx/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/get-dx/terraform-provider-dx/compare/v0.9.1...v0.10.0
