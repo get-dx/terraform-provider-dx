@@ -122,6 +122,7 @@ Optional:
 - `call_to_action` (String) Call-to-action text for url properties. Required when type is 'url'.
 - `call_to_action_type` (String) Call-to-action type for url properties. Options: 'text', 'icon'. Required when type is 'url'.
 - `description` (String) Description of the property.
+- `enable_interactivity` (Boolean) For openapi type properties. Whether to render an interactive API explorer. Required when type is 'openapi'.
 - `file_path` (String) For file_matching_rule type properties. The static path to the file within the repository.
 - `match_expression` (String) For file_matching_rule type properties. The substring or regular expression to match against. Required when type is 'regex' or 'substring'.
 - `options` (Attributes List) Available options for select and multi_select properties. (see [below for nested schema](#nestedatt--properties--options))

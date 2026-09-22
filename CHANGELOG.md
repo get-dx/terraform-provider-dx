@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Added support for File Matching Rule properties (Thank you to @shaun-mccormick-zocdoc!)
+- Added support for `email`, `slack_channel`, and `msteams_channel` property types
+- Fixed `openapi` properties by adding the required `enable_interactivity` field
+
 ## [0.11.1] - 2026-09-15
 
 ### Changed

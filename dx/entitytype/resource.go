@@ -280,6 +280,11 @@ func modelToRequestBody(ctx context.Context, plan EntityTypeModel, isUpdate bool
 				if !planProp.CallToActionType.IsNull() && !planProp.CallToActionType.IsUnknown() {
 					definition["call_to_action_type"] = planProp.CallToActionType.ValueString()
 				}
+			case propertyTypeOpenAPI:
+				// For openapi type, add enable_interactivity to definition
+				if !planProp.EnableInteractivity.IsNull() && !planProp.EnableInteractivity.IsUnknown() {
+					definition["enable_interactivity"] = planProp.EnableInteractivity.ValueBool()
+				}
 			default:
 				// For other types (like text), definition is an empty object
 			}
@@ -380,6 +385,10 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIEntityTypeRespon
 					}
 					if apiProp.Definition.CallToActionType != nil {
 						property.CallToActionType = types.StringValue(*apiProp.Definition.CallToActionType)
+					}
+				} else if propType == propertyTypeOpenAPI {
+					if apiProp.Definition.EnableInteractivity != nil {
+						property.EnableInteractivity = types.BoolValue(*apiProp.Definition.EnableInteractivity)
 					}
 				}
 			}
