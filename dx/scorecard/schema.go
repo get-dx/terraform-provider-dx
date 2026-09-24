@@ -5,7 +5,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -116,14 +115,9 @@ func ScorecardSchema() map[string]schema.Attribute {
 			},
 		},
 		"evaluation_frequency_hours": schema.Int32Attribute{
-			Required:    true,
-			Description: "How often the scorecard is evaluated (in hours). [2|4|8|24]",
-			// Validators: []validator.Number{
-			// 	numbervalidator.OneOf(2, 4, 8, 24),
-			// },
-			PlanModifiers: []planmodifier.Int32{
-				int32planmodifier.UseStateForUnknown(),
-			},
+			Optional:           true,
+			DeprecationMessage: "This setting no longer has any effect and will be removed in a future release. DX now schedules scorecard evaluations automatically, so any value set here is ignored. Remove this attribute from your configuration.",
+			Description:        "Deprecated: this setting no longer has any effect and will be removed in a future release. DX schedules scorecard evaluations automatically.",
 		},
 		"tags": schema.SetNestedAttribute{
 			Optional:    true,

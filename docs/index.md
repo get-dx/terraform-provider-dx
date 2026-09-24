@@ -38,7 +38,6 @@ resource "dx_scorecard" "my_example_scorecard" {
   type                           = "LEVEL"
   entity_filter_type             = "entity_types"
   entity_filter_type_identifiers = ["service"]
-  evaluation_frequency_hours     = 2
   empty_level_label              = "Incomplete"
   empty_level_color              = "#cccccc"
   published                      = true

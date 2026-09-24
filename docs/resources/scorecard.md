@@ -30,7 +30,6 @@ resource "dx_scorecard" "level_based_example" {
   type                           = "LEVEL"
   entity_filter_type             = "entity_types"
   entity_filter_type_identifiers = ["service"]
-  evaluation_frequency_hours     = 2
   empty_level_label              = "Incomplete"
   empty_level_color              = "#cccccc"
   published                      = true
@@ -126,7 +125,6 @@ resource "dx_scorecard" "points_based_example" {
   type                           = "POINTS"
   entity_filter_type             = "entity_types"
   entity_filter_type_identifiers = ["service"]
-  evaluation_frequency_hours     = 2
   published                      = true
 
   check_groups = {
@@ -183,7 +181,6 @@ resource "dx_scorecard" "points_based_example" {
 ### Required
 
 - `entity_filter_type` (String) The filtering strategy when deciding what entities this scorecard should assess. Options: 'entity_types', 'sql'
-- `evaluation_frequency_hours` (Number) How often the scorecard is evaluated (in hours). [2|4|8|24]
 - `name` (String) The name of the scorecard.
 - `type` (String) The type of scorecard. Options: 'LEVEL', 'POINTS'.
 
@@ -196,6 +193,7 @@ resource "dx_scorecard" "points_based_example" {
 - `empty_level_label` (String) The label to display when an entity has not achieved any levels in the scorecard (levels scorecards only).
 - `entity_filter_sql` (String) Custom SQL used to filter entities that the scorecard should run against.
 - `entity_filter_type_identifiers` (List of String) List of entity type identifiers that the scorecard should run against.
+- `evaluation_frequency_hours` (Number, Deprecated) Deprecated: this setting no longer has any effect and will be removed in a future release. DX schedules scorecard evaluations automatically.
 - `levels` (Attributes Map) The levels that can be achieved in this scorecard (levels scorecards only). (see [below for nested schema](#nestedatt--levels))
 - `published` (Boolean) Whether the scorecard is published.
 - `tags` (Attributes Set) List of tags to apply to the scorecard. (see [below for nested schema](#nestedatt--tags))

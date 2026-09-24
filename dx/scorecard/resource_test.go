@@ -18,7 +18,6 @@ func TestDuplicateOrderingWithinLevel(t *testing.T) {
 		Type:                        types.StringValue("LEVEL"),
 		EntityFilterType:            types.StringValue("entity_types"),
 		EntityFilterTypeIdentifiers: []types.String{types.StringValue("service")},
-		EvaluationFrequency:         types.Int32Value(2),
 		EmptyLevelLabel:             types.StringValue("Incomplete"),
 		EmptyLevelColor:             types.StringValue("#cccccc"),
 		Published:                   types.BoolValue(true),
@@ -72,7 +71,6 @@ func TestDuplicateOrderingWithinCheckGroup(t *testing.T) {
 		Type:                        types.StringValue("POINTS"),
 		EntityFilterType:            types.StringValue("entity_types"),
 		EntityFilterTypeIdentifiers: []types.String{types.StringValue("service")},
-		EvaluationFrequency:         types.Int32Value(2),
 		Published:                   types.BoolValue(true),
 		Tags:                        []scorecard.TagModel{{Value: types.StringValue("test")}},
 		CheckGroups: map[string]scorecard.CheckGroupModel{
@@ -121,16 +119,18 @@ func TestDuplicateOrderingWithinCheckGroup(t *testing.T) {
 
 func TestAccDxScorecardResourceCreateScorecard(t *testing.T) {
 	scorecardName := fmt.Sprintf("Terraform Provider Scorecard %d", acctest.RandInt())
-	var testAccDxScorecardResourceBasic = fmt.Sprintf(`
+	// The %[2]s slot carries the deprecated evaluation_frequency_hours attribute, so the
+	// same scorecard can be applied both with and without it.
+	var testAccDxScorecardResourceBasic = `
 provider "dx" {}
 
 resource "dx_scorecard" "level_based_example" {
-  name                           = "%s"
+  name                           = "%[1]s"
   description                    = "This is a test scorecard"
   type                           = "LEVEL"
   entity_filter_type             = "entity_types"
   entity_filter_type_identifiers = ["service"]
-  evaluation_frequency_hours     = 2
+%[2]s
   empty_level_label              = "Incomplete"
   empty_level_color              = "#cccccc"
   published                      = true
@@ -221,16 +221,32 @@ resource "dx_scorecard" "level_based_example" {
   }
 }
 
-`, scorecardName)
+`
+
+	// 24 is deliberate: the API ignores evaluation_frequency_hours and always reports a
+	// fixed 2 back, so 24 is a value the API would never return on its own.
+	withDeprecatedAttr := fmt.Sprintf(testAccDxScorecardResourceBasic, scorecardName, "  evaluation_frequency_hours     = 24")
+	withoutDeprecatedAttr := fmt.Sprintf(testAccDxScorecardResourceBasic, scorecardName, "")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
+			// A configuration still carrying the deprecated evaluation_frequency_hours must
+			// apply cleanly.
 			{
-				Config: testAccDxScorecardResourceBasic,
+				Config: withDeprecatedAttr,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("dx_scorecard.level_based_example", "name", scorecardName),
+				),
+			},
+			// Dropping the attribute is the migration the deprecation message asks users to
+			// make, so verify it applies cleanly and leaves nothing behind in state.
+			{
+				Config: withoutDeprecatedAttr,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("dx_scorecard.level_based_example", "name", scorecardName),
+					resource.TestCheckNoResourceAttr("dx_scorecard.level_based_example", "evaluation_frequency_hours"),
 				),
 			},
 		},

@@ -17,11 +17,10 @@ import (
 
 type APIScorecard struct {
 	// Required fields
-	Id                  string `json:"id"`
-	Name                string `json:"name"`
-	Type                string `json:"type"`
-	EntityFilterType    string `json:"entity_filter_type"`
-	EvaluationFrequency int32  `json:"evaluation_frequency_hours"`
+	Id               string `json:"id"`
+	Name             string `json:"name"`
+	Type             string `json:"type"`
+	EntityFilterType string `json:"entity_filter_type"`
 
 	// Conditionally required fields for levels based scorecards
 	EmptyLevelLabel *string     `json:"empty_level_label"`
