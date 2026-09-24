@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed `Provider produced inconsistent result after apply` when `evaluation_frequency_hours` was set to any value other than `2` on a `dx_scorecard`. 
 
+- Documented that `checks`, `levels`, and `check_groups` map keys on a `dx_scorecard` must be the snake-cased form of their element's `name`.
+
 ## [0.11.2] - 2026-09-22
 
 - Added support for File Matching Rule properties (Thank you to @shaun-mccormick-zocdoc!)
