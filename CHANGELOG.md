@@ -7,9 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.11.3] - 2026-09-24
+
 - Deprecated `evaluation_frequency_hours` on the `dx_scorecard` resource. DX removed this setting in March 2026 and now schedules scorecard evaluations automatically, so the API ignores any value sent to it. The attribute is now optional and no longer sent to the API; it will be removed in a future release.
 
-- Fixed `Provider produced inconsistent result after apply` when `evaluation_frequency_hours` was set to any value other than `2` on a `dx_scorecard`. 
+- Fixed `Provider produced inconsistent result after apply` when `evaluation_frequency_hours` was set to any value other than `2` on a `dx_scorecard`.
 
 - Documented that `checks`, `levels`, and `check_groups` map keys on a `dx_scorecard` must be the snake-cased form of their element's `name`.
 
@@ -205,6 +207,7 @@ Initial published release.
 - Provider
 - `dx_scorecard` resource
 
+[0.11.3]: https://github.com/get-dx/terraform-provider-dx/compare/v0.11.2...v0.11.3
 [0.11.2]: https://github.com/get-dx/terraform-provider-dx/compare/v0.11.1...v0.11.2
 [0.11.1]: https://github.com/get-dx/terraform-provider-dx/compare/v0.11.0...v0.11.1
 [0.11.0]: https://github.com/get-dx/terraform-provider-dx/compare/v0.10.0...v0.11.0
