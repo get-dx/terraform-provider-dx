@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Deprecated `evaluation_frequency_hours` on the `dx_scorecard` resource. DX removed this setting in March 2026 and now schedules scorecard evaluations automatically, so the API ignores any value sent to it. The attribute is now optional and no longer sent to the API; it will be removed in a future release.
+
+- Fixed `Provider produced inconsistent result after apply` when `evaluation_frequency_hours` was set to any value other than `2` on a `dx_scorecard`. 
+
 ## [0.11.2] - 2026-09-22
 
 - Added support for File Matching Rule properties (Thank you to @shaun-mccormick-zocdoc!)
