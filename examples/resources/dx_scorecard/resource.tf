@@ -15,7 +15,6 @@ resource "dx_scorecard" "level_based_example" {
   type                           = "LEVEL"
   entity_filter_type             = "entity_types"
   entity_filter_type_identifiers = ["service"]
-  evaluation_frequency_hours     = 2
   empty_level_label              = "Incomplete"
   empty_level_color              = "#cccccc"
   published                      = true
@@ -111,7 +110,6 @@ resource "dx_scorecard" "points_based_example" {
   type                           = "POINTS"
   entity_filter_type             = "entity_types"
   entity_filter_type_identifiers = ["service"]
-  evaluation_frequency_hours     = 2
   published                      = true
 
   check_groups = {

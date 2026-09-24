@@ -5,7 +5,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -116,14 +115,9 @@ func ScorecardSchema() map[string]schema.Attribute {
 			},
 		},
 		"evaluation_frequency_hours": schema.Int32Attribute{
-			Required:    true,
-			Description: "How often the scorecard is evaluated (in hours). [2|4|8|24]",
-			// Validators: []validator.Number{
-			// 	numbervalidator.OneOf(2, 4, 8, 24),
-			// },
-			PlanModifiers: []planmodifier.Int32{
-				int32planmodifier.UseStateForUnknown(),
-			},
+			Optional:           true,
+			DeprecationMessage: "This setting no longer has any effect and will be removed in a future release. DX now schedules scorecard evaluations automatically, so any value set here is ignored. Remove this attribute from your configuration.",
+			Description:        "Deprecated: this setting no longer has any effect and will be removed in a future release. DX schedules scorecard evaluations automatically.",
 		},
 		"tags": schema.SetNestedAttribute{
 			Optional:    true,
@@ -144,7 +138,7 @@ func ScorecardSchema() map[string]schema.Attribute {
 		},
 		"levels": schema.MapNestedAttribute{
 			Optional:    true,
-			Description: "The levels that can be achieved in this scorecard (levels scorecards only).",
+			Description: "The levels that can be achieved in this scorecard (levels scorecards only). Each map key must be the snake-cased form of that level's `name` — e.g. `fully_compliant` for a level named \"Fully Compliant\". Names containing digits gain a separator, so a level named \"P1 Alerts\" requires the key `p_1_alerts`.",
 			NestedObject: schema.NestedAttributeObject{
 				Attributes: LevelSchema(),
 			},
@@ -153,7 +147,7 @@ func ScorecardSchema() map[string]schema.Attribute {
 		// Conditionally required for points-based scorecards
 		"check_groups": schema.MapNestedAttribute{
 			Optional:    true,
-			Description: "Groups of checks, to help organize the scorecard for entity owners (points scorecards only).",
+			Description: "Groups of checks, to help organize the scorecard for entity owners (points scorecards only). Each map key must be the snake-cased form of that check group's `name` — e.g. `ai_readiness` for a check group named \"AI Readiness\". Names containing digits gain a separator, so a check group named \"P1 Alerts\" requires the key `p_1_alerts`.",
 			NestedObject: schema.NestedAttributeObject{
 				Attributes: CheckGroupSchema(),
 			},
@@ -181,7 +175,7 @@ func ScorecardSchema() map[string]schema.Attribute {
 		// For now, all check field are required. This may change in the future.
 		"checks": schema.MapNestedAttribute{
 			Optional:    true,
-			Description: "List of checks that are applied to entities in the scorecard.",
+			Description: "List of checks that are applied to entities in the scorecard. Each map key must be the snake-cased form of that check's `name` — e.g. `bronze_checks` for a check named \"Bronze Checks\". Names containing digits gain a separator, so a check named \"P1 Alerts\" requires the key `p_1_alerts`.",
 			NestedObject: schema.NestedAttributeObject{
 				Attributes: CheckSchema(),
 			},

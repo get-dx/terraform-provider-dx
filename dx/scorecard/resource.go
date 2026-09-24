@@ -217,10 +217,6 @@ func ValidateModel(plan ScorecardModel, diags *diag.Diagnostics) {
 		diags.AddError("Missing required field", "The 'entity_filter_type' field must be specified.")
 		return
 	}
-	if plan.EvaluationFrequency.IsNull() || plan.EvaluationFrequency.IsUnknown() {
-		diags.AddError("Missing required field", "The 'evaluation_frequency_hours' field must be specified.")
-		return
-	}
 
 	// Validate tags
 	if len(plan.Tags) > 0 {
@@ -359,12 +355,13 @@ func modelToRequestBody(ctx context.Context, plan ScorecardModel, setIds bool) (
 	scorecardType := plan.Type.ValueString()
 
 	// Construct API request payload
+	// Note: `evaluation_frequency_hours` is deliberately not sent. The API ignores it —
+	// DX schedules evaluations automatically — and always reports a fixed value back.
 	payload := map[string]interface{}{
 		// Required fields
-		"name":                       plan.Name.ValueString(),
-		"type":                       scorecardType,
-		"entity_filter_type":         plan.EntityFilterType.ValueString(),
-		"evaluation_frequency_hours": plan.EvaluationFrequency.ValueInt32(),
+		"name":               plan.Name.ValueString(),
+		"type":               scorecardType,
+		"entity_filter_type": plan.EntityFilterType.ValueString(),
 	}
 
 	if len(plan.Tags) > 0 {
@@ -517,7 +514,10 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 	state.Name = types.StringValue(apiResp.Scorecard.Name)
 	state.Type = types.StringValue(apiResp.Scorecard.Type)
 	state.EntityFilterType = types.StringValue(apiResp.Scorecard.EntityFilterType)
-	state.EvaluationFrequency = types.Int32Value(apiResp.Scorecard.EvaluationFrequency)
+
+	// Deprecated and ignored by the API, which always reports a fixed value regardless of
+	// what was sent. Echo back the configured value so it stays consistent with the plan.
+	state.EvaluationFrequency = oldPlan.EvaluationFrequency
 
 	// ************** Conditionally required fields for levels based scorecards **************
 	state.EmptyLevelLabel = dx.StringOrNull(apiResp.Scorecard.EmptyLevelLabel)

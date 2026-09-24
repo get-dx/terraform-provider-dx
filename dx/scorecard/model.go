@@ -7,12 +7,15 @@ import (
 // ScorecardModel describes the resource data model.
 type ScorecardModel struct {
 	// Required fields
-	Id                  types.String `tfsdk:"id"`
-	Name                types.String `tfsdk:"name"`
-	Type                types.String `tfsdk:"type"`
-	EntityFilterType    types.String `tfsdk:"entity_filter_type"`
-	EvaluationFrequency types.Int32  `tfsdk:"evaluation_frequency_hours"`
-	Tags                []TagModel   `tfsdk:"tags"`
+	Id               types.String `tfsdk:"id"`
+	Name             types.String `tfsdk:"name"`
+	Type             types.String `tfsdk:"type"`
+	EntityFilterType types.String `tfsdk:"entity_filter_type"`
+	Tags             []TagModel   `tfsdk:"tags"`
+
+	// Deprecated fields, retained so existing configurations keep parsing.
+	// Ignored by the API; will be removed in a future release.
+	EvaluationFrequency types.Int32 `tfsdk:"evaluation_frequency_hours"`
 
 	// Conditionally required fields for levels based scorecards
 	EmptyLevelLabel types.String          `tfsdk:"empty_level_label"`

@@ -56,11 +56,10 @@ func TestResponseBodyToModelMatchesByID(t *testing.T) {
 	// API returns checks in a DIFFERENT order than the old plan keys
 	apiResp := &dxapi.APIResponse{
 		Scorecard: dxapi.APIScorecard{
-			Id:                  "scorecard-1",
-			Name:                "Test Scorecard",
-			Type:                "LEVEL",
-			EntityFilterType:    "entity_types",
-			EvaluationFrequency: 2,
+			Id:               "scorecard-1",
+			Name:             "Test Scorecard",
+			Type:             "LEVEL",
+			EntityFilterType: "entity_types",
 			Levels: []*dxapi.APILevel{
 				{Id: strPtr("level-1"), Name: strPtr("Bronze"), Color: strPtr("#FB923C"), Rank: int32Ptr(1)},
 			},
@@ -153,11 +152,10 @@ func TestResponseBodyToModelPreservesGroupingKeysOnCreate(t *testing.T) {
 	// API response after Create — checks now have IDs assigned
 	apiResp := &dxapi.APIResponse{
 		Scorecard: dxapi.APIScorecard{
-			Id:                  "scorecard-1",
-			Name:                "Test Scorecard",
-			Type:                "LEVEL",
-			EntityFilterType:    "entity_types",
-			EvaluationFrequency: 2,
+			Id:               "scorecard-1",
+			Name:             "Test Scorecard",
+			Type:             "LEVEL",
+			EntityFilterType: "entity_types",
 			Levels: []*dxapi.APILevel{
 				{Id: strPtr("level-1"), Name: strPtr("Bronze"), Color: strPtr("#FB923C"), Rank: int32Ptr(1)},
 				{Id: strPtr("level-2"), Name: strPtr("Silver"), Color: strPtr("#C0C0C0"), Rank: int32Ptr(2)},
