@@ -597,6 +597,10 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 		for i, id := range apiResp.Scorecard.EntityFilterTypeIdentifiers {
 			identifiers[i] = dx.StringOrNull(id)
 		}
+		// The API does not preserve the configured order, so keep the plan's order when only the order differs.
+		if sameElements(identifiers, oldPlan.EntityFilterTypeIdentifiers) {
+			identifiers = oldPlan.EntityFilterTypeIdentifiers
+		}
 		state.EntityFilterTypeIdentifiers = identifiers
 	} else {
 		state.EntityFilterTypeIdentifiers = oldPlan.EntityFilterTypeIdentifiers
@@ -704,4 +708,22 @@ func nameToKey(ctx context.Context, name string) string {
 	result := strcase.ToSnake(name)
 	tflog.Info(ctx, fmt.Sprintf("Converted name `%s` to key `%s`", name, result))
 	return result
+}
+
+// Reports whether two lists hold the same values with the same counts, ignoring order.
+func sameElements(a, b []types.String) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	counts := make(map[types.String]int, len(a))
+	for _, v := range a {
+		counts[v]++
+	}
+	for _, v := range b {
+		if counts[v] == 0 {
+			return false
+		}
+		counts[v]--
+	}
+	return true
 }
