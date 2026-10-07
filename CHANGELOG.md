@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Fixed `Provider produced inconsistent result after apply` when the DX API returned a `dx_scorecard`'s `entity_filter_type_identifiers` in a different order than configured.
+
 ## [0.11.3] - 2026-09-24
 
 - Deprecated `evaluation_frequency_hours` on the `dx_scorecard` resource. DX removed this setting in March 2026 and now schedules scorecard evaluations automatically, so the API ignores any value sent to it. The attribute is now optional and no longer sent to the API; it will be removed in a future release.

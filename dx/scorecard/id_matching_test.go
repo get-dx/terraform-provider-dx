@@ -193,3 +193,69 @@ func TestResponseBodyToModelPreservesGroupingKeysOnCreate(t *testing.T) {
 		}
 	}
 }
+
+// TestResponseBodyToModelEntityFilterTypeIdentifiersOrder verifies that the
+// configured order of entity_filter_type_identifiers is kept when the API
+// returns the same identifiers in a different order.
+func TestResponseBodyToModelEntityFilterTypeIdentifiersOrder(t *testing.T) {
+	ctx := context.Background()
+
+	strPtr := func(s string) *string { return &s }
+
+	cases := []struct {
+		name     string
+		plan     []types.String
+		api      []*string
+		expected []string
+	}{
+		{
+			name:     "same identifiers in a different order keep the plan order",
+			plan:     []types.String{types.StringValue("service"), types.StringValue("library")},
+			api:      []*string{strPtr("library"), strPtr("service")},
+			expected: []string{"service", "library"},
+		},
+		{
+			name:     "different identifiers use the API values",
+			plan:     []types.String{types.StringValue("service")},
+			api:      []*string{strPtr("library"), strPtr("service")},
+			expected: []string{"library", "service"},
+		},
+		{
+			name:     "duplicate counts that differ use the API values",
+			plan:     []types.String{types.StringValue("service"), types.StringValue("service")},
+			api:      []*string{strPtr("service"), strPtr("library")},
+			expected: []string{"service", "library"},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			oldPlan := &ScorecardModel{
+				Type:                        types.StringValue("LEVEL"),
+				EntityFilterType:            types.StringValue("entity_types"),
+				EntityFilterTypeIdentifiers: tc.plan,
+			}
+			apiResp := &dxapi.APIResponse{
+				Scorecard: dxapi.APIScorecard{
+					Id:                          "scorecard-1",
+					Name:                        "Test Scorecard",
+					Type:                        "LEVEL",
+					EntityFilterType:            "entity_types",
+					EntityFilterTypeIdentifiers: tc.api,
+				},
+			}
+
+			state := &ScorecardModel{}
+			responseBodyToModel(ctx, apiResp, state, oldPlan)
+
+			if len(state.EntityFilterTypeIdentifiers) != len(tc.expected) {
+				t.Fatalf("got %v, expected %v", state.EntityFilterTypeIdentifiers, tc.expected)
+			}
+			for i, id := range state.EntityFilterTypeIdentifiers {
+				if id.ValueString() != tc.expected[i] {
+					t.Fatalf("got %v, expected %v", state.EntityFilterTypeIdentifiers, tc.expected)
+				}
+			}
+		})
+	}
+}
