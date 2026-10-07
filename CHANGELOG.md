@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.11.4] - 2026-10-07
+
+### Fixed
+
 - Fixed `Provider produced inconsistent result after apply` when the DX API returned a `dx_scorecard`'s `entity_filter_type_identifiers` in a different order than configured.
 
 ## [0.11.3] - 2026-09-24
@@ -209,6 +213,7 @@ Initial published release.
 - Provider
 - `dx_scorecard` resource
 
+[0.11.4]: https://github.com/get-dx/terraform-provider-dx/compare/v0.11.3...v0.11.4
 [0.11.3]: https://github.com/get-dx/terraform-provider-dx/compare/v0.11.2...v0.11.3
 [0.11.2]: https://github.com/get-dx/terraform-provider-dx/compare/v0.11.1...v0.11.2
 [0.11.1]: https://github.com/get-dx/terraform-provider-dx/compare/v0.11.0...v0.11.1
