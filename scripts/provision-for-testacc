@@ -1,0 +1,151 @@
+#!/usr/bin/env bash
+# Provisions a DX account so that `make testacc` can run against it.
+#
+# Required tools: dx (DX CLI), jq
+set -euo pipefail
+
+command -v dx  >/dev/null 2>&1 || { echo "Error: 'dx' CLI not found in PATH." >&2; exit 1; }
+command -v jq  >/dev/null 2>&1 || { echo "Error: 'jq' not found in PATH." >&2; exit 1; }
+
+# ---------------------------------------------------------------------------
+# 1. Auth confirmation
+# ---------------------------------------------------------------------------
+
+AUTH_JSON=$(dx auth status --json)
+ACCOUNT=$(echo "$AUTH_JSON" | jq -r '.account.name')
+API_URL=$(echo  "$AUTH_JSON" | jq -r '.api_base_url')
+TOKEN=$(echo   "$AUTH_JSON" | jq -r '.token')
+
+echo ""
+echo "Current DX account"
+echo "------------------"
+printf "  Account : %s\n" "$ACCOUNT"
+printf "  API URL : %s\n" "$API_URL"
+printf "  Token   : %s\n" "$TOKEN"
+echo ""
+read -rp "Proceed with provisioning this account? [y/N] " CONFIRM
+if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
+  echo "Aborted."
+  exit 1
+fi
+
+# ---------------------------------------------------------------------------
+# 2. Ensure 'service' entity type has the required properties and aliases
+#
+# The acceptance tests create entities of type 'service' and set:
+#   - tier        (text)            e.g. "Tier-1"
+#   - language    (multi_select)    e.g. ["Go", "TypeScript"]
+#   - slack-team  (url)             e.g. "https://slack.com/channels/…"
+#   - environment (text)            e.g. "production"
+#
+# They also attach github_repo aliases to those entities, which requires the
+# github_repo alias type to be enabled on the 'service' entity type.
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Ensuring 'service' entity type is ready ==="
+
+SERVICE_ET=$(dx catalog entityTypes info service --json 2>&1)
+if echo "$SERVICE_ET" | jq -e '.error // .message' >/dev/null 2>&1; then
+  echo "Error fetching 'service' entity type:" >&2
+  echo "$SERVICE_ET" >&2
+  exit 1
+fi
+
+# --- Properties ---
+
+REQUIRED_PROPS='[
+  {
+    "identifier": "tier",
+    "name": "Tier",
+    "type": "text",
+    "description": "",
+    "visibility": "visible",
+    "ordering": 100,
+    "definition": {},
+    "is_required": false
+  },
+  {
+    "identifier": "language",
+    "name": "Language",
+    "type": "multi_select",
+    "description": "",
+    "visibility": "visible",
+    "ordering": 101,
+    "definition": {},
+    "is_required": false
+  },
+  {
+    "identifier": "slack-team",
+    "name": "Slack Team",
+    "type": "url",
+    "description": "",
+    "visibility": "visible",
+    "ordering": 102,
+    "definition": {},
+    "is_required": false
+  },
+  {
+    "identifier": "environment",
+    "name": "Environment",
+    "type": "text",
+    "description": "",
+    "visibility": "visible",
+    "ordering": 103,
+    "definition": {},
+    "is_required": false
+  }
+]'
+
+MISSING_PROPS=$(echo "$SERVICE_ET" | jq --argjson required "$REQUIRED_PROPS" '
+  .properties as $existing |
+  ($existing | map(.identifier)) as $existing_ids |
+  $required | map(select(.identifier as $id | $existing_ids | contains([$id]) | not))
+')
+MISSING_PROPS_COUNT=$(echo "$MISSING_PROPS" | jq 'length')
+
+# --- Aliases ---
+
+NEEDS_GITHUB_REPO=$(echo "$SERVICE_ET" | jq '
+  .aliases | has("github_repo") | not
+')
+
+# --- Update if anything is missing ---
+
+if [[ "$MISSING_PROPS_COUNT" -eq 0 && "$NEEDS_GITHUB_REPO" == "false" ]]; then
+  echo "✓ 'service' entity type already has all required properties and aliases."
+else
+  if [[ "$MISSING_PROPS_COUNT" -gt 0 ]]; then
+    MISSING_NAMES=$(echo "$MISSING_PROPS" | jq -r '[.[].identifier] | join(", ")')
+    echo "  Adding missing properties: $MISSING_NAMES"
+  fi
+  if [[ "$NEEDS_GITHUB_REPO" == "true" ]]; then
+    echo "  Enabling alias type: github_repo"
+  fi
+
+  UPDATED=$(echo "$SERVICE_ET" | jq \
+    --argjson missing_props "$MISSING_PROPS" \
+    --argjson needs_github_repo "$NEEDS_GITHUB_REPO" '
+      del(.created_at, .updated_at) |
+      .properties = (
+        (.properties | map(del(.created_at, .updated_at))) + $missing_props
+      ) |
+      if $needs_github_repo then
+        .aliases.github_repo = true
+      else . end
+    ')
+
+  echo "$UPDATED" | dx catalog entityTypes update service --from-stdin
+  echo "✓ 'service' entity type updated."
+fi
+
+# ---------------------------------------------------------------------------
+# Done
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Provisioning complete ==="
+echo ""
+echo "You can now run:"
+echo "  make testacc"
+echo ""
