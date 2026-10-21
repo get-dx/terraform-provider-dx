@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Added the `dx_catalog_relation_edge` resource for managing an edge between two catalog entities for a relation definition.
+
 ## [0.11.4] - 2026-10-07
 
 ### Fixed
