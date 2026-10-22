@@ -16,7 +16,7 @@ func TestRelationEdgeExistsPaginates(t *testing.T) {
 			t.Fatalf("unexpected path %s", r.URL.Path)
 		}
 		q := r.URL.Query()
-		if q.Get("entity_identifier") != "src" || q.Get("relation_identifier") != "rel" || q.Get("direction") != "outgoing" || q.Get("limit") != "50" {
+		if q.Get("entity_identifier") != "src" || q.Get("relation_identifier") != "rel" || q.Get("direction") != "outgoing" || q.Get("limit") != "100" {
 			t.Fatalf("unexpected query %s", r.URL.RawQuery)
 		}
 		cursors = append(cursors, q.Get("cursor"))

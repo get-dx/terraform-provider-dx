@@ -15,7 +15,7 @@ import (
 )
 
 // relationEdgeListPageSize is the maximum page size accepted by catalog.relationEdges.list.
-const relationEdgeListPageSize = 50
+const relationEdgeListPageSize = 100
 
 // Error codes returned by the catalog.relationEdges.* methods that indicate the
 // edge (or something it depends on) no longer exists.
