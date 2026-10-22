@@ -3,16 +3,19 @@ package relationedge
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"terraform-provider-dx/dx/dxapi"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 var (
-	_ resource.Resource = &RelationEdgeResource{}
+	_ resource.Resource                = &RelationEdgeResource{}
+	_ resource.ResourceWithImportState = &RelationEdgeResource{}
 )
 
 func NewRelationEdgeResource() resource.Resource {
@@ -137,6 +140,29 @@ func (r *RelationEdgeResource) Delete(ctx context.Context, req resource.DeleteRe
 		resp.Diagnostics.AddError("Error deleting catalog relation edge", err.Error())
 		return
 	}
+}
+
+func (r *RelationEdgeResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	relationIdentifier, sourceEntityIdentifier, targetEntityIdentifier, err := parseEdgeID(req.ID)
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid import ID", err.Error())
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), req.ID)...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("relation_identifier"), relationIdentifier)...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("source_entity_identifier"), sourceEntityIdentifier)...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("target_entity_identifier"), targetEntityIdentifier)...)
+}
+
+// parseEdgeID splits an ID produced by edgeID back into its relation, source
+// entity, and target entity identifiers.
+func parseEdgeID(id string) (string, string, string, error) {
+	parts := strings.Split(id, "+")
+	if len(parts) != 3 || parts[0] == "" || parts[1] == "" || parts[2] == "" {
+		return "", "", "", fmt.Errorf("expected import ID in the form relation_identifier+source_entity_identifier+target_entity_identifier, got %q", id)
+	}
+	return parts[0], parts[1], parts[2], nil
 }
 
 func edgeID(m RelationEdgeModel) string {

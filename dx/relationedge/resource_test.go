@@ -63,6 +63,12 @@ func TestAccDxCatalogRelationEdgeResource(t *testing.T) {
 					resource.TestCheckResourceAttr("dx_catalog_relation_edge.test", "id", fmt.Sprintf("tf_test_edge_rel_%[1]d+tf_test_edge_src_%[1]d+tf_test_edge_tgt_a_%[1]d", suffix)),
 				),
 			},
+			// ImportState testing
+			{
+				ResourceName:      "dx_catalog_relation_edge.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 			// Changing the target replaces the edge
 			{
 				Config: testAccRelationEdgeConfig(suffix, "target_b"),
