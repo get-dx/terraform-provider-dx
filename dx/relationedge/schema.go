@@ -17,7 +17,7 @@ func (r *RelationEdgeResource) Schema(ctx context.Context, req resource.SchemaRe
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:    true,
-				Description: "Identifier of the edge in the form `relation_identifier/source_entity_identifier/target_entity_identifier`.",
+				Description: "Identifier of the edge in the form `relation_identifier+source_entity_identifier+target_entity_identifier`.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},

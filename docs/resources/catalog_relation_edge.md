@@ -57,4 +57,4 @@ resource "dx_catalog_relation_edge" "authn_service_depends_on_authn_service_even
 
 ### Read-Only
 
-- `id` (String) Identifier of the edge in the form `relation_identifier/source_entity_identifier/target_entity_identifier`.
+- `id` (String) Identifier of the edge in the form `relation_identifier+source_entity_identifier+target_entity_identifier`.

@@ -60,7 +60,7 @@ func TestAccDxCatalogRelationEdgeResource(t *testing.T) {
 					resource.TestCheckResourceAttr("dx_catalog_relation_edge.test", "relation_identifier", fmt.Sprintf("tf_test_edge_rel_%d", suffix)),
 					resource.TestCheckResourceAttr("dx_catalog_relation_edge.test", "source_entity_identifier", fmt.Sprintf("tf_test_edge_src_%d", suffix)),
 					resource.TestCheckResourceAttr("dx_catalog_relation_edge.test", "target_entity_identifier", fmt.Sprintf("tf_test_edge_tgt_a_%d", suffix)),
-					resource.TestCheckResourceAttr("dx_catalog_relation_edge.test", "id", fmt.Sprintf("tf_test_edge_rel_%[1]d/tf_test_edge_src_%[1]d/tf_test_edge_tgt_a_%[1]d", suffix)),
+					resource.TestCheckResourceAttr("dx_catalog_relation_edge.test", "id", fmt.Sprintf("tf_test_edge_rel_%[1]d+tf_test_edge_src_%[1]d+tf_test_edge_tgt_a_%[1]d", suffix)),
 				),
 			},
 			// Changing the target replaces the edge

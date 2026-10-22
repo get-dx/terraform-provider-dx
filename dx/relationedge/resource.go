@@ -140,7 +140,7 @@ func (r *RelationEdgeResource) Delete(ctx context.Context, req resource.DeleteRe
 }
 
 func edgeID(m RelationEdgeModel) string {
-	return fmt.Sprintf("%s/%s/%s",
+	return fmt.Sprintf("%s+%s+%s",
 		m.RelationIdentifier.ValueString(),
 		m.SourceEntityIdentifier.ValueString(),
 		m.TargetEntityIdentifier.ValueString(),
