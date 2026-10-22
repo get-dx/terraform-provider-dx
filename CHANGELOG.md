@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.11.5] - 2026-10-22
+
 ### Added
 
 - Added the `dx_catalog_relation_edge` resource for managing an edge between two catalog entities for a relation definition.
@@ -217,6 +219,7 @@ Initial published release.
 - Provider
 - `dx_scorecard` resource
 
+[0.11.5]: https://github.com/get-dx/terraform-provider-dx/compare/v0.11.4...v0.11.5
 [0.11.4]: https://github.com/get-dx/terraform-provider-dx/compare/v0.11.3...v0.11.4
 [0.11.3]: https://github.com/get-dx/terraform-provider-dx/compare/v0.11.2...v0.11.3
 [0.11.2]: https://github.com/get-dx/terraform-provider-dx/compare/v0.11.1...v0.11.2
