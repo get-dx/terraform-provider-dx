@@ -81,7 +81,7 @@ func (c *Client) ListEntities(ctx context.Context, entityType string, opts *List
 	cursor := ""
 
 	for {
-		urlStr := fmt.Sprintf("%s/entities.list?type=%s&limit=50", c.baseURL, url.QueryEscape(entityType))
+		urlStr := fmt.Sprintf("%s/catalog.entities.list?type=%s&limit=50", c.baseURL, url.QueryEscape(entityType))
 		if cursor != "" {
 			urlStr += "&cursor=" + url.QueryEscape(cursor)
 		}
@@ -132,7 +132,7 @@ func (c *Client) CreateEntity(ctx context.Context, payload map[string]interface{
 		return nil, fmt.Errorf("marshaling payload: %w", err)
 	}
 
-	url := fmt.Sprintf("%s/entities.create", c.baseURL)
+	url := fmt.Sprintf("%s/catalog.entities.create", c.baseURL)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("creating request: %w", err)
@@ -174,7 +174,7 @@ func (c *Client) CreateEntity(ctx context.Context, payload map[string]interface{
 }
 
 func (c *Client) GetEntity(ctx context.Context, identifier string) (*APIEntityResponse, error) {
-	urlStr := fmt.Sprintf("%s/entities.info?identifier=%s", c.baseURL, url.QueryEscape(identifier))
+	urlStr := fmt.Sprintf("%s/catalog.entities.info?identifier=%s", c.baseURL, url.QueryEscape(identifier))
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, urlStr, nil)
 	if err != nil {
 		return nil, fmt.Errorf("creating request: %w", err)
@@ -218,7 +218,7 @@ func (c *Client) UpdateEntity(ctx context.Context, payload map[string]interface{
 		return nil, fmt.Errorf("marshaling payload: %w", err)
 	}
 
-	url := fmt.Sprintf("%s/entities.update", c.baseURL)
+	url := fmt.Sprintf("%s/catalog.entities.update", c.baseURL)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("creating request: %w", err)
@@ -260,7 +260,7 @@ func (c *Client) DeleteEntity(ctx context.Context, identifier string) (bool, err
 	tflog.Info(ctx, "Calling DeleteEntity")
 	tflog.Info(ctx, fmt.Sprintf("Deleting entity with identifier: %s", identifier))
 
-	urlStr := fmt.Sprintf("%s/entities.delete?identifier=%s", c.baseURL, url.QueryEscape(identifier))
+	urlStr := fmt.Sprintf("%s/catalog.entities.delete?identifier=%s", c.baseURL, url.QueryEscape(identifier))
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, urlStr, nil)
 	if err != nil {
 		return false, fmt.Errorf("creating request: %w", err)

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- Internal: Switched from deprecated `/entities.*` and `/entityTypes.*` route paths to `/catalog.entities.*` and `/catalog.entityTypes.*`. No change in behavior.
+
 ## [0.11.5] - 2026-10-22
 
 ### Added

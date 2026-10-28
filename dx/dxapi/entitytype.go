@@ -71,7 +71,7 @@ func (c *Client) CreateEntityType(ctx context.Context, payload map[string]interf
 		return nil, fmt.Errorf("marshaling payload: %w", err)
 	}
 
-	url := fmt.Sprintf("%s/entityTypes.create", c.baseURL)
+	url := fmt.Sprintf("%s/catalog.entityTypes.create", c.baseURL)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("creating request: %w", err)
@@ -113,7 +113,7 @@ func (c *Client) CreateEntityType(ctx context.Context, payload map[string]interf
 }
 
 func (c *Client) GetEntityType(ctx context.Context, identifier string) (*APIEntityTypeResponse, error) {
-	url := fmt.Sprintf("%s/entityTypes.info?identifier=%s", c.baseURL, identifier)
+	url := fmt.Sprintf("%s/catalog.entityTypes.info?identifier=%s", c.baseURL, identifier)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("creating request: %w", err)
@@ -157,7 +157,7 @@ func (c *Client) UpdateEntityType(ctx context.Context, payload map[string]interf
 		return nil, fmt.Errorf("marshaling payload: %w", err)
 	}
 
-	url := fmt.Sprintf("%s/entityTypes.update", c.baseURL)
+	url := fmt.Sprintf("%s/catalog.entityTypes.update", c.baseURL)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("creating request: %w", err)
@@ -214,7 +214,7 @@ func (c *Client) DeleteEntityType(ctx context.Context, identifier string) (bool,
 		return false, fmt.Errorf("marshaling payload: %w", err)
 	}
 
-	url := fmt.Sprintf("%s/entityTypes.delete", c.baseURL)
+	url := fmt.Sprintf("%s/catalog.entityTypes.delete", c.baseURL)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
 	if err != nil {
 		return false, fmt.Errorf("creating request: %w", err)
