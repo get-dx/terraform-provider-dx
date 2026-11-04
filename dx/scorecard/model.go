@@ -31,6 +31,9 @@ type ScorecardModel struct {
 	EntityFilterTypeIdentifiers []types.String        `tfsdk:"entity_filter_type_identifiers"`
 	EntityFilterSql             types.String          `tfsdk:"entity_filter_sql"`
 	Checks                      map[string]CheckModel `tfsdk:"checks"`
+
+	DefaultDisplayEntityTypeIdentifier types.String `tfsdk:"default_display_entity_type_identifier"`
+	DefaultDisplayGrouping             types.String `tfsdk:"default_display_grouping"`
 }
 
 type TagModel struct {

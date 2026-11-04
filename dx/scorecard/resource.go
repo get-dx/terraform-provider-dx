@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strings"
 
 	"terraform-provider-dx/dx"
 	"terraform-provider-dx/dx/dxapi"
@@ -215,6 +216,12 @@ func ValidateModel(plan ScorecardModel, diags *diag.Diagnostics) {
 	}
 	if plan.EntityFilterType.IsNull() || plan.EntityFilterType.IsUnknown() {
 		diags.AddError("Missing required field", "The 'entity_filter_type' field must be specified.")
+		return
+	}
+
+	if strings.HasPrefix(plan.DefaultDisplayGrouping.ValueString(), "relation:") &&
+		(plan.DefaultDisplayEntityTypeIdentifier.IsNull() || plan.DefaultDisplayEntityTypeIdentifier.ValueString() == "") {
+		diags.AddError("Missing required field", "The 'default_display_entity_type_identifier' field must be specified when 'default_display_grouping' is a relation grouping.")
 		return
 	}
 
@@ -434,6 +441,11 @@ func modelToRequestBody(ctx context.Context, plan ScorecardModel, setIds bool) (
 		payload["entity_filter_sql"] = plan.EntityFilterSql.ValueString()
 	}
 
+	// These attributes are Optional+Computed: when omitted from config the plan carries the existing
+	// server value (or is unknown on create), so the server value is left alone. An empty string clears it.
+	setOptionalString(payload, "default_display_entity_type_identifier", plan.DefaultDisplayEntityTypeIdentifier)
+	setOptionalString(payload, "default_display_grouping", plan.DefaultDisplayGrouping)
+
 	// Add checks
 	checks := []map[string]interface{}{}
 	for _, planCheck := range plan.Checks {
@@ -606,6 +618,9 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 		state.EntityFilterTypeIdentifiers = oldPlan.EntityFilterTypeIdentifiers
 	}
 
+	state.DefaultDisplayEntityTypeIdentifier = clearableStringToState(apiResp.Scorecard.DefaultDisplayEntityTypeIdentifier, oldPlan.DefaultDisplayEntityTypeIdentifier)
+	state.DefaultDisplayGrouping = clearableStringToState(apiResp.Scorecard.DefaultDisplayGrouping, oldPlan.DefaultDisplayGrouping)
+
 	// Update the state.Checks
 	// Build ID-to-key lookup from old plan for stable matching
 	checkIdToKey := make(map[string]string)
@@ -701,6 +716,28 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 			ScorecardCheckGroupKey: dx.StringOrNull(checkGroupKey),
 		}
 	}
+}
+
+// Sets an optional string field on the payload. Null and unknown values are omitted (leaving the
+// server value unchanged). An empty string is sent as an explicit null, which clears the field.
+func setOptionalString(payload map[string]interface{}, key string, value types.String) {
+	switch {
+	case value.IsNull() || value.IsUnknown():
+	case value.ValueString() == "":
+		payload[key] = nil
+	default:
+		payload[key] = value.ValueString()
+	}
+}
+
+// Maps an API value that may be null/empty to state. If the plan explicitly asked to clear the field
+// with "", keep "" so the result matches the plan.
+func clearableStringToState(apiValue *string, prior types.String) types.String {
+	result := dx.StringOrNullConvertEmpty(apiValue)
+	if result.IsNull() && !prior.IsNull() && !prior.IsUnknown() && prior.ValueString() == "" {
+		return types.StringValue("")
+	}
+	return result
 }
 
 // Convert a level/check-group/check name to a key.

@@ -36,6 +36,9 @@ type APIScorecard struct {
 	EntityFilterTypeIdentifiers []*string   `json:"entity_filter_type_identifiers"`
 	EntityFilterSql             *string     `json:"entity_filter_sql"`
 	Checks                      []*APICheck `json:"checks"`
+
+	DefaultDisplayEntityTypeIdentifier *string `json:"default_display_entity_type_identifier"`
+	DefaultDisplayGrouping             *string `json:"default_display_grouping"`
 }
 
 type APILevel struct {
