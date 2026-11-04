@@ -41,37 +41,27 @@ func TestModelToRequestBodyDefaultDisplay(t *testing.T) {
 		}
 	})
 
-	t.Run("null or unknown is omitted on create and update", func(t *testing.T) {
-		for _, setIds := range []bool{false, true} {
-			for _, v := range []types.String{types.StringNull(), types.StringUnknown()} {
-				plan := basePlan()
-				plan.DefaultDisplayEntityTypeIdentifier = v
-				plan.DefaultDisplayGrouping = v
-				payload, err := modelToRequestBody(ctx, plan, setIds)
-				if err != nil {
-					t.Fatal(err)
-				}
-				for _, k := range keys {
-					if _, ok := payload[k]; ok {
-						t.Errorf("setIds=%v value=%v: expected %s to be omitted", setIds, v, k)
-					}
-				}
+	t.Run("null is omitted on create", func(t *testing.T) {
+		payload, err := modelToRequestBody(ctx, basePlan(), false)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, k := range keys {
+			if _, ok := payload[k]; ok {
+				t.Errorf("expected %s to be omitted on create", k)
 			}
 		}
 	})
 
-	t.Run("empty string is sent as explicit null to clear", func(t *testing.T) {
-		plan := basePlan()
-		plan.DefaultDisplayEntityTypeIdentifier = types.StringValue("")
-		plan.DefaultDisplayGrouping = types.StringValue("")
-		payload, err := modelToRequestBody(ctx, plan, true)
+	t.Run("null is sent as explicit null on update", func(t *testing.T) {
+		payload, err := modelToRequestBody(ctx, basePlan(), true)
 		if err != nil {
 			t.Fatal(err)
 		}
 		for _, k := range keys {
 			v, ok := payload[k]
 			if !ok || v != nil {
-				t.Errorf("expected %s to be an explicit nil, got %v (present=%v)", k, v, ok)
+				t.Errorf("expected %s to be an explicit nil on update, got %v (present=%v)", k, v, ok)
 			}
 		}
 	})
@@ -91,7 +81,6 @@ func TestResponseBodyToModelDefaultDisplay(t *testing.T) {
 		{"values", strPtr("service"), strPtr("owner_team"), types.StringValue("service"), types.StringValue("owner_team")},
 		{"null", nil, nil, types.StringNull(), types.StringNull()},
 		{"empty", strPtr(""), strPtr(""), types.StringNull(), types.StringNull()},
-		{"cleared with empty string in plan", nil, nil, types.StringValue(""), types.StringValue("")},
 	}
 
 	for _, tc := range cases {
@@ -106,10 +95,6 @@ func TestResponseBodyToModelDefaultDisplay(t *testing.T) {
 			}}
 			state := basePlan()
 			old := basePlan()
-			if tc.wantEntity.ValueString() == "" && !tc.wantEntity.IsNull() {
-				old.DefaultDisplayEntityTypeIdentifier = types.StringValue("")
-				old.DefaultDisplayGrouping = types.StringValue("")
-			}
 			responseBodyToModel(ctx, apiResp, &state, &old)
 
 			if !state.DefaultDisplayEntityTypeIdentifier.Equal(tc.wantEntity) {
