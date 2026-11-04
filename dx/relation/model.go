@@ -6,6 +6,7 @@ import (
 
 type RelationModel struct {
 	Id                         types.String `tfsdk:"id"`
+	PublicId                   types.String `tfsdk:"public_id"`
 	Identifier                 types.String `tfsdk:"identifier"`
 	Type                       types.String `tfsdk:"type"`
 	InverseType                types.String `tfsdk:"inverse_type"`

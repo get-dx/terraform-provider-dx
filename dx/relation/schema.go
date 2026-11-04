@@ -22,6 +22,13 @@ func (r *RelationResource) Schema(ctx context.Context, req resource.SchemaReques
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
+			"public_id": schema.StringAttribute{
+				Computed:    true,
+				Description: "The public ID of the relation. Use it to reference the relation elsewhere, e.g. `relation:<public_id>` in a scorecard's `default_display_grouping`.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
 			"identifier": schema.StringAttribute{
 				Required:    true,
 				Description: "Unique identifier for the relation definition. Cannot be changed after creation.",

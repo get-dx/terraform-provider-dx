@@ -198,6 +198,7 @@ func modelToUpdatePayload(plan RelationModel) map[string]interface{} {
 
 func responseToModel(apiResp *dxapi.APIRelationResponse, state *RelationModel) {
 	state.Id = types.StringValue(apiResp.Relation.Identifier)
+	state.PublicId = types.StringValue(apiResp.Relation.PublicId)
 	state.Identifier = types.StringValue(apiResp.Relation.Identifier)
 	state.Type = types.StringValue(apiResp.Relation.Type)
 	state.InverseType = types.StringValue(apiResp.Relation.InverseType)
