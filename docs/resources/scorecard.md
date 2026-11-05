@@ -34,6 +34,10 @@ resource "dx_scorecard" "level_based_example" {
   empty_level_color              = "#cccccc"
   published                      = true
 
+  # Default view when opening the scorecard's results. Remove these to clear them.
+  default_display_entity_type_identifier = "service"
+  default_display_grouping               = "owner_team"
+
   tags = [
     { value = "test" },
     { value = "production" },
@@ -126,6 +130,10 @@ resource "dx_scorecard" "points_based_example" {
   entity_filter_type             = "entity_types"
   entity_filter_type_identifiers = ["service"]
   published                      = true
+
+  # Group results by a relation using its `public_id`, e.g.:
+  #   default_display_entity_type_identifier = "service"
+  #   default_display_grouping               = "relation:${dx_catalog_relation.<name>.public_id}"
 
   check_groups = {
     first_group = {
