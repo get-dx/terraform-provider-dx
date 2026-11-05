@@ -7,9 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.12.0] - 2026-11-05
+
 ### Added
 
-- Added `default_display_entity_type_identifier` and `default_display_grouping` to the `dx_scorecard` resource, to configure the scorecard's default results view.
+- Added `default_display_entity_type_identifier` and `default_display_grouping` to the `dx_scorecard` resource, to configure the scorecard's default results view. Omitting either attribute clears it on the next update, including a value set in the DX UI.
 - Added the computed `public_id` attribute to the `dx_catalog_relation` resource, for use in `relation:<public_id>` values of `dx_scorecard.default_display_grouping`.
 
 ### Changed
@@ -228,6 +230,7 @@ Initial published release.
 - Provider
 - `dx_scorecard` resource
 
+[0.12.0]: https://github.com/get-dx/terraform-provider-dx/compare/v0.11.5...v0.12.0
 [0.11.5]: https://github.com/get-dx/terraform-provider-dx/compare/v0.11.4...v0.11.5
 [0.11.4]: https://github.com/get-dx/terraform-provider-dx/compare/v0.11.3...v0.11.4
 [0.11.3]: https://github.com/get-dx/terraform-provider-dx/compare/v0.11.2...v0.11.3
