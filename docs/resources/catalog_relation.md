@@ -43,4 +43,5 @@ resource "dx_catalog_relation" "team_manages_github_team" {
 - `created_at` (String) Timestamp when the relation was created.
 - `id` (String) The unique identifier of the relation (same as 'identifier').
 - `inverse_type` (String) The inverse relation type, derived automatically by the API.
+- `public_id` (String) The public ID of the relation. Use it to reference the relation elsewhere, e.g. `relation:<public_id>` in a scorecard's `default_display_grouping`.
 - `updated_at` (String) Timestamp when the relation was last updated.

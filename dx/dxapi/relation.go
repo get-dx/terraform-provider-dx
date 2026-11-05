@@ -21,6 +21,7 @@ func (e *RelationNotFoundError) Error() string {
 }
 
 type APIRelation struct {
+	PublicId                   string  `json:"public_id"`
 	Identifier                 string  `json:"identifier"`
 	Type                       string  `json:"type"`
 	InverseType                string  `json:"inverse_type"`

@@ -34,6 +34,10 @@ resource "dx_scorecard" "level_based_example" {
   empty_level_color              = "#cccccc"
   published                      = true
 
+  # Default view when opening the scorecard's results. Remove these to clear them.
+  default_display_entity_type_identifier = "service"
+  default_display_grouping               = "owner_team"
+
   tags = [
     { value = "test" },
     { value = "production" },
@@ -127,6 +131,10 @@ resource "dx_scorecard" "points_based_example" {
   entity_filter_type_identifiers = ["service"]
   published                      = true
 
+  # Group results by a relation using its `public_id`, e.g.:
+  #   default_display_entity_type_identifier = "service"
+  #   default_display_grouping               = "relation:${dx_catalog_relation.<name>.public_id}"
+
   check_groups = {
     first_group = {
       name     = "First group"
@@ -188,6 +196,8 @@ resource "dx_scorecard" "points_based_example" {
 
 - `check_groups` (Attributes Map) Groups of checks, to help organize the scorecard for entity owners (points scorecards only). Each map key must be the snake-cased form of that check group's `name` — e.g. `ai_readiness` for a check group named "AI Readiness". Names containing digits gain a separator, so a check group named "P1 Alerts" requires the key `p_1_alerts`. (see [below for nested schema](#nestedatt--check_groups))
 - `checks` (Attributes Map) List of checks that are applied to entities in the scorecard. Each map key must be the snake-cased form of that check's `name` — e.g. `bronze_checks` for a check named "Bronze Checks". Names containing digits gain a separator, so a check named "P1 Alerts" requires the key `p_1_alerts`. (see [below for nested schema](#nestedatt--checks))
+- `default_display_entity_type_identifier` (String) The identifier of the entity type to show by default when viewing the scorecard's results, e.g. `service`. Must reference an existing entity type. Remove the attribute to clear it.
+- `default_display_grouping` (String) How results are grouped by default when viewing the scorecard. One of `entity`, `owner_team`, `owner_leaf`, or `relation:<relation_id>` (where `<relation_id>` is the relation's `public_id`). Relation groupings require `default_display_entity_type_identifier` to be set, and the relation must connect to that entity type and not be self-referential. Remove the attribute to clear it.
 - `description` (String) Description of the scorecard.
 - `empty_level_color` (String) The color hex code to display when an entity has not achieved any levels in the scorecard (levels scorecards only).
 - `empty_level_label` (String) The label to display when an entity has not achieved any levels in the scorecard (levels scorecards only).

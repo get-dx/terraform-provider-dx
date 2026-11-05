@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strings"
 
 	"terraform-provider-dx/dx"
 	"terraform-provider-dx/dx/dxapi"
@@ -215,6 +216,12 @@ func ValidateModel(plan ScorecardModel, diags *diag.Diagnostics) {
 	}
 	if plan.EntityFilterType.IsNull() || plan.EntityFilterType.IsUnknown() {
 		diags.AddError("Missing required field", "The 'entity_filter_type' field must be specified.")
+		return
+	}
+
+	if strings.HasPrefix(plan.DefaultDisplayGrouping.ValueString(), "relation:") &&
+		(plan.DefaultDisplayEntityTypeIdentifier.IsNull() || plan.DefaultDisplayEntityTypeIdentifier.ValueString() == "") {
+		diags.AddError("Missing required field", "The 'default_display_entity_type_identifier' field must be specified when 'default_display_grouping' is a relation grouping.")
 		return
 	}
 
@@ -434,6 +441,10 @@ func modelToRequestBody(ctx context.Context, plan ScorecardModel, setIds bool) (
 		payload["entity_filter_sql"] = plan.EntityFilterSql.ValueString()
 	}
 
+	// On update, send an explicit null when unset so removing the attribute clears it on the server.
+	setOptionalString(payload, "default_display_entity_type_identifier", plan.DefaultDisplayEntityTypeIdentifier, setIds)
+	setOptionalString(payload, "default_display_grouping", plan.DefaultDisplayGrouping, setIds)
+
 	// Add checks
 	checks := []map[string]interface{}{}
 	for _, planCheck := range plan.Checks {
@@ -606,6 +617,9 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 		state.EntityFilterTypeIdentifiers = oldPlan.EntityFilterTypeIdentifiers
 	}
 
+	state.DefaultDisplayEntityTypeIdentifier = dx.StringOrNullConvertEmpty(apiResp.Scorecard.DefaultDisplayEntityTypeIdentifier)
+	state.DefaultDisplayGrouping = dx.StringOrNullConvertEmpty(apiResp.Scorecard.DefaultDisplayGrouping)
+
 	// Update the state.Checks
 	// Build ID-to-key lookup from old plan for stable matching
 	checkIdToKey := make(map[string]string)
@@ -700,6 +714,21 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIResponse, state 
 			ScorecardLevelKey:      dx.StringOrNull(levelKey),
 			ScorecardCheckGroupKey: dx.StringOrNull(checkGroupKey),
 		}
+	}
+}
+
+// Sets an optional string field on the payload. Null values are omitted on create, or sent as an
+// explicit null on update so that removing the attribute from config clears it on the server.
+// Unknown values are always omitted.
+func setOptionalString(payload map[string]interface{}, key string, value types.String, clearOnNull bool) {
+	switch {
+	case value.IsUnknown():
+	case value.IsNull():
+		if clearOnNull {
+			payload[key] = nil
+		}
+	default:
+		payload[key] = value.ValueString()
 	}
 }
 

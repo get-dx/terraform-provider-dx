@@ -172,6 +172,15 @@ func ScorecardSchema() map[string]schema.Attribute {
 			Description: "Custom SQL used to filter entities that the scorecard should run against.",
 		},
 
+		"default_display_entity_type_identifier": schema.StringAttribute{
+			Optional:    true,
+			Description: "The identifier of the entity type to show by default when viewing the scorecard's results, e.g. `service`. Must reference an existing entity type. Remove the attribute to clear it.",
+		},
+		"default_display_grouping": schema.StringAttribute{
+			Optional:    true,
+			Description: "How results are grouped by default when viewing the scorecard. One of `entity`, `owner_team`, `owner_leaf`, or `relation:<relation_id>` (where `<relation_id>` is the relation's `public_id`). Relation groupings require `default_display_entity_type_identifier` to be set, and the relation must connect to that entity type and not be self-referential. Remove the attribute to clear it.",
+		},
+
 		// For now, all check field are required. This may change in the future.
 		"checks": schema.MapNestedAttribute{
 			Optional:    true,

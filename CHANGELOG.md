@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Added `default_display_entity_type_identifier` and `default_display_grouping` to the `dx_scorecard` resource, to configure the scorecard's default results view.
+- Added the computed `public_id` attribute to the `dx_catalog_relation` resource, for use in `relation:<public_id>` values of `dx_scorecard.default_display_grouping`.
+
 ### Changed
 
 - Internal: Switched from deprecated `/entities.*` and `/entityTypes.*` route paths to `/catalog.entities.*` and `/catalog.entityTypes.*`. No change in behavior.
