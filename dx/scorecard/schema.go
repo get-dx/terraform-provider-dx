@@ -15,7 +15,7 @@ func LevelSchema() map[string]schema.Attribute {
 		"id": schema.StringAttribute{
 			Computed: true,
 			PlanModifiers: []planmodifier.String{
-				stringplanmodifier.UseStateForUnknown(),
+				stringplanmodifier.UseNonNullStateForUnknown(),
 			}},
 		"name":  schema.StringAttribute{Required: true},
 		"color": schema.StringAttribute{Required: true},
@@ -34,7 +34,7 @@ func CheckGroupSchema() map[string]schema.Attribute {
 		"id": schema.StringAttribute{
 			Computed: true,
 			PlanModifiers: []planmodifier.String{
-				stringplanmodifier.UseStateForUnknown(),
+				stringplanmodifier.UseNonNullStateForUnknown(),
 			}},
 		"name":     schema.StringAttribute{Required: true},
 		"ordering": schema.Int32Attribute{Required: true},
@@ -46,7 +46,7 @@ func CheckSchema() map[string]schema.Attribute {
 		"id": schema.StringAttribute{
 			Computed: true,
 			PlanModifiers: []planmodifier.String{
-				stringplanmodifier.UseStateForUnknown(),
+				stringplanmodifier.UseNonNullStateForUnknown(),
 			},
 		},
 		"name":               schema.StringAttribute{Required: true},
