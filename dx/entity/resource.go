@@ -553,6 +553,10 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIEntityResponse, 
 				aliasModels = append(aliasModels, aliasModel)
 			}
 			if len(aliasModels) > 0 {
+				// The API may return aliases in a different order than configured.
+				if prior, ok := oldPlan.Aliases[aliasType]; ok && sameAliases(prior, aliasModels) {
+					aliasModels = prior
+				}
 				aliases[aliasType] = aliasModels
 			}
 		}
@@ -566,6 +570,24 @@ func responseBodyToModel(ctx context.Context, apiResp *dxapi.APIEntityResponse, 
 	// Computed fields
 	state.CreatedAt = types.StringValue(apiResp.Entity.CreatedAt)
 	state.UpdatedAt = types.StringValue(apiResp.Entity.UpdatedAt)
+}
+
+// sameAliases reports whether two alias lists hold the same entries with the same counts, ignoring order.
+func sameAliases(a, b []AliasModel) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	counts := make(map[AliasModel]int, len(a))
+	for _, v := range a {
+		counts[v]++
+	}
+	for _, v := range b {
+		if counts[v] == 0 {
+			return false
+		}
+		counts[v]--
+	}
+	return true
 }
 
 // interfaceToDynamic converts an interface{} value to a types.Dynamic value.

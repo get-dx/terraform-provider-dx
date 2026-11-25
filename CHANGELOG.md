@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- Fixed `Provider produced inconsistent result after apply` when adding a level, check group, or check to an existing `dx_scorecard`. New elements now plan their `id` as known after apply instead of null.
+- Fixed `Provider produced inconsistent result after apply` and perpetual diffs when the DX API returned a `dx_entity`'s aliases in a different order than configured.
+
+### Changed
+
+- Internal: Bumped `terraform-plugin-framework` to v1.17.0.
+
 ## [0.12.0] - 2026-11-05
 
 ### Added
